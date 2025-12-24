@@ -1,13 +1,20 @@
-
+mod debug_overlay;
 mod settings;
 
 use forward_renderer::{ForwardRenderer, PerformanceMonitor};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
-use wgpu_renderer::{default_application::{DefaultApplication, DefaultApplicationInterface}, performance_monitor::watch::Watch, wgpu_renderer::WgpuRendererInterface};
+use wgpu_renderer::{
+    default_application::{DefaultApplication, DefaultApplicationInterface},
+    performance_monitor::{Fps, watch::Watch},
+    wgpu_renderer::WgpuRendererInterface,
+};
 use winit::event::{ElementState, WindowEvent};
 
+use crate::debug_overlay::DebugOverlay;
+
 const WATCH_POINTS_SIZE: usize = 7;
+const DEBUG_OVERLAY_SIZE: usize = 10;
 
 struct NeonWarlord {
     settings: settings::Settings,
@@ -19,18 +26,17 @@ struct NeonWarlord {
     font: rusttype::Font<'static>,
 
     // performance monitor
+    fps: Fps,
     watch_fps: Watch<WATCH_POINTS_SIZE>,
     performance_monitor_fps: PerformanceMonitor<WATCH_POINTS_SIZE>,
     performance_monitor_ups: PerformanceMonitor<WATCH_POINTS_SIZE>,
+    debug_overlay: DebugOverlay<DEBUG_OVERLAY_SIZE>,
 
     // // show the entity index
     mouse_pos_y: u32,
     mouse_pos_x: u32,
-
-
     // debug_overlay: DebugOverlay,
 }
-
 
 impl NeonWarlord {
     pub fn new(
@@ -40,8 +46,7 @@ impl NeonWarlord {
     ) -> Self {
         let settings = settings::Settings::new();
 
-        let renderer =
-            ForwardRenderer::new(renderer_interface, settings.get_renderer_settings());
+        let renderer = ForwardRenderer::new(renderer_interface, settings.get_renderer_settings());
 
         // font
         let font = wgpu_renderer::freefont::create_font_free_mono();
@@ -79,6 +84,15 @@ impl NeonWarlord {
             colorous::PLASMA,
             false,
             "60 ups",
+            scale_factor,
+        );
+        let fps = Fps::new();
+        let debug_overlay = DebugOverlay::new(
+            renderer_interface,
+            &renderer.texture_bind_group_layout,
+            &font,
+            size.height,
+            size.width,
             scale_factor,
         );
 
@@ -172,6 +186,8 @@ impl NeonWarlord {
             performance_monitor_ups,
             mouse_pos_y: 0,
             mouse_pos_x: 0,
+            fps,
+            debug_overlay,
             // settings,
 
             // size,
@@ -246,34 +262,90 @@ impl DefaultApplicationInterface for NeonWarlord {
     ) {
         self.size = new_size;
         self.renderer.resize(renderer_interface, new_size);
+        self.debug_overlay.resize(            renderer_interface,
+            &self.renderer.texture_bind_group_layout,
+            &self.font,
+            new_size.height,
+            new_size.width,
+        );
     }
 
-    fn update_scale_factor(&mut self, 
+    fn update_scale_factor(
+        &mut self,
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
-        scale_factor: f32) {
+        scale_factor: f32,
+    ) {
         println!("new scale factor {}", scale_factor);
 
         // let scale_factor = 2.0;
         self.scale_factor = scale_factor;
-        self.performance_monitor_fps.rescale(renderer_interface,  &self.renderer.texture_bind_group_layout, &self.font, scale_factor);
-        self.performance_monitor_ups.rescale(renderer_interface,  &self.renderer.texture_bind_group_layout, &self.font, scale_factor);
+        self.performance_monitor_fps.rescale(
+            renderer_interface,
+            &self.renderer.texture_bind_group_layout,
+            &self.font,
+            scale_factor,
+        );
+        self.performance_monitor_ups.rescale(
+            renderer_interface,
+            &self.renderer.texture_bind_group_layout,
+            &self.font,
+            scale_factor,
+        );
+
+        self.debug_overlay.rescale(            renderer_interface,
+            &self.renderer.texture_bind_group_layout,
+            &self.font,
+            scale_factor,
+        );
     }
 
-    fn update(&mut self, renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface, dt: instant::Duration) {
+    fn update(
+        &mut self,
+        renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
+        dt: instant::Duration,
+    ) {
         self.renderer.update(renderer_interface, dt);
 
         self.watch_fps.start(3, "Update data");
-        {
-
-        }
+        {}
         self.watch_fps.stop(3);
 
         self.watch_fps.update();
-        self.performance_monitor_fps.update_from_data(
-            renderer_interface,
-            &self.font,
-            &self.watch_fps.get_viewer_data(),
-        );
+        self.watch_fps.start(0, "Debug utilities");
+        {
+            self.fps.update(dt);
+
+            self.debug_overlay.update(
+                renderer_interface,
+                &self.font,
+                0,
+                "fps",
+                self.fps.get() as f32,
+            );
+
+            self.debug_overlay.update(
+                renderer_interface,
+                &self.font,
+                1,
+                "x",
+                self.mouse_pos_x as f32,
+            );
+
+            self.debug_overlay.update(
+                renderer_interface,
+                &self.font,
+                2,
+                "y",
+                self.mouse_pos_y as f32,
+            );
+
+            self.performance_monitor_fps.update_from_data(
+                renderer_interface,
+                &self.font,
+                &self.watch_fps.get_viewer_data(),
+            );
+        }
+        self.watch_fps.stop(0);
     }
 
     fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
@@ -325,7 +397,7 @@ impl DefaultApplicationInterface for NeonWarlord {
             WindowEvent::CursorMoved { position, .. } => {
                 let pos = apply_scale_factor(*position, self.scale_factor);
 
-                self.mouse_pos_y = pos.y as u32;
+                self.mouse_pos_y = self.size.height - pos.y as u32;
                 self.mouse_pos_x = pos.x as u32;
                 true
             }
@@ -349,17 +421,15 @@ impl DefaultApplicationInterface for NeonWarlord {
                 &[
                     &mut self.performance_monitor_fps,
                     &mut self.performance_monitor_ups,
+                    &mut self.debug_overlay,
                 ],
-                // &mut self.watch_fps,
             )
         }
         self.watch_fps.stop(1);
 
         return res;
-
     }
 }
-
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
