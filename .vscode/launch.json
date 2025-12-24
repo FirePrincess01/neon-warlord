@@ -1,0 +1,67 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+    
+        {
+            "name": "Debug unit tests in library 'forward_renderer'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=forward-renderer"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'wgpu_renderer'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=wgpu_renderer"
+                ]
+            }
+        },
+        {
+            "name": "Debug unit tests in library 'neon_warlord'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--package=neon-warlord"
+                ]
+            }
+        },
+        {
+            "name": "Debug executable 'app'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "run",
+                    "--bin=app",
+                    "--package=neon-warlord"
+                ]
+            },
+            "args": []
+        },
+        {
+            "name": "Debug unit tests in executable 'app'",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--bin=app",
+                    "--package=neon-warlord"
+                ]
+            }
+        }
+    ]
+}
