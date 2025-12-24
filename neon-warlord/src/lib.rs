@@ -248,8 +248,15 @@ impl DefaultApplicationInterface for NeonWarlord {
         self.renderer.resize(renderer_interface, new_size);
     }
 
-    fn update_scale_factor(&mut self, scale_factor: f32) {
+    fn update_scale_factor(&mut self, 
+        renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
+        scale_factor: f32) {
+        println!("new scale factor {}", scale_factor);
+
+        // let scale_factor = 2.0;
         self.scale_factor = scale_factor;
+        self.performance_monitor_fps.rescale(renderer_interface,  &self.renderer.texture_bind_group_layout, &self.font, scale_factor);
+        self.performance_monitor_ups.rescale(renderer_interface,  &self.renderer.texture_bind_group_layout, &self.font, scale_factor);
     }
 
     fn update(&mut self, renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface, dt: instant::Duration) {

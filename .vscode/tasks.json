@@ -60,7 +60,7 @@
 			"label": "wasm-pack",
 			"type": "shell",
 			// "command": "RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target web",
-			"command": "wasm-pack build neon-warloard --target web",
+			"command": "wasm-pack build neon-warlord --target web",
 			"problemMatcher": [
 				"$rustc"
 			],
