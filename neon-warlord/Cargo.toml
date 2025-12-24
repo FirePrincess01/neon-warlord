@@ -1,0 +1,7 @@
+[package]
+name = "neon-warlord"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+forward-renderer = { path = "../forward-renderer" }
