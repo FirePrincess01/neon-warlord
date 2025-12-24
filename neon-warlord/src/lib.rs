@@ -17,7 +17,7 @@ const WATCH_POINTS_SIZE: usize = 7;
 const DEBUG_OVERLAY_SIZE: usize = 10;
 
 struct NeonWarlord {
-    settings: settings::Settings,
+    _settings: settings::Settings,
 
     size: winit::dpi::PhysicalSize<u32>,
     scale_factor: f32,
@@ -176,7 +176,7 @@ impl NeonWarlord {
         // let selector = Selector::new();
 
         Self {
-            settings,
+            _settings: settings,
             size,
             scale_factor,
             renderer,
