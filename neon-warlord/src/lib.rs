@@ -260,6 +260,8 @@ impl DefaultApplicationInterface for NeonWarlord {
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         new_size: winit::dpi::PhysicalSize<u32>,
     ) {
+        println!("resize: {:?}", new_size);
+
         self.size = new_size;
         self.renderer.resize(renderer_interface, new_size);
         self.debug_overlay.resize(            renderer_interface,
@@ -304,10 +306,10 @@ impl DefaultApplicationInterface for NeonWarlord {
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         dt: instant::Duration,
     ) {
+        self.watch_fps.start(3, "Update data");
         self.renderer.update(renderer_interface, dt);
 
-        self.watch_fps.start(3, "Update data");
-        {}
+        
         self.watch_fps.stop(3);
 
         self.watch_fps.update();
