@@ -2,7 +2,8 @@
 name = "forward-renderer"
 version = "0.1.0"
 edition = "2024"
-
+repository = "https://github.com/FirePrincess01/neon-warlord"
+description = "Basic pipeline using a forward rendering method (not deferred)"
 
 [dependencies]
 wgpu_renderer = { path = "../wgpu_renderer" }

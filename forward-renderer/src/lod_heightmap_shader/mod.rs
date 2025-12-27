@@ -26,8 +26,4 @@ pub use wgpu_renderer::vertex_heightmap_shader::Heightmap;
 pub use wgpu_renderer::vertex_heightmap_shader::HeightmapBindGroupLayout;
 pub use wgpu_renderer::vertex_heightmap_shader::HeightmapTexture;
 
-// pub use super::deferred_color_shader::EntityBuffer;
-
-// pub use crate::deferred_color_shader::GBuffer;
-
 pub use wgpu_renderer::vertex_color_shader::CameraBindGroupLayout;

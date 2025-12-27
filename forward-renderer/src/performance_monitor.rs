@@ -1,3 +1,5 @@
+//! Creates a nice graph with description for user defined watchpoints
+
 mod sliding_average;
 mod sorted_table;
 
@@ -24,13 +26,6 @@ struct Data<const SIZE: usize> {
 }
 
 pub struct PerformanceMonitor<const SIZE: usize> {
-    // graph_host: performance_monitor::Graph<SIZE>,
-    // graph_device: vertex_color_shader::Mesh,
-
-    // // label_30fps: wgpu_renderer::label::LabelMesh,
-    // label_60fps: wgpu_renderer::label::LabelMesh,
-    // // label_120fps: wgpu_renderer::label::LabelMesh,
-    // table: sorted_table::SortedTable<SIZE>,
     color_gradient: colorous::Gradient,
     indicator: &'static str,
     scale_factor: f32,

@@ -1,12 +1,14 @@
+//! Application settings
+
 use forward_renderer::{RendererSettings, TerrainSettings};
 
 pub struct Settings {}
 impl Settings {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {}
     }
 
-    pub(crate) fn get_renderer_settings(&self) -> RendererSettings {
+    pub fn get_renderer_settings(&self) -> RendererSettings {
         RendererSettings {
             wait_for_render_loop_to_finish: true,
             enable_vertical_sync: false,
@@ -15,7 +17,7 @@ impl Settings {
         }
     }
 
-    pub(crate) fn get_terrain_settings(&self) -> TerrainSettings {
+    pub fn get_terrain_settings(&self) -> TerrainSettings {
         TerrainSettings {
             nr_tiles: 16,
             max_depth: 8,

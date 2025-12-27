@@ -1,3 +1,5 @@
+//! Creates the Neon-Warlord application
+
 mod debug_overlay;
 mod heightmap_generator;
 mod settings;
@@ -337,13 +339,6 @@ impl DefaultApplicationInterface for NeonWarlord {
             self.terrain.clear_requests();
         }
         self.watch_fps.stop(3);
-
-        // self.watch_fps.update();
-        // self.watch_fps.start(0, "Debug utilities");
-        // {
-        //     self.fps.update(dt);
-        // }
-        // self.watch_fps.stop(3);
 
         self.watch_fps.update();
         self.watch_fps.start(0, "Debug utilities");

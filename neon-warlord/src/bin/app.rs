@@ -1,5 +1,5 @@
-fn main() {
-    println!("Hello, world!");
+//! Runs the app on a Desktop PC
 
-    pollster::block_on(neon_warlord::run());
+fn main() {
+     pollster::block_on(neon_warlord::run());
 }

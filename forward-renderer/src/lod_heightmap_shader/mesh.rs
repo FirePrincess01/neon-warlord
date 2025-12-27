@@ -47,35 +47,6 @@ impl Mesh {
         self.vertex_buffer.update(queue, vertices);
     }
 
-    // pub fn _set_texture_index(&mut self, texture_index: usize) {
-    //     self.texture_index = texture_index;
-    // }
-
-    // pub fn update_heightmap_texture(&mut self, queue: &wgpu::Queue, heightmap: &[Heightmap]) {
-    //     self.heightmap_texture.update(queue, heightmap);
-    // }
-
-    // pub fn update_instance_buffer(&mut self, queue: &wgpu::Queue, instances: &[Instance]) {
-    //     self.instance_buffer.update(queue, instances);
-    //     self.nr_instances = u32::min(instances.len() as u32, self.max_instances);
-    // }
-
-    // pub fn draw<'a>(
-    //     &'a self,
-    //     render_pass: &mut wgpu::RenderPass<'a>,
-    //     heightmap_texture: &'a HeightmapTexture,
-    //     texture: &'a Texture,
-    //     instance: &'a InstanceBuffer<Instance>,
-    // ) {
-    //     self.vertex_buffer.bind(render_pass);
-    //     heightmap_texture.bind(render_pass);
-    //     texture.bind(render_pass);
-    //     self.index_buffer.bind(render_pass);
-    //     instance.bind_slot(render_pass, 1);
-
-    //     render_pass.draw_indexed(0..self.index_buffer.size(), 0, 0..1);
-    // }
-
     pub fn bind<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         self.vertex_buffer.bind(render_pass);
         self.index_buffer.bind(render_pass);
@@ -86,18 +57,4 @@ impl Mesh {
     }
 }
 
-// impl DeferredHeightMapShaderDraw for Mesh {
-//     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>, heightmap_texture: &'a HeightmapTexture, texture: &'a Texture) {
-//         self.vertex_buffer.bind(render_pass);
-//         heightmap_texture.bind(render_pass);
-//         texture.bind(render_pass);
-//         self.index_buffer.bind(render_pass);
-//         self.instance_buffer.bind_slot(render_pass, 1);
 
-//         render_pass.draw_indexed(
-//             0..self.index_buffer.size(),
-//             0,
-//             0..self.instance_buffer.size(),
-//         );
-//     }
-// }

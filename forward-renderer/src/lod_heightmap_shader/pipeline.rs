@@ -1,10 +1,8 @@
-//! Deferred shader drawing a terrain height map
+//! Pipeline drawing a lod terrain height map
 //!
 
 use super::CameraBindGroupLayout;
 use super::LodHeightMapShaderDraw;
-// use super::EntityBuffer;
-// use super::GBuffer;
 use super::HeightmapBindGroupLayout;
 use super::Instance;
 use super::TextureBindGroupLayout;
@@ -60,27 +58,6 @@ impl Pipeline {
                         blend: None,
                         write_mask: wgpu::ColorWrites::ALL,
                     }),
-                    // None,
-                    // Some(wgpu::ColorTargetState {
-                    //     format: GBuffer::G_BUFFER_FORMAT_POSITION,
-                    //     blend: None,
-                    //     write_mask: wgpu::ColorWrites::ALL,
-                    // }),
-                    // Some(wgpu::ColorTargetState {
-                    //     format: GBuffer::G_BUFFER_FORMAT_NORMAL,
-                    //     blend: None,
-                    //     write_mask: wgpu::ColorWrites::ALL,
-                    // }),
-                    // Some(wgpu::ColorTargetState {
-                    //     format: GBuffer::G_BUFFER_FORMAT_ALBEDO,
-                    //     blend: None,
-                    //     write_mask: wgpu::ColorWrites::ALL,
-                    // }),
-                    // Some(wgpu::ColorTargetState {
-                    //     format: EntityBuffer::FORMAT,
-                    //     blend: None,
-                    //     write_mask: wgpu::ColorWrites::ALL,
-                    // }),
                 ],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             }),
