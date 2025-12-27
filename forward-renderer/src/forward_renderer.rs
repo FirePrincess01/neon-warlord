@@ -620,6 +620,7 @@ impl ForwardRenderer {
                     }),
                     store: wgpu::StoreOp::default(),
                 },
+                depth_slice: None,
             })],
             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                 view: renderer_interface.get_depth_texture_view(),
@@ -632,6 +633,7 @@ impl ForwardRenderer {
             }),
             timestamp_writes: None,
             occlusion_query_set: None,
+            multiview_mask: None,
         });
 
         // lod heightmap
@@ -770,9 +772,9 @@ impl ForwardRenderer {
 
         // wait to see how high the gpu load is
         if self.settings.wait_for_render_loop_to_finish {
-            renderer_interface.device().poll(wgpu::Maintain::Wait);
+            renderer_interface.device().poll(wgpu::PollType::Wait{ submission_index: None, timeout: None });
         } else {
-            renderer_interface.device().poll(wgpu::Maintain::Poll);
+            renderer_interface.device().poll(wgpu::PollType::Poll);
         }
 
         // watch_fps.stop(1);
