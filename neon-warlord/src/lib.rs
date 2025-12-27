@@ -20,7 +20,7 @@ use winit::event::{ElementState, WindowEvent};
 
 use crate::{
     ant_generator::AntGenerator,
-    ant_storage::{Ant, AntStorage},
+    ant_storage::AntStorage,
     debug_overlay::DebugOverlay,
     heightmap_generator::HeightMapGenerator,
 };
@@ -160,7 +160,7 @@ impl NeonWarlord {
 
         let ant_generator = AntGenerator::new(settings.get_object_settings().max_nr_ants);
         for elem in &ant_generator.ants {
-            ants.set_ant(&elem);
+            ants.set_ant(elem);
         }
 
         // ant_storage.set_ant(&Ant{

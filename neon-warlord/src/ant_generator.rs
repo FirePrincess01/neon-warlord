@@ -1,7 +1,6 @@
 //! Manages all ants instances
 //!
 
-use std::sync::mpsc;
 
 use crate::ant_storage::Ant;
 
