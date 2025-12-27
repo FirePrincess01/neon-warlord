@@ -100,8 +100,8 @@ impl NeonWarlord {
         );
 
         // Mouse position
-        let mouse_pos_y = 0;
-        let mouse_pos_x = 0;
+        let _mouse_pos_y = 0;
+        let _mouse_pos_x = 0;
 
         // Debug Overlay
         // let debug_overlay = DebugOverlay::new(
