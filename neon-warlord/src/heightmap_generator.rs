@@ -1,6 +1,8 @@
 //! Provides a function to generate single tiles of the heightmap
 
+use forward_renderer::{HeightMap, TerrainTextureDetails};
 use noise::NoiseFn;
+
 
 #[allow(unused)]
 pub struct HeightMapGenerator {
@@ -21,7 +23,7 @@ impl HeightMapGenerator {
         Self { perlin }
     }
 
-    pub fn generate(&self, details: HeightMapDetails) -> HeightMap {
+    pub fn generate(&self, details: &TerrainTextureDetails) -> HeightMap {
         let distance = details.point_distance;
         let size_x = details.size_0;
         let size_y = details.size_0;
@@ -69,12 +71,12 @@ impl HeightMapGenerator {
                     (p_x + x as isize * distance as isize - a as isize / 2) as f32 / 20.0,
                 ) as f64;
 
-                // heights.push(height as f32);
-                heights.push(0.0);
+                heights.push(height as f32);
+                // heights.push(0.0);
             }
         }
 
-        HeightMap { heights, details }
+        HeightMap { heights, details: details.clone() }
     }
 
     fn canyon(x: f32) -> f32 {
@@ -87,24 +89,24 @@ impl HeightMapGenerator {
     }
 }
 
-#[derive(Debug)]
-pub struct HeightMap {
-    pub heights: Vec<f32>,
-    pub details: HeightMapDetails,
-}
+// #[derive(Debug)]
+// pub struct HeightMap {
+//     pub heights: Vec<f32>,
+//     pub details: HeightMapDetails,
+// }
 
-#[derive(Clone, Debug)]
-pub struct HeightMapDetails {
-    pub pos_0: cgmath::Vector2<isize>, // texture world position at index (0/0)
-    pub pos_1: cgmath::Vector2<isize>, // texture position at index (1/1)
-    pub point_distance: usize,         // distance between pos_1.x - pos_0.x
+// #[derive(Clone, Debug)]
+// pub struct HeightMapDetails {
+//     pub pos_0: cgmath::Vector2<isize>, // texture world position at index (0/0)
+//     pub pos_1: cgmath::Vector2<isize>, // texture position at index (1/1)
+//     pub point_distance: usize,         // distance between pos_1.x - pos_0.x
 
-    pub size_0: usize, // nr points between (0/0) and (N/N)
-    pub size_1: usize, // nr points between (1/1) and ((N-1)/(N-1)), (size_0 - 2)
+//     pub size_0: usize, // nr points between (0/0) and (N/N)
+//     pub size_1: usize, // nr points between (1/1) and ((N-1)/(N-1)), (size_0 - 2)
 
-    pub nr_tiles: usize, // size_0 - 3
+//     pub nr_tiles: usize, // size_0 - 3
 
-    // pub data_index: usize, // Index in the Data.data array
-    pub depth: usize,      // Depth of the Node in the quad tree
-    pub node_index: usize, // Index of the Node in the quad tree
-}
+//     // pub data_index: usize, // Index in the Data.data array
+//     pub depth: usize,      // Depth of the Node in the quad tree
+//     pub node_index: usize, // Index of the Node in the quad tree
+// }

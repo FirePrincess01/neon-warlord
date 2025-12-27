@@ -1,4 +1,4 @@
-use forward_renderer::RendererSettings;
+use forward_renderer::{RendererSettings, TerrainSettings};
 
 
 
@@ -16,6 +16,13 @@ impl Settings {
             enable_vertical_sync: false,
             enable_fxaa: false,
             window_resolution: (1920 / 2, 1080 / 2),
+        }
+    }
+    
+    pub(crate) fn get_terrain_settings(&self) -> TerrainSettings {
+        TerrainSettings {
+            nr_tiles: 32,
+            max_depth: 6,
         }
     }
 }

@@ -9,9 +9,6 @@ use std::sync::mpsc;
 
 use cgmath::Zero;
 use lod_quad_tree::LodQuadTree;
-use market_economy_simulation_server::{
-    game_logic::game_logic_interface::GameLogicMessageRequest, heightmap_generator,
-};
 use quad_tree_draw::QuadTreeDraw;
 use terrain_texture_details::TerrainTextureDetails;
 use wgpu_renderer::{
@@ -21,9 +18,36 @@ use wgpu_renderer::{
 };
 
 use crate::{
-    deferred_heightmap_shader::{self, DeferredHeightMapShaderDraw},
-    selector,
+    lod_heightmap_shader::{self, LodHeightMapShaderDraw},
+    // selector,
 };
+
+
+#[derive(Debug)]
+pub struct HeightMap {
+    pub heights: Vec<f32>,
+    pub details: TerrainTextureDetails,
+}
+
+// #[derive(Clone, Debug)]
+// pub struct HeightMapDetails {
+//     pub pos_0: cgmath::Vector2<isize>, // texture world position at index (0/0)
+//     pub pos_1: cgmath::Vector2<isize>, // texture position at index (1/1)
+//     pub point_distance: usize,         // distance between pos_1.x - pos_0.x
+
+//     pub size_0: usize, // nr points between (0/0) and (N/N)
+//     pub size_1: usize, // nr points between (1/1) and ((N-1)/(N-1)), (size_0 - 2)
+
+//     pub nr_tiles: usize, // size_0 - 3
+
+//     // pub data_index: usize, // Index in the Data.data array
+//     pub depth: usize,      // Depth of the Node in the quad tree
+//     pub node_index: usize, // Index of the Node in the quad tree
+// }
+
+// pub enum GameLogicMessageRequest {
+//     GetTerrain(HeightMapDetails), // Requests the terrain heightmap
+// }
 
 pub struct TerrainSettings {
     pub nr_tiles: usize,
@@ -33,10 +57,10 @@ pub struct TerrainSettings {
 pub struct TerrainStorage {
     _settings: TerrainSettings,
 
-    mesh: deferred_heightmap_shader::Mesh,
-    texture: deferred_heightmap_shader::Texture,
-    heightmap_textures: Vec<deferred_heightmap_shader::HeightmapTexture>,
-    instances: Vec<deferred_heightmap_shader::InstanceBuffer<deferred_heightmap_shader::Instance>>,
+    mesh: lod_heightmap_shader::Mesh,
+    texture: lod_heightmap_shader::Texture,
+    heightmap_textures: Vec<lod_heightmap_shader::HeightmapTexture>,
+    instances: Vec<lod_heightmap_shader::InstanceBuffer<lod_heightmap_shader::Instance>>,
     pub height_map_details: Vec<TerrainTextureDetails>,
     pub height_maps: Vec<Vec<f32>>,
 
@@ -54,7 +78,8 @@ impl TerrainStorage {
     pub fn new(
         settings: TerrainSettings,
         renderer: &mut dyn WgpuRendererInterface,
-        texture_bind_group_layout: &deferred_heightmap_shader::TextureBindGroupLayout,
+        texture_bind_group_layout: &lod_heightmap_shader::TextureBindGroupLayout,
+        texture_bytes: &[u8],
         // heightmap_bind_group_layout: &deferred_heightmap_shader::HeightmapBindGroupLayout,
     ) -> Self {
         let max_depth = settings.max_depth;
@@ -65,13 +90,13 @@ impl TerrainStorage {
         // mesh
         let grid = shape::Grid::new(1.0, size_1, 1);
         let gird_triangles = grid.triangles();
-        let mesh = deferred_heightmap_shader::Mesh::from_shape(renderer.device(), gird_triangles);
+        let mesh = lod_heightmap_shader::Mesh::from_shape(renderer.device(), gird_triangles);
 
         // texture
-        let texture_bytes = include_bytes!("../res/tile.png");
+        // let texture_bytes = include_bytes!("../res/tile.png");
         let texture_image = image::load_from_memory(texture_bytes).unwrap();
         let texture_rgba = texture_image.to_rgba8();
-        let texture = deferred_heightmap_shader::Texture::new_with_mipmaps(
+        let texture = lod_heightmap_shader::Texture::new_with_mipmaps(
             renderer,
             texture_bind_group_layout,
             &texture_rgba,
@@ -114,8 +139,8 @@ impl TerrainStorage {
     pub fn update_height_map(
         &mut self,
         renderer: &mut dyn WgpuRendererInterface,
-        heightmap_bind_group_layout: &deferred_heightmap_shader::HeightmapBindGroupLayout,
-        height_map: heightmap_generator::HeightMap,
+        heightmap_bind_group_layout: &lod_heightmap_shader::HeightmapBindGroupLayout,
+        height_map: HeightMap,
     ) {
         let pos_0 = height_map.details.pos_0;
         let pos_1 = height_map.details.pos_1;
@@ -132,7 +157,7 @@ impl TerrainStorage {
         assert_eq!(nr_tiles, self.nr_tiles);
 
         // create host data
-        let mut heightmap: Vec<deferred_heightmap_shader::Heightmap> =
+        let mut heightmap: Vec<lod_heightmap_shader::Heightmap> =
             Vec::with_capacity(size_0 * size_0);
         assert_eq!(height_map.heights.len(), size_0 * size_0);
         for elem in &height_map.heights {
@@ -152,7 +177,7 @@ impl TerrainStorage {
         };
 
         // create device data
-        let height_texture = deferred_heightmap_shader::HeightmapTexture::new(
+        let height_texture = lod_heightmap_shader::HeightmapTexture::new(
             renderer,
             heightmap_bind_group_layout,
             &heightmap,
@@ -162,18 +187,18 @@ impl TerrainStorage {
         );
 
         let data_index = self.heightmap_textures.len();
-        let instance = deferred_heightmap_shader::Instance {
+        let instance = lod_heightmap_shader::Instance {
             position: [
                 (pos_1.x - point_distance as isize) as f32,
                 (pos_1.y - point_distance as isize) as f32,
                 0.0,
             ],
             color: [0.2, 0.2, 0.8],
-            entity: data_index as u32 | selector::ENTITY_TERRAIN_BIT,
+            // entity: data_index as u32 | selector::ENTITY_TERRAIN_BIT,
             distance: point_distance as f32,
         };
         let instance_buffer =
-            deferred_heightmap_shader::InstanceBuffer::new(renderer.device(), &[instance]);
+            lod_heightmap_shader::InstanceBuffer::new(renderer.device(), &[instance]);
 
         // save device data
         assert_eq!(self.instances.len(), data_index);
@@ -188,7 +213,7 @@ impl TerrainStorage {
         self.lod_quad_tree.set_data_index(node_index, data_index);
     }
 
-    pub fn update_view_position(&mut self, view_position: &cgmath::Vector3<f32>) {
+    pub fn set_view_position(&mut self, view_position: &cgmath::Vector3<f32>) {
         self.view_position = cgmath::Vector3::new(
             view_position.x as isize,
             view_position.y as isize,
@@ -196,27 +221,35 @@ impl TerrainStorage {
         );
     }
 
-    pub fn submit_requests(&mut self, sender: &mpsc::Sender<GameLogicMessageRequest>) {
-        for elem in &self.requests {
-            let _res = sender.send(GameLogicMessageRequest::GetTerrain(
-                heightmap_generator::HeightMapDetails {
-                    pos_0: elem.pos_0,
-                    pos_1: elem.pos_1,
-                    point_distance: elem.point_distance,
-                    size_0: elem.size_0,
-                    size_1: elem.size_1,
-                    nr_tiles: elem.nr_tiles,
-                    depth: elem.depth,
-                    node_index: elem.node_index,
-                },
-            ));
-        }
+    // pub fn submit_requests(&mut self, sender: &mpsc::Sender<GameLogicMessageRequest>) {
+    //     for elem in &self.requests {
+    //         let _res = sender.send(GameLogicMessageRequest::GetTerrain(
+    //             HeightMapDetails {
+    //                 pos_0: elem.pos_0,
+    //                 pos_1: elem.pos_1,
+    //                 point_distance: elem.point_distance,
+    //                 size_0: elem.size_0,
+    //                 size_1: elem.size_1,
+    //                 nr_tiles: elem.nr_tiles,
+    //                 depth: elem.depth,
+    //                 node_index: elem.node_index,
+    //             },
+    //         ));
+    //     }
 
+    //     self.requests.clear();
+    // }
+
+    pub fn get_requestes(&self) -> &Vec<TerrainTextureDetails> {
+        &self.requests
+    }
+
+    pub fn clear_requests(&mut self) {
         self.requests.clear();
     }
 }
 
-impl DeferredHeightMapShaderDraw for TerrainStorage {
+impl LodHeightMapShaderDraw for TerrainStorage {
     fn draw<'a>(&'a mut self, render_pass: &mut wgpu::RenderPass<'a>) {
         // mesh data
         let mesh = &self.mesh;

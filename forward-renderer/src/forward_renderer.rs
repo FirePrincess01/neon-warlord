@@ -12,7 +12,7 @@
 // use crate::performance_monitor::PerformanceMonitor;
 // use crate::point_light_storage::PointLightStorage;
 // use crate::terrain_storage::TerrainStorage;
-// use camera_controller::CameraController;
+use crate::camera_controller::CameraController;
 use wgpu_renderer::performance_monitor::watch;
 use wgpu_renderer::vertex_color_shader;
 use wgpu_renderer::vertex_texture_shader::{self, VertexTextureShaderDraw};
@@ -20,7 +20,8 @@ use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 use winit::event::{ElementState, MouseScrollDelta};
 
-use crate::DrawGui;
+use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
+use crate::{DrawGui, lod_heightmap_shader};
 
 // use crate::{
 //     deferred_animation_shader, deferred_heightmap_shader, deferred_light_shader,
@@ -55,8 +56,8 @@ pub struct ForwardRenderer {
     // pub animation_bind_group_layout: deferred_animation_shader::AnimationBindGroupLayout,
     // pipeline_deferred_animated: deferred_animation_shader::Pipeline,
 
-    // pub heightmap_bind_group_layout: deferred_heightmap_shader::HeightmapBindGroupLayout,
-    // pipeline_deferred_heightmap: deferred_heightmap_shader::Pipeline,
+    pub heightmap_bind_group_layout: lod_heightmap_shader::HeightmapBindGroupLayout,
+    pipeline_deferred_heightmap: lod_heightmap_shader::Pipeline,
 
     // post_processing_bind_group_layout: fxaa_shader::PostProcessingTextureBindGroupLayout,
     // post_processing_texture: fxaa_shader::PostProcessingTexture,
@@ -64,7 +65,7 @@ pub struct ForwardRenderer {
 
     // camera
     pub camera: Camera,
-    // camera_controller: CameraController,
+    camera_controller: CameraController,
     pub projection: Projection,
 
     camera_uniform: vertex_color_shader::CameraUniform,
@@ -172,16 +173,16 @@ impl ForwardRenderer {
         //     surface_format,
         // );
 
-        // // pipeline deferred heightmap
-        // let heightmap_bind_group_layout =
-        //     deferred_heightmap_shader::HeightmapBindGroupLayout::new(wgpu_renderer.device());
-        // let pipeline_deferred_heightmap = deferred_heightmap_shader::Pipeline::new(
-        //     wgpu_renderer.device(),
-        //     &camera_bind_group_layout,
-        //     &texture_bind_group_layout,
-        //     &heightmap_bind_group_layout,
-        //     surface_format,
-        // );
+        // pipeline deferred heightmap
+        let heightmap_bind_group_layout =
+            lod_heightmap_shader::HeightmapBindGroupLayout::new(wgpu_renderer.device());
+        let pipeline_deferred_heightmap = lod_heightmap_shader::Pipeline::new(
+            wgpu_renderer.device(),
+            &camera_bind_group_layout,
+            &texture_bind_group_layout,
+            &heightmap_bind_group_layout,
+            surface_format,
+        );
 
         // // pipeline fxaa
         // let post_processing_bind_group_layout =
@@ -206,12 +207,12 @@ impl ForwardRenderer {
         let pitch = cgmath::Deg(0.0);
         let mut camera = Camera::new(position, yaw, pitch);
         // Self::top_view_point(&mut camera);
-        // Self::side_view_point(&mut camera);
+        Self::side_view_point(&mut camera);
 
         let speed = 40.0;
         let sensitivity = 1.0;
         let sensitivity_scroll = 1.0;
-        // let camera_controller = CameraController::new(speed, sensitivity, sensitivity_scroll);
+        let camera_controller = CameraController::new(speed, sensitivity, sensitivity_scroll);
 
         let width = wgpu_renderer.surface_width();
         let height = wgpu_renderer.surface_height();
@@ -258,15 +259,15 @@ impl ForwardRenderer {
             // animation_bind_group_layout,
             // pipeline_deferred_animated,
 
-            // heightmap_bind_group_layout,
-            // pipeline_deferred_heightmap,
+            heightmap_bind_group_layout,
+            pipeline_deferred_heightmap,
 
             // post_processing_bind_group_layout,
             // post_processing_texture,
             // pipeline_fxaa,
 
             camera,
-            // camera_controller,
+            camera_controller,
             projection,
 
             camera_uniform,
@@ -277,25 +278,25 @@ impl ForwardRenderer {
         }
     }
 
-    // fn _top_view_point(camera: &mut Camera) {
-    //     let position = cgmath::Point3::new(0.0, 0.0, 10.0);
-    //     let yaw = cgmath::Deg(-90.0).into();
-    //     let pitch = cgmath::Deg(0.0).into();
+    fn _top_view_point(camera: &mut Camera) {
+        let position = cgmath::Point3::new(0.0, 0.0, 10.0);
+        let yaw = cgmath::Deg(-90.0).into();
+        let pitch = cgmath::Deg(0.0).into();
 
-    //     camera.position = position;
-    //     camera.yaw = yaw;
-    //     camera.pitch = pitch;
-    // }
+        camera.position = position;
+        camera.yaw = yaw;
+        camera.pitch = pitch;
+    }
 
-    // fn side_view_point(camera: &mut Camera) {
-    //     let position = cgmath::Point3::new(0.0, 5.0, 12.0);
-    //     let yaw = cgmath::Deg(-90.0).into();
-    //     let pitch = cgmath::Deg(60.0).into();
+    fn side_view_point(camera: &mut Camera) {
+        let position = cgmath::Point3::new(0.0, 5.0, 12.0);
+        let yaw = cgmath::Deg(-90.0).into();
+        let pitch = cgmath::Deg(60.0).into();
 
-    //     camera.position = position;
-    //     camera.yaw = yaw;
-    //     camera.pitch = pitch;
-    // }
+        camera.position = position;
+        camera.yaw = yaw;
+        camera.pitch = pitch;
+    }
 
     pub fn resize(
         &mut self,
@@ -341,20 +342,20 @@ impl ForwardRenderer {
         dt: instant::Duration,
     ) {
         // camera
-        // self.camera_controller.update_camera(&mut self.camera, dt);
+        self.camera_controller.update_camera(&mut self.camera, dt);
         self.camera_uniform
             .update_view_proj(&self.camera, &self.projection);
         self.camera_uniform_buffer
             .update(renderer_interface.queue(), self.camera_uniform);
     }
 
-    // pub fn process_keyboard(&mut self, key: winit::keyboard::KeyCode, state: ElementState) -> bool {
-    //     self.camera_controller.process_keyboard(key, state)
-    // }
+    pub fn process_keyboard(&mut self, key: winit::keyboard::KeyCode, state: ElementState) -> bool {
+        self.camera_controller.process_keyboard(key, state)
+    }
 
-    // pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
-    //     self.camera_controller.process_scroll(delta);
-    // }
+    pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
+        self.camera_controller.process_scroll(delta);
+    }
 
     pub fn get_view_position(&self) -> cgmath::Vector3<f32> {
         self.camera.get_view_position()
@@ -599,6 +600,7 @@ impl ForwardRenderer {
         renderer_interface: &mut dyn WgpuRendererInterface,
         view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
+        lod_terrains: &mut dyn LodHeightMapShaderDraw,
         // textured_meshes: &impl VertexTextureShaderDraw,
         gui_elements: &[&mut dyn DrawGui],
         // performance_monitors: &[&mut PerformanceMonitor<{ super::WATCH_POINTS_SIZE }>],
@@ -632,7 +634,14 @@ impl ForwardRenderer {
             occlusion_query_set: None,
         });
 
-        // performance monitor
+        // lod heightmap
+        self.pipeline_deferred_heightmap.draw(
+            &mut render_pass,
+            &self.camera_uniform_buffer,
+            lod_terrains,
+        );
+
+        // gui lines
         for elem in gui_elements {
             self.pipeline_lines.draw_lines(
                 &mut render_pass,
@@ -641,6 +650,7 @@ impl ForwardRenderer {
             );
         }
 
+        // gui color
         for elem in gui_elements {
             self.pipeline_color.draw(
                 &mut render_pass,
@@ -649,6 +659,7 @@ impl ForwardRenderer {
             );
         }
 
+        // gui texture
         for elem in gui_elements {
             self.pipeline_texture_gui.draw(
                 &mut render_pass,
@@ -681,7 +692,7 @@ impl ForwardRenderer {
         // deferred_combined: &(impl DeferredShaderDraw + DeferredLightShaderDraw),
         // animated_object_storage: &AnimatedObjectStorage,
         // point_light_storage: &PointLightStorage,
-        // terrain_storage: &mut TerrainStorage,
+        lod_terrains: &mut dyn LodHeightMapShaderDraw,
 
         // ant_light_orbs: &(impl DeferredShaderDraw + DeferredLightShaderDraw),
         // mesh_textured_gui: &impl VertexTextureShaderDraw,
@@ -741,6 +752,7 @@ impl ForwardRenderer {
             &view,
             &mut encoder,
             // mesh_textured_gui,
+            lod_terrains,
             gui_elements,
         );
 

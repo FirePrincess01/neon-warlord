@@ -2,9 +2,9 @@
 //!
 
 use super::CameraBindGroupLayout;
-use super::DeferredHeightMapShaderDraw;
-use super::EntityBuffer;
-use super::GBuffer;
+use super::LodHeightMapShaderDraw;
+// use super::EntityBuffer;
+// use super::GBuffer;
 use super::HeightmapBindGroupLayout;
 use super::Instance;
 use super::TextureBindGroupLayout;
@@ -22,7 +22,7 @@ impl Pipeline {
         camera_bind_group_layout: &CameraBindGroupLayout,
         texture_bind_group_layout: &TextureBindGroupLayout,
         heightmap_bind_group_layout: &HeightmapBindGroupLayout,
-        _surface_format: wgpu::TextureFormat,
+        surface_format: wgpu::TextureFormat,
     ) -> Self {
         // Shader
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -33,7 +33,7 @@ impl Pipeline {
         // Pipeline
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Deferred Heightmap Render Pipeline Layout"),
+                label: Some("Lod Heigtmap Pipeline Layout"),
                 bind_group_layouts: &[
                     camera_bind_group_layout.get(),
                     texture_bind_group_layout.get(),
@@ -43,7 +43,7 @@ impl Pipeline {
             });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Deferred Heightmap Render Pipeline"),
+            label: Some("Lod Heigtmap Pipeline"),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
@@ -55,27 +55,27 @@ impl Pipeline {
                 module: &shader,
                 entry_point: Some("fs_main"),
                 targets: &[
+                    Some(wgpu::ColorTargetState {
+                        format: surface_format,
+                        blend: None,
+                        write_mask: wgpu::ColorWrites::ALL,
+                    }),
+                    // None,
                     // Some(wgpu::ColorTargetState {
-                    //     format: surface_format,
+                    //     format: GBuffer::G_BUFFER_FORMAT_POSITION,
                     //     blend: None,
                     //     write_mask: wgpu::ColorWrites::ALL,
                     // }),
-                    // None,
-                    Some(wgpu::ColorTargetState {
-                        format: GBuffer::G_BUFFER_FORMAT_POSITION,
-                        blend: None,
-                        write_mask: wgpu::ColorWrites::ALL,
-                    }),
-                    Some(wgpu::ColorTargetState {
-                        format: GBuffer::G_BUFFER_FORMAT_NORMAL,
-                        blend: None,
-                        write_mask: wgpu::ColorWrites::ALL,
-                    }),
-                    Some(wgpu::ColorTargetState {
-                        format: GBuffer::G_BUFFER_FORMAT_ALBEDO,
-                        blend: None,
-                        write_mask: wgpu::ColorWrites::ALL,
-                    }),
+                    // Some(wgpu::ColorTargetState {
+                    //     format: GBuffer::G_BUFFER_FORMAT_NORMAL,
+                    //     blend: None,
+                    //     write_mask: wgpu::ColorWrites::ALL,
+                    // }),
+                    // Some(wgpu::ColorTargetState {
+                    //     format: GBuffer::G_BUFFER_FORMAT_ALBEDO,
+                    //     blend: None,
+                    //     write_mask: wgpu::ColorWrites::ALL,
+                    // }),
                     // Some(wgpu::ColorTargetState {
                     //     format: EntityBuffer::FORMAT,
                     //     blend: None,
@@ -120,7 +120,7 @@ impl Pipeline {
         &self,
         render_pass: &mut wgpu::RenderPass<'a>,
         camera: &'a vertex_color_shader::CameraUniformBuffer,
-        mesh: &'a mut dyn DeferredHeightMapShaderDraw,
+        mesh: &'a mut dyn LodHeightMapShaderDraw,
     ) {
         render_pass.set_pipeline(&self.render_pipeline);
         camera.bind(render_pass);

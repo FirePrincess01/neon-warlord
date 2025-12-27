@@ -76,7 +76,7 @@ impl<const SIZE: usize> SortedTable<SIZE> {
         // mesh_percent
         let mut label_percent_with = 0;
         for i in 0..size {
-            let label = wgpu_renderer::label::Label::new(font, scale, "100.0 %");
+            let label = wgpu_renderer::label::Label::new(font, scale, "00.00 ms");
             label_percent_with = label.width();
             let mesh = wgpu_renderer::label::LabelMesh::new(
                 wgpu_renderer,
@@ -145,8 +145,11 @@ impl<const SIZE: usize> SortedTable<SIZE> {
         self.update_index += 1;
 
         // mesh_percent
-        let average = 100.0 * self.averages[i].average() as f64 / 16666.0;
-        let average_str = format!("{:>4.1} %", average);
+        // let average = 100.0 * self.averages[i].average() as f64 / 16666.0;
+        // let average_str = format!("{:>4.1} %", average);
+
+        let average = self.averages[i].average() as f64  / 1000.0;
+        let average_str = format!("{:>4.2} ms", average);
 
         self.label_percents[i].update(font, average_str.as_str()); // this is an expensive operation
         self.mesh_percent[i]
