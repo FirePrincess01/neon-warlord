@@ -1,6 +1,8 @@
 //! Renders everything
 //!
 
+use crate::animation_shader;
+use crate::animation_shader::AnimationShaderDraw;
 // use crate::animated_object_storage::AnimatedObjectStorage;
 // use crate::deferred_color_shader::entity_buffer::MousePosition;
 // use crate::deferred_color_shader::{self, DeferredShaderDraw, EntityBuffer, GBuffer};
@@ -49,10 +51,11 @@ pub struct ForwardRenderer {
     // pipeline_deferred_light_ambient: deferred_light_shader::Pipeline,
     // pipeline_deferred_light_sphere: deferred_light_sphere_shader::Pipeline,
 
-    // pub animation_bind_group_layout: deferred_animation_shader::AnimationBindGroupLayout,
-    // pipeline_deferred_animated: deferred_animation_shader::Pipeline,
+    pub animation_bind_group_layout: animation_shader::AnimationBindGroupLayout,
+    pipeline_animated: animation_shader::Pipeline,
+
     pub heightmap_bind_group_layout: lod_heightmap_shader::HeightmapBindGroupLayout,
-    pipeline_deferred_heightmap: lod_heightmap_shader::Pipeline,
+    pipeline_lod_heightmap: lod_heightmap_shader::Pipeline,
 
     // post_processing_bind_group_layout: fxaa_shader::PostProcessingTextureBindGroupLayout,
     // post_processing_texture: fxaa_shader::PostProcessingTexture,
@@ -157,16 +160,16 @@ impl ForwardRenderer {
         //     surface_format,
         // );
 
-        // let animation_bind_group_layout =
-        //     deferred_animation_shader::AnimationBindGroupLayout::new(wgpu_renderer.device());
+        let animation_bind_group_layout =
+            animation_shader::AnimationBindGroupLayout::new(wgpu_renderer.device());
 
-        // // pipeline deferred animated
-        // let pipeline_deferred_animated = deferred_animation_shader::Pipeline::new(
-        //     wgpu_renderer.device(),
-        //     &camera_bind_group_layout,
-        //     &animation_bind_group_layout,
-        //     surface_format,
-        // );
+        // pipeline animated
+        let pipeline_animated = animation_shader::Pipeline::new(
+            wgpu_renderer.device(),
+            &camera_bind_group_layout,
+            &animation_bind_group_layout,
+            surface_format,
+        );
 
         // pipeline deferred heightmap
         let heightmap_bind_group_layout =
@@ -251,10 +254,10 @@ impl ForwardRenderer {
             // pipeline_deferred_light_ambient,
             // pipeline_deferred_light_sphere,
 
-            // animation_bind_group_layout,
-            // pipeline_deferred_animated,
+            animation_bind_group_layout,
+            pipeline_animated,
             heightmap_bind_group_layout,
-            pipeline_deferred_heightmap,
+            pipeline_lod_heightmap: pipeline_deferred_heightmap,
 
             // post_processing_bind_group_layout,
             // post_processing_texture,
@@ -594,8 +597,9 @@ impl ForwardRenderer {
         view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
         lod_terrains: &mut dyn LodHeightMapShaderDraw,
+        animations:&[&dyn AnimationShaderDraw],
         // textured_meshes: &impl VertexTextureShaderDraw,
-        gui_elements: &[&mut dyn DrawGui],
+        gui_elements: &[&dyn DrawGui],
         // performance_monitors: &[&mut PerformanceMonitor<{ super::WATCH_POINTS_SIZE }>],
     ) {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -630,11 +634,20 @@ impl ForwardRenderer {
         });
 
         // lod heightmap
-        self.pipeline_deferred_heightmap.draw(
+        self.pipeline_lod_heightmap.draw(
             &mut render_pass,
             &self.camera_uniform_buffer,
             lod_terrains,
         );
+
+        // animations
+        for elem in animations {
+            self.pipeline_animated.draw(
+                &mut render_pass,
+                &self.camera_uniform_buffer,
+                *elem,
+            );
+        }
 
         // gui lines
         for elem in gui_elements {
@@ -692,7 +705,8 @@ impl ForwardRenderer {
         // ant_light_orbs: &(impl DeferredShaderDraw + DeferredLightShaderDraw),
         // mesh_textured_gui: &impl VertexTextureShaderDraw,
         // ambient_light_quad: &deferred_light_shader::Mesh,
-        gui_elements: &[&mut dyn DrawGui],
+        animations:&[&dyn AnimationShaderDraw],
+        gui_elements: &[&dyn DrawGui],
         // watch_fps: &mut watch::Watch<{ super::WATCH_POINTS_SIZE }>,
         // mouse_position: MousePosition,
     ) -> Result<(), wgpu::SurfaceError> {
@@ -747,6 +761,7 @@ impl ForwardRenderer {
             &mut encoder,
             // mesh_textured_gui,
             lod_terrains,
+            animations,
             gui_elements,
         );
 

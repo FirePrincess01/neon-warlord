@@ -2,6 +2,8 @@
 
 use forward_renderer::{RendererSettings, TerrainSettings};
 
+use crate::ObjectSettings;
+
 pub struct Settings {}
 impl Settings {
     pub fn new() -> Self {
@@ -19,8 +21,14 @@ impl Settings {
 
     pub fn get_terrain_settings(&self) -> TerrainSettings {
         TerrainSettings {
-            nr_tiles: 16,
-            max_depth: 8,
+            nr_tiles: 32,
+            max_depth: 4,
+        }
+    }
+    
+    pub fn get_object_settings(&self) -> ObjectSettings {
+        ObjectSettings {
+            max_nr_ants: 9,
         }
     }
 }
