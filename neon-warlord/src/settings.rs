@@ -21,8 +21,8 @@ impl Settings {
     
     pub(crate) fn get_terrain_settings(&self) -> TerrainSettings {
         TerrainSettings {
-            nr_tiles: 32,
-            max_depth: 6,
+            nr_tiles: 16,
+            max_depth: 8,
         }
     }
 }
