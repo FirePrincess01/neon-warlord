@@ -92,7 +92,7 @@ impl<const SIZE: usize> PerformanceMonitor<SIZE> {
             },
         );
 
-        return Data {
+        Data {
             graph_host,
             graph_device,
             label_60fps,

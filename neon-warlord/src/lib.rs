@@ -260,7 +260,7 @@ impl DefaultApplicationInterface for NeonWarlord {
     }
 
     fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
-        return self.size;
+        self.size
     }
 
     fn resize(
@@ -459,7 +459,7 @@ impl DefaultApplicationInterface for NeonWarlord {
         }
         self.watch_fps.stop(1);
 
-        return res;
+        res
     }
 }
 
