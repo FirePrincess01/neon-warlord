@@ -327,7 +327,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 .set_view_position(&self.renderer.get_view_position());
 
             // generate map
-            let requests = self.terrain.get_requestes().clone();
+            let requests = self.terrain.get_requests().clone();
             for request in requests {
                 let terrain_part = self.terrain_generator.generate(&request);
                 self.terrain.update_height_map(

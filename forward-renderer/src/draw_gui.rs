@@ -1,4 +1,4 @@
-//! Combines some rendering interfaces using an orthographic porjection
+//! Combines some rendering interfaces using an orthographic projection
 
 use wgpu_renderer::{
     vertex_color_shader::{

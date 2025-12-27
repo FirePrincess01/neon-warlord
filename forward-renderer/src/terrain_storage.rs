@@ -214,7 +214,7 @@ impl TerrainStorage {
     //     self.requests.clear();
     // }
 
-    pub fn get_requestes(&self) -> &Vec<TerrainTextureDetails> {
+    pub fn get_requests(&self) -> &Vec<TerrainTextureDetails> {
         &self.requests
     }
 
