@@ -14,7 +14,7 @@
 // use crate::terrain_storage::TerrainStorage;
 use crate::camera_controller::CameraController;
 use wgpu_renderer::vertex_color_shader;
-use wgpu_renderer::vertex_texture_shader::{self, VertexTextureShaderDraw};
+use wgpu_renderer::vertex_texture_shader;
 use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 use winit::event::{ElementState, MouseScrollDelta};
@@ -771,9 +771,9 @@ impl ForwardRenderer {
 
         // wait to see how high the gpu load is
         if self.settings.wait_for_render_loop_to_finish {
-            renderer_interface.device().poll(wgpu::PollType::Wait{ submission_index: None, timeout: None });
+            let _res = renderer_interface.device().poll(wgpu::PollType::Wait{ submission_index: None, timeout: None });
         } else {
-            renderer_interface.device().poll(wgpu::PollType::Poll);
+            let _res = renderer_interface.device().poll(wgpu::PollType::Poll);
         }
 
         // watch_fps.stop(1);
