@@ -5,7 +5,6 @@ pub mod lod_quad_tree;
 pub mod quad_tree_draw;
 pub mod terrain_texture_details;
 
-use std::sync::mpsc;
 
 use cgmath::Zero;
 use lod_quad_tree::LodQuadTree;

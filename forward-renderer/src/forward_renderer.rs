@@ -13,7 +13,6 @@
 // use crate::point_light_storage::PointLightStorage;
 // use crate::terrain_storage::TerrainStorage;
 use crate::camera_controller::CameraController;
-use wgpu_renderer::performance_monitor::watch;
 use wgpu_renderer::vertex_color_shader;
 use wgpu_renderer::vertex_texture_shader::{self, VertexTextureShaderDraw};
 use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
@@ -83,8 +82,8 @@ impl ForwardRenderer {
             .request_window_size(settings.window_resolution.0, settings.window_resolution.1);
 
         // wgpu renderer
-        let surface_width = wgpu_renderer.surface_width();
-        let surface_height = wgpu_renderer.surface_height();
+        let _surface_width = wgpu_renderer.surface_width();
+        let _surface_height = wgpu_renderer.surface_height();
         let surface_format: wgpu::TextureFormat = wgpu_renderer.surface_format();
 
         // pipeline color
@@ -321,7 +320,7 @@ impl ForwardRenderer {
         //     self.settings.enable_memory_mapped_read,
         // );
 
-        let surface_format = renderer_interface.surface_format();
+        let _surface_format = renderer_interface.surface_format();
         // self.post_processing_texture = fxaa_shader::PostProcessingTexture::new(
         //     renderer_interface,
         //     &self.post_processing_bind_group_layout,
