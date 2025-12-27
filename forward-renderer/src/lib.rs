@@ -14,4 +14,3 @@ pub use terrain_storage::HeightMap;
 pub use terrain_storage::TerrainSettings;
 pub use terrain_storage::TerrainStorage;
 pub use terrain_storage::terrain_texture_details::TerrainTextureDetails;
-

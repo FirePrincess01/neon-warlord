@@ -56,5 +56,3 @@ impl Mesh {
         render_pass.draw_indexed(0..self.index_buffer.size(), 0, 0..1);
     }
 }
-
-

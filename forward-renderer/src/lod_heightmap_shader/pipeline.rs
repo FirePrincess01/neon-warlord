@@ -2,9 +2,9 @@
 //!
 
 use super::CameraBindGroupLayout;
-use super::LodHeightMapShaderDraw;
 use super::HeightmapBindGroupLayout;
 use super::Instance;
+use super::LodHeightMapShaderDraw;
 use super::TextureBindGroupLayout;
 use super::Vertex;
 use wgpu_renderer::vertex_color_shader;
@@ -52,13 +52,11 @@ impl Pipeline {
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
-                targets: &[
-                    Some(wgpu::ColorTargetState {
-                        format: surface_format,
-                        blend: None,
-                        write_mask: wgpu::ColorWrites::ALL,
-                    }),
-                ],
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: surface_format,
+                    blend: None,
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             }),
             primitive: wgpu::PrimitiveState {
