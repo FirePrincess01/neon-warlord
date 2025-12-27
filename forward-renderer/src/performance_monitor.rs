@@ -143,6 +143,7 @@ impl<const SIZE: usize> PerformanceMonitor<SIZE> {
         font: &rusttype::Font<'static>,
         scale_factor: f32) 
     {
+        self.scale_factor = scale_factor;
         self.data = Self::create_data(wgpu_renderer, texture_bind_group_layout, font, self.color_gradient, self.indicator, scale_factor);   
     }
 }
