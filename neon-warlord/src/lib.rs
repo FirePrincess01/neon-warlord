@@ -1,10 +1,14 @@
 //! Creates the Neon-Warlord application
 
+mod ant_generator;
+mod ant_storage;
 mod debug_overlay;
 mod heightmap_generator;
 mod settings;
 
-use forward_renderer::{ForwardRenderer, PerformanceMonitor, TerrainStorage};
+use forward_renderer::{
+    AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
+};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use wgpu_renderer::{
@@ -14,10 +18,17 @@ use wgpu_renderer::{
 };
 use winit::event::{ElementState, WindowEvent};
 
-use crate::{debug_overlay::DebugOverlay, heightmap_generator::HeightMapGenerator};
+use crate::{
+    ant_generator::AntGenerator, ant_storage::AntStorage, debug_overlay::DebugOverlay,
+    heightmap_generator::HeightMapGenerator,
+};
 
 const WATCH_POINTS_SIZE: usize = 7;
 const DEBUG_OVERLAY_SIZE: usize = 10;
+
+struct ObjectSettings {
+    pub max_nr_ants: usize,
+}
 
 struct NeonWarlord {
     _settings: settings::Settings,
@@ -41,6 +52,10 @@ struct NeonWarlord {
     // Scene
     terrain: TerrainStorage,
     terrain_generator: HeightMapGenerator,
+
+    // Ants
+    ants: AntStorage,
+    _ant_generator: AntGenerator,
 }
 
 impl NeonWarlord {
@@ -119,13 +134,13 @@ impl NeonWarlord {
 
         // create ant
         // let glb_bin = include_bytes!("../res/wiggle_tower2.glb");
-        // let glb_bin = include_bytes!("../res/ant_0_8.glb");
-        // let animated_object_storage_ant = AnimatedObjectStorage::create_from_glb(
-        //     renderer_interface,
-        //     &renderer.animation_bind_group_layout,
-        //     glb_bin,
-        //     settings.max_nr_ants,
-        // );
+        let glb_bin = include_bytes!("../res/ant_0_8.glb");
+        let animated_object_storage_ant = AnimatedObjectStorage::create_from_glb(
+            renderer_interface,
+            &renderer.animation_bind_group_layout,
+            glb_bin,
+            settings.get_object_settings().max_nr_ants,
+        );
 
         // println!("{:?}", animated_object_storage_ant);
 
@@ -135,11 +150,24 @@ impl NeonWarlord {
         //     settings.dbg_point_lights,
         // );
 
-        // let ant_storage = AntStorage::new(
-        //     point_light_storage_ant,
-        //     animated_object_storage_ant,
-        //     settings.max_nr_ants,
-        // );
+        let mut ants = AntStorage::new(
+            // point_light_storage_ant,
+            animated_object_storage_ant,
+            settings.get_object_settings().max_nr_ants,
+        );
+
+        let ant_generator = AntGenerator::new(settings.get_object_settings().max_nr_ants);
+        for elem in &ant_generator.ants {
+            ants.set_ant(elem);
+        }
+
+        // ant_storage.set_ant(&Ant{
+        //     id: todo!(),
+        //     pos: todo!(),
+        //     rot_z: todo!(),
+        //     light_strength: todo!(),
+        //     light_color: todo!(),
+        // });
 
         // create game server
         // let game_logic =
@@ -197,6 +225,8 @@ impl NeonWarlord {
             debug_overlay,
             terrain,
             terrain_generator,
+            ants,
+            _ant_generator: ant_generator,
             // settings,
 
             // size,
@@ -317,11 +347,20 @@ impl DefaultApplicationInterface for NeonWarlord {
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         dt: instant::Duration,
     ) {
-        self.watch_fps.start(3, "Update data");
-        {
-            // renderer (camera)
-            self.renderer.update(renderer_interface, dt);
+        self.renderer.update(renderer_interface, dt);
 
+        self.watch_fps.start(4, "Update animations");
+        {
+            self.ants.animated_object_storage.update_animations(&dt);
+
+            self.ants
+                .animated_object_storage
+                .update_device_data(renderer_interface);
+        }
+        self.watch_fps.stop(4);
+
+        self.watch_fps.start(3, "Update terrain");
+        {
             // set terrain view position
             self.terrain
                 .set_view_position(&self.renderer.get_view_position());
@@ -449,10 +488,11 @@ impl DefaultApplicationInterface for NeonWarlord {
             res = self.renderer.render(
                 renderer_interface,
                 &mut self.terrain,
+                &[&self.ants.animated_object_storage],
                 &[
-                    &mut self.performance_monitor_fps,
-                    &mut self.performance_monitor_ups,
-                    &mut self.debug_overlay,
+                    &self.performance_monitor_fps,
+                    &self.performance_monitor_ups,
+                    &self.debug_overlay,
                 ],
             )
         }

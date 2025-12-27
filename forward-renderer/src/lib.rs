@@ -1,11 +1,15 @@
 //! Library to instantiate a forward rendering pipeline
 
+mod animated_object;
+mod animation_shader;
 mod camera_controller;
 mod draw_gui;
 mod forward_renderer;
+mod geometry;
 mod lod_heightmap_shader;
 mod performance_monitor;
 mod terrain_storage;
+pub use animated_object::animated_object_storage::AnimatedObjectStorage;
 pub use draw_gui::DrawGui;
 pub use forward_renderer::ForwardRenderer;
 pub use forward_renderer::RendererSettings;
