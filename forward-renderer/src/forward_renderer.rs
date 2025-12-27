@@ -1,8 +1,5 @@
-
-
 //! Renders everything
 //!
-
 
 // use crate::animated_object_storage::AnimatedObjectStorage;
 // use crate::deferred_color_shader::entity_buffer::MousePosition;
@@ -15,8 +12,8 @@
 use crate::camera_controller::CameraController;
 use wgpu_renderer::vertex_color_shader;
 use wgpu_renderer::vertex_texture_shader;
-use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
+use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
 use winit::event::{ElementState, MouseScrollDelta};
 
 use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
@@ -54,7 +51,6 @@ pub struct ForwardRenderer {
 
     // pub animation_bind_group_layout: deferred_animation_shader::AnimationBindGroupLayout,
     // pipeline_deferred_animated: deferred_animation_shader::Pipeline,
-
     pub heightmap_bind_group_layout: lod_heightmap_shader::HeightmapBindGroupLayout,
     pipeline_deferred_heightmap: lod_heightmap_shader::Pipeline,
 
@@ -257,14 +253,12 @@ impl ForwardRenderer {
 
             // animation_bind_group_layout,
             // pipeline_deferred_animated,
-
             heightmap_bind_group_layout,
             pipeline_deferred_heightmap,
 
             // post_processing_bind_group_layout,
             // post_processing_texture,
             // pipeline_fxaa,
-
             camera,
             camera_controller,
             projection,
@@ -698,7 +692,6 @@ impl ForwardRenderer {
         // ant_light_orbs: &(impl DeferredShaderDraw + DeferredLightShaderDraw),
         // mesh_textured_gui: &impl VertexTextureShaderDraw,
         // ambient_light_quad: &deferred_light_shader::Mesh,
-
         gui_elements: &[&mut dyn DrawGui],
         // watch_fps: &mut watch::Watch<{ super::WATCH_POINTS_SIZE }>,
         // mouse_position: MousePosition,
@@ -771,7 +764,10 @@ impl ForwardRenderer {
 
         // wait to see how high the gpu load is
         if self.settings.wait_for_render_loop_to_finish {
-            let _res = renderer_interface.device().poll(wgpu::PollType::Wait{ submission_index: None, timeout: None });
+            let _res = renderer_interface.device().poll(wgpu::PollType::Wait {
+                submission_index: None,
+                timeout: None,
+            });
         } else {
             let _res = renderer_interface.device().poll(wgpu::PollType::Poll);
         }

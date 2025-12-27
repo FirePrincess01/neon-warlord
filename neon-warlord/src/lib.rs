@@ -1,6 +1,6 @@
 mod debug_overlay;
-mod settings;
 mod heightmap_generator;
+mod settings;
 
 use forward_renderer::{ForwardRenderer, PerformanceMonitor, TerrainStorage};
 #[cfg(target_arch = "wasm32")]
@@ -177,7 +177,6 @@ impl NeonWarlord {
         );
         let terrain_generator = heightmap_generator::HeightMapGenerator::new();
 
-
         // selector
         // let selector = Selector::new();
 
@@ -272,7 +271,8 @@ impl DefaultApplicationInterface for NeonWarlord {
 
         self.size = new_size;
         self.renderer.resize(renderer_interface, new_size);
-        self.debug_overlay.resize(            renderer_interface,
+        self.debug_overlay.resize(
+            renderer_interface,
             &self.renderer.texture_bind_group_layout,
             &self.font,
             new_size.height,
@@ -302,7 +302,8 @@ impl DefaultApplicationInterface for NeonWarlord {
             scale_factor,
         );
 
-        self.debug_overlay.rescale(            renderer_interface,
+        self.debug_overlay.rescale(
+            renderer_interface,
             &self.renderer.texture_bind_group_layout,
             &self.font,
             scale_factor,
@@ -314,7 +315,6 @@ impl DefaultApplicationInterface for NeonWarlord {
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         dt: instant::Duration,
     ) {
-
         self.watch_fps.start(3, "Update data");
         {
             // renderer (camera)
@@ -328,7 +328,11 @@ impl DefaultApplicationInterface for NeonWarlord {
             let requests = self.terrain.get_requestes().clone();
             for request in requests {
                 let terrain_part = self.terrain_generator.generate(&request);
-                self.terrain.update_height_map(renderer_interface, &self.renderer.heightmap_bind_group_layout, terrain_part);
+                self.terrain.update_height_map(
+                    renderer_interface,
+                    &self.renderer.heightmap_bind_group_layout,
+                    terrain_part,
+                );
             }
             self.terrain.clear_requests();
         }

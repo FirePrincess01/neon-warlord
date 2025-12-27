@@ -3,7 +3,6 @@
 use forward_renderer::{HeightMap, TerrainTextureDetails};
 use noise::NoiseFn;
 
-
 #[allow(unused)]
 pub struct HeightMapGenerator {
     perlin: noise::Perlin,
@@ -76,7 +75,10 @@ impl HeightMapGenerator {
             }
         }
 
-        HeightMap { heights, details: details.clone() }
+        HeightMap {
+            heights,
+            details: details.clone(),
+        }
     }
 
     fn canyon(x: f32) -> f32 {

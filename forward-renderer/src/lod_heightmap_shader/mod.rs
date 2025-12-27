@@ -1,8 +1,8 @@
 //! Deferred shader drawing a terrain height map
 //!
 
-mod lod_heightmap_shader_draw;
 mod instance;
+mod lod_heightmap_shader_draw;
 mod mesh;
 mod pipeline;
 mod vertex;
@@ -13,11 +13,11 @@ pub use pipeline::Pipeline;
 
 pub use wgpu_renderer::vertex_color_shader::IndexBuffer;
 
-pub use wgpu_renderer::vertex_color_shader::VertexBuffer;
 pub use vertex::Vertex;
+pub use wgpu_renderer::vertex_color_shader::VertexBuffer;
 
-pub use wgpu_renderer::vertex_color_shader::InstanceBuffer;
 pub use instance::Instance;
+pub use wgpu_renderer::vertex_color_shader::InstanceBuffer;
 
 pub use wgpu_renderer::vertex_texture_shader::Texture;
 pub use wgpu_renderer::vertex_texture_shader::TextureBindGroupLayout;

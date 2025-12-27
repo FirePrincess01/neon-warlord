@@ -13,7 +13,7 @@ use wgpu_renderer::{
 
 use crate::draw_gui::DrawGui;
 
-struct Data<const SIZE: usize>  {
+struct Data<const SIZE: usize> {
     graph_host: performance_monitor::Graph<SIZE>,
     graph_device: vertex_color_shader::Mesh,
 
@@ -31,7 +31,6 @@ pub struct PerformanceMonitor<const SIZE: usize> {
     // label_60fps: wgpu_renderer::label::LabelMesh,
     // // label_120fps: wgpu_renderer::label::LabelMesh,
     // table: sorted_table::SortedTable<SIZE>,
-
     color_gradient: colorous::Gradient,
     indicator: &'static str,
     scale_factor: f32,
@@ -49,7 +48,7 @@ impl<const SIZE: usize> PerformanceMonitor<SIZE> {
         color_gradient: colorous::Gradient,
         indicator: &'static str,
         scale_factor: f32,
-    )  -> Data<SIZE>{
+    ) -> Data<SIZE> {
         let graph_host = performance_monitor::Graph::new(color_gradient, scale_factor);
 
         let graph_device = vertex_color_shader::Mesh::new(
@@ -109,8 +108,14 @@ impl<const SIZE: usize> PerformanceMonitor<SIZE> {
         indicator: &'static str,
         scale_factor: f32,
     ) -> Self {
-        
-        let data = Self::create_data(wgpu_renderer, texture_bind_group_layout, font, color_gradient, indicator, scale_factor);
+        let data = Self::create_data(
+            wgpu_renderer,
+            texture_bind_group_layout,
+            font,
+            color_gradient,
+            indicator,
+            scale_factor,
+        );
 
         Self {
             data,
@@ -131,20 +136,30 @@ impl<const SIZE: usize> PerformanceMonitor<SIZE> {
         self.data.table.update_from_viewer_data(data);
 
         if self.show {
-            self.data.graph_device
-                .update_vertex_buffer(wgpu_renderer.queue(), self.data.graph_host.vertices.as_slice());
+            self.data.graph_device.update_vertex_buffer(
+                wgpu_renderer.queue(),
+                self.data.graph_host.vertices.as_slice(),
+            );
             self.data.table.update_device(wgpu_renderer, font);
         }
     }
-    
-    pub fn rescale(&mut self, 
+
+    pub fn rescale(
+        &mut self,
         wgpu_renderer: &mut dyn WgpuRendererInterface,
         texture_bind_group_layout: &TextureBindGroupLayout,
         font: &rusttype::Font<'static>,
-        scale_factor: f32) 
-    {
+        scale_factor: f32,
+    ) {
         self.scale_factor = scale_factor;
-        self.data = Self::create_data(wgpu_renderer, texture_bind_group_layout, font, self.color_gradient, self.indicator, scale_factor);   
+        self.data = Self::create_data(
+            wgpu_renderer,
+            texture_bind_group_layout,
+            font,
+            self.color_gradient,
+            self.indicator,
+            scale_factor,
+        );
     }
 }
 

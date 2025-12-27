@@ -3,7 +3,7 @@
 
 use super::{
     lod_quad_tree::QuadTreeInterface,
-    terrain_texture_details::{depth_to_distance, TerrainTextureDetails},
+    terrain_texture_details::{TerrainTextureDetails, depth_to_distance},
 };
 
 pub struct QuadTreeDraw<T>

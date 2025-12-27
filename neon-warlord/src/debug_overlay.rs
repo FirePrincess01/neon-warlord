@@ -44,7 +44,10 @@ impl<const SIZE: usize> DebugOverlay<SIZE> {
                 &vertex_texture_shader::Instance {
                     position: cgmath::Vector3 {
                         x: 15.0,
-                        y: height as f32 - font_scale - 15.0 - i as f32 * (font_scale + 2.0 * scale_factor),
+                        y: height as f32
+                            - font_scale
+                            - 15.0
+                            - i as f32 * (font_scale + 2.0 * scale_factor),
                         z: 0.0,
                     },
                     rotation: cgmath::Quaternion::zero(),
@@ -65,7 +68,6 @@ impl<const SIZE: usize> DebugOverlay<SIZE> {
         width: u32,
         scale_factor: f32,
     ) -> Self {
-
         let entries = Self::create_entries(
             renderer,
             texture_bind_group_layout,

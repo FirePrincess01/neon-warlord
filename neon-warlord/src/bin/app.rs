@@ -3,4 +3,3 @@ fn main() {
 
     pollster::block_on(neon_warlord::run());
 }
-

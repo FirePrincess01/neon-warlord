@@ -148,7 +148,7 @@ impl<const SIZE: usize> SortedTable<SIZE> {
         // let average = 100.0 * self.averages[i].average() as f64 / 16666.0;
         // let average_str = format!("{:>4.1} %", average);
 
-        let average = self.averages[i].average() as f64  / 1000.0;
+        let average = self.averages[i].average() as f64 / 1000.0;
         let average_str = format!("{:>4.2} ms", average);
 
         self.label_percents[i].update(font, average_str.as_str()); // this is an expensive operation

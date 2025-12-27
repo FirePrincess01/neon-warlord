@@ -5,7 +5,6 @@ pub mod lod_quad_tree;
 pub mod quad_tree_draw;
 pub mod terrain_texture_details;
 
-
 use cgmath::Zero;
 use lod_quad_tree::LodQuadTree;
 use quad_tree_draw::QuadTreeDraw;
@@ -20,7 +19,6 @@ use crate::{
     lod_heightmap_shader::{self, LodHeightMapShaderDraw},
     // selector,
 };
-
 
 #[derive(Debug)]
 pub struct HeightMap {
