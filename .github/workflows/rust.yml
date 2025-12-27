@@ -113,7 +113,7 @@ jobs:
           command: build
       - uses: actions/upload-artifact@v4
         with:
-          name: market_economy_simulation_ubuntu
+          name: neon-warlord_ubuntu
           path: target/debug/app # or path/to/artifact
 
   build_wasm:
@@ -133,14 +133,14 @@ jobs:
         with:
           command: install
           args: wasm-pack
-      - run: wasm-pack build market_economy_simulation --target web
+      - run: wasm-pack build neon-warlord --target web
       
       - shell: bash
         run: |
           mkdir public
-          mkdir public/market_economy_simulation
-          mkdir public/market_economy_simulation/pkg
-          cp market_economy_simulation/pkg/* public/market_economy_simulation/pkg
+          mkdir public/neon-warlord
+          mkdir public/neon-warlord/pkg
+          cp neon-warlord/pkg/* public/neon-warlord/pkg
           cp index.html public/index.html
           cp favicon.ico public/favicon.ico
 
