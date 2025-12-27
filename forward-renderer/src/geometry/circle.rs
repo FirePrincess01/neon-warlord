@@ -13,7 +13,6 @@ pub struct Circle {
     pub vertices: Vec<Vertex>,
     pub colors: Vec<Color>,
     pub indices: Vec<u16>,
-
     // pub deferred_vertices: Vec<deferred_color_shader::Vertex>,
 }
 
@@ -62,17 +61,15 @@ impl Circle {
 
         // let normal = [0.0, 0.0, 1.0];
         // for vertex in &vertices {
-            // deferred_vertices.push(deferred_color_shader::Vertex {
-            //     position: vertex.position,
-            //     normal,
-            // })
-        
+        // deferred_vertices.push(deferred_color_shader::Vertex {
+        //     position: vertex.position,
+        //     normal,
+        // })
 
         Self {
             vertices,
             colors,
             indices,
-
             // deferred_vertices,
         }
     }

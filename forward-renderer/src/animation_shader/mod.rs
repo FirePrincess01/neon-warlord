@@ -8,13 +8,13 @@ mod pipeline_animation;
 mod animation_bind_group_layout;
 mod animation_uniform;
 mod animation_uniform_buffer;
-mod vertex;
 mod instance;
+mod vertex;
 
 pub use animation_bind_group_layout::AnimationBindGroupLayout;
+pub use animation_shader_draw::AnimationShaderDraw;
 pub use animation_uniform::AnimationUniform;
 pub use animation_uniform_buffer::AnimationUniformBuffer;
-pub use animation_shader_draw::AnimationShaderDraw;
 pub use mesh::Mesh;
 pub use pipeline_animation::Pipeline;
 pub use vertex::Vertex;

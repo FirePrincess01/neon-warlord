@@ -50,7 +50,6 @@ pub struct ForwardRenderer {
     // pipeline_deferred_light: deferred_light_shader::Pipeline,
     // pipeline_deferred_light_ambient: deferred_light_shader::Pipeline,
     // pipeline_deferred_light_sphere: deferred_light_sphere_shader::Pipeline,
-
     pub animation_bind_group_layout: animation_shader::AnimationBindGroupLayout,
     pipeline_animated: animation_shader::Pipeline,
 
@@ -253,7 +252,6 @@ impl ForwardRenderer {
             // pipeline_deferred_light,
             // pipeline_deferred_light_ambient,
             // pipeline_deferred_light_sphere,
-
             animation_bind_group_layout,
             pipeline_animated,
             heightmap_bind_group_layout,
@@ -597,7 +595,7 @@ impl ForwardRenderer {
         view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
         lod_terrains: &mut dyn LodHeightMapShaderDraw,
-        animations:&[&dyn AnimationShaderDraw],
+        animations: &[&dyn AnimationShaderDraw],
         // textured_meshes: &impl VertexTextureShaderDraw,
         gui_elements: &[&dyn DrawGui],
         // performance_monitors: &[&mut PerformanceMonitor<{ super::WATCH_POINTS_SIZE }>],
@@ -642,11 +640,8 @@ impl ForwardRenderer {
 
         // animations
         for elem in animations {
-            self.pipeline_animated.draw(
-                &mut render_pass,
-                &self.camera_uniform_buffer,
-                *elem,
-            );
+            self.pipeline_animated
+                .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
         }
 
         // gui lines
@@ -705,7 +700,7 @@ impl ForwardRenderer {
         // ant_light_orbs: &(impl DeferredShaderDraw + DeferredLightShaderDraw),
         // mesh_textured_gui: &impl VertexTextureShaderDraw,
         // ambient_light_quad: &deferred_light_shader::Mesh,
-        animations:&[&dyn AnimationShaderDraw],
+        animations: &[&dyn AnimationShaderDraw],
         gui_elements: &[&dyn DrawGui],
         // watch_fps: &mut watch::Watch<{ super::WATCH_POINTS_SIZE }>,
         // mouse_position: MousePosition,

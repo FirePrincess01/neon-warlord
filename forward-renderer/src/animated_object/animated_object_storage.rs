@@ -3,10 +3,10 @@
 
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 
-use crate::animated_object::gltf_importer::GltfImporter;
-use crate::animated_object::animated_object_data::AnimationData;
-use crate::animated_object::animated_model::{skeleton::Skeleton};
 use crate::animated_object::animated_model::animation::Animation;
+use crate::animated_object::animated_model::skeleton::Skeleton;
+use crate::animated_object::animated_object_data::AnimationData;
+use crate::animated_object::gltf_importer::GltfImporter;
 use crate::animation_shader::{self, AnimationShaderDraw};
 
 pub struct AnimatedObjectStorage {
@@ -56,7 +56,7 @@ impl AnimatedObjectStorage {
         let mut instance_host = Vec::with_capacity(max_instances);
         let mut instance_device = Vec::with_capacity(max_instances);
 
-        for i in 0..max_instances {
+        for _i in 0..max_instances {
             instance_host.push(AnimatedObjectInstanceHost {
                 animation: Animation::new(&animation_data),
                 is_active: false,
@@ -83,7 +83,7 @@ impl AnimatedObjectStorage {
         }
 
         let mut instances = Vec::with_capacity(max_instances);
-        for i in 0..max_instances {
+        for _i in 0..max_instances {
             instances.push(animation_shader::Instance {
                 position: [0.0, 20.0, 5.0],
                 color: [0.5, 0.5, 0.8],
@@ -198,6 +198,5 @@ struct AnimatedObjectInstanceHost {
 
 struct AnimatedObjectInstanceDevice {
     pub animation_uniform_buffer: animation_shader::AnimationUniformBuffer,
-    pub _instance_buffer:
-        animation_shader::InstanceBuffer<animation_shader::Instance>,
+    pub _instance_buffer: animation_shader::InstanceBuffer<animation_shader::Instance>,
 }

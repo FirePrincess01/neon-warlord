@@ -1,9 +1,9 @@
 //! Contains the device buffers to render an object with this shader
 //!
 
-use super::animation_uniform_buffer::AnimationUniformBuffer;
 use super::Instance;
 use super::Vertex;
+use super::animation_uniform_buffer::AnimationUniformBuffer;
 
 use super::IndexBuffer;
 

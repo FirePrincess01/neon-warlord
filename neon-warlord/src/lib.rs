@@ -19,9 +19,7 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_generator::AntGenerator,
-    ant_storage::AntStorage,
-    debug_overlay::DebugOverlay,
+    ant_generator::AntGenerator, ant_storage::AntStorage, debug_overlay::DebugOverlay,
     heightmap_generator::HeightMapGenerator,
 };
 
@@ -353,9 +351,7 @@ impl DefaultApplicationInterface for NeonWarlord {
 
         self.watch_fps.start(4, "Update animations");
         {
-            self.ants
-                .animated_object_storage
-                .update_animations(&dt);
+            self.ants.animated_object_storage.update_animations(&dt);
 
             self.ants
                 .animated_object_storage

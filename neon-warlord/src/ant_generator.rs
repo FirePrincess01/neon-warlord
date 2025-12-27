@@ -1,7 +1,6 @@
 //! Manages all ants instances
 //!
 
-
 use crate::ant_storage::Ant;
 
 // use crate::game_logic::game_logic_interface::GameLogicMessageLight;
@@ -45,10 +44,10 @@ impl AntGenerator {
                         x: x as f32 * 50.0,
                         y: y as f32 * 50.0,
                     },
-                    rot_z: 0.0,
-                    light_strength: 1.0,
+                    _rot_z: 0.0,
+                    _light_strength: 1.0,
                     // light_color: cgmath::Vector3::new(1.0, 1.0, 1.0),
-                    light_color: color,
+                    _light_color: color,
                 });
 
                 id += 1;
@@ -57,8 +56,6 @@ impl AntGenerator {
 
         Self { ants }
     }
-
-
 
     // pub fn update(&mut self, channel: &mpsc::Sender<GameLogicMessageLight>) {
     //     // if self.requires_update {

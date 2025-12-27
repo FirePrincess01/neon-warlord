@@ -1,11 +1,11 @@
 //! Deferred shader drawing colored objects
 //!
 
-use super::CameraBindGroupLayout;
-use super::animation_bind_group_layout::AnimationBindGroupLayout;
 use super::AnimationShaderDraw;
+use super::CameraBindGroupLayout;
 use super::Instance;
 use super::Vertex;
+use super::animation_bind_group_layout::AnimationBindGroupLayout;
 use wgpu_renderer::vertex_color_shader;
 use wgpu_renderer::wgpu_renderer::depth_texture;
 
@@ -81,13 +81,11 @@ impl Pipeline {
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
-                targets: &[
-                    Some(wgpu::ColorTargetState {
-                        format: surface_format,
-                        blend: None,
-                        write_mask: wgpu::ColorWrites::ALL,
-                    }),
-                ],
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: surface_format,
+                    blend: None,
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             }),
             primitive: wgpu::PrimitiveState {

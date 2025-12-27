@@ -11,7 +11,6 @@ pub struct Quad {
     pub vertices: Vec<Vertex>,
     pub colors: Vec<Color>,
     pub indices: Vec<u16>,
-
     // pub deferred_vertices: Vec<deferred_color_shader::Vertex>,
 }
 
@@ -69,7 +68,6 @@ impl Quad {
             vertices,
             colors,
             indices,
-
             // deferred_vertices,
         }
     }

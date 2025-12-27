@@ -25,10 +25,8 @@ impl Settings {
             max_depth: 4,
         }
     }
-    
+
     pub fn get_object_settings(&self) -> ObjectSettings {
-        ObjectSettings {
-            max_nr_ants: 9,
-        }
+        ObjectSettings { max_nr_ants: 9 }
     }
 }

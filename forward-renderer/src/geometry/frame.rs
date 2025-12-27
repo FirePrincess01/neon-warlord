@@ -11,7 +11,6 @@ pub struct Frame {
     mesh: Mesh,
     // pub deferred_vertices: Vec<deferred_color_shader::Vertex>,
     // pub indices: Vec<u16>,
-
 }
 
 #[allow(unused)]
@@ -138,8 +137,6 @@ impl Frame {
 
         // let indices = mesh.indices;
 
-        Self {
-            mesh,
-        }
+        Self { mesh }
     }
 }

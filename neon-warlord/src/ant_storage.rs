@@ -6,15 +6,14 @@
 // use crate::point_light_storage::{PointLightIndex, PointLightInterface, PointLightStorage};
 use forward_renderer::AnimatedObjectStorage;
 
-#[derive(Clone)]
 pub struct Ant {
     pub id: usize,
 
     pub pos: cgmath::Vector2<f32>,
-    pub rot_z: f32,
+    pub _rot_z: f32,
 
-    pub light_strength: f32,
-    pub light_color: cgmath::Vector3<f32>,
+    pub _light_strength: f32,
+    pub _light_color: cgmath::Vector3<f32>,
 }
 
 pub struct AntStorage {
