@@ -2,6 +2,7 @@
 
 mod ant_generator;
 mod ant_storage;
+mod camera_controller;
 mod debug_overlay;
 mod heightmap_generator;
 mod settings;
@@ -19,8 +20,8 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_generator::AntGenerator, ant_storage::AntStorage, debug_overlay::DebugOverlay,
-    heightmap_generator::HeightMapGenerator,
+    ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController,
+    debug_overlay::DebugOverlay, heightmap_generator::HeightMapGenerator,
 };
 
 const WATCH_POINTS_SIZE: usize = 7;
@@ -28,6 +29,12 @@ const DEBUG_OVERLAY_SIZE: usize = 10;
 
 struct ObjectSettings {
     pub max_nr_ants: usize,
+}
+
+struct CameraSettings {
+    speed: f32,
+    sensitivity: f32,
+    sensitivity_scroll: f32,
 }
 
 struct NeonWarlord {
@@ -39,6 +46,8 @@ struct NeonWarlord {
 
     renderer: ForwardRenderer,
     font: rusttype::Font<'static>,
+
+    camera_controller: CameraController,
 
     // Debug Utilities
     fps: Fps,
@@ -70,6 +79,13 @@ impl NeonWarlord {
 
         // font
         let font = wgpu_renderer::freefont::create_font_free_mono();
+
+        // Camera
+        let camera_controller = CameraController::new(
+            settings.get_camera_settings().speed,
+            settings.get_camera_settings().sensitivity,
+            settings.get_camera_settings().sensitivity_scroll,
+        );
 
         // world
         // let mut world = ecs2::World::new();
@@ -227,6 +243,7 @@ impl NeonWarlord {
             terrain_generator,
             ants,
             _ant_generator: ant_generator,
+            camera_controller,
             // settings,
 
             // size,
@@ -347,8 +364,12 @@ impl DefaultApplicationInterface for NeonWarlord {
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         dt: instant::Duration,
     ) {
+        // Render engine
+        self.camera_controller
+            .update_camera(&mut self.renderer.camera, dt);
         self.renderer.update(renderer_interface, dt);
 
+        // Animations
         self.watch_fps.start(4, "Update animations");
         {
             self.ants.animated_object_storage.update_animations(&dt);
@@ -359,6 +380,7 @@ impl DefaultApplicationInterface for NeonWarlord {
         }
         self.watch_fps.stop(4);
 
+        // Terrain
         self.watch_fps.start(3, "Update terrain");
         {
             // set terrain view position
@@ -379,6 +401,7 @@ impl DefaultApplicationInterface for NeonWarlord {
         }
         self.watch_fps.stop(3);
 
+        // Debug utilities
         self.watch_fps.update();
         self.watch_fps.start(0, "Debug utilities");
         {
@@ -458,9 +481,13 @@ impl DefaultApplicationInterface for NeonWarlord {
                         ..
                     },
                 ..
-            } => self.renderer.process_keyboard(*key, *state),
+            } => {
+                // self.renderer.process_keyboard(*key, *state),
+                self.camera_controller.process_keyboard(key, state)
+            }
             WindowEvent::MouseWheel { delta, .. } => {
-                self.renderer.process_scroll(delta);
+                // self.renderer.process_scroll(delta);
+                self.camera_controller.process_scroll(delta);
                 true
             }
             WindowEvent::CursorMoved { position, .. } => {

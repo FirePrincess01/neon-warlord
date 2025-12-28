@@ -11,15 +11,12 @@ use crate::animation_shader::AnimationShaderDraw;
 // use crate::performance_monitor::PerformanceMonitor;
 // use crate::point_light_storage::PointLightStorage;
 // use crate::terrain_storage::TerrainStorage;
-use crate::camera_controller::CameraController;
+use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
+use crate::{DrawGui, lod_heightmap_shader};
 use wgpu_renderer::vertex_color_shader;
 use wgpu_renderer::vertex_texture_shader;
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
-use winit::event::{ElementState, MouseScrollDelta};
-
-use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
-use crate::{DrawGui, lod_heightmap_shader};
 
 // use crate::{
 //     deferred_animation_shader, deferred_heightmap_shader, deferred_light_shader,
@@ -62,7 +59,6 @@ pub struct ForwardRenderer {
 
     // camera
     pub camera: Camera,
-    camera_controller: CameraController,
     pub projection: Projection,
 
     camera_uniform: vertex_color_shader::CameraUniform,
@@ -206,11 +202,6 @@ impl ForwardRenderer {
         // Self::top_view_point(&mut camera);
         Self::side_view_point(&mut camera);
 
-        let speed = 40.0;
-        let sensitivity = 1.0;
-        let sensitivity_scroll = 1.0;
-        let camera_controller = CameraController::new(speed, sensitivity, sensitivity_scroll);
-
         let width = wgpu_renderer.surface_width();
         let height = wgpu_renderer.surface_height();
         let fovy = cgmath::Deg(45.0);
@@ -261,7 +252,6 @@ impl ForwardRenderer {
             // post_processing_texture,
             // pipeline_fxaa,
             camera,
-            camera_controller,
             projection,
 
             camera_uniform,
@@ -336,19 +326,10 @@ impl ForwardRenderer {
         dt: instant::Duration,
     ) {
         // camera
-        self.camera_controller.update_camera(&mut self.camera, dt);
         self.camera_uniform
             .update_view_proj(&self.camera, &self.projection);
         self.camera_uniform_buffer
             .update(renderer_interface.queue(), self.camera_uniform);
-    }
-
-    pub fn process_keyboard(&mut self, key: winit::keyboard::KeyCode, state: ElementState) -> bool {
-        self.camera_controller.process_keyboard(key, state)
-    }
-
-    pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
-        self.camera_controller.process_scroll(delta);
     }
 
     pub fn get_view_position(&self) -> cgmath::Vector3<f32> {

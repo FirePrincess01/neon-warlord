@@ -2,7 +2,6 @@
 
 mod animated_object;
 mod animation_shader;
-mod camera_controller;
 mod draw_gui;
 mod forward_renderer;
 mod geometry;

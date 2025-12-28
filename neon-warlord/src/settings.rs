@@ -2,7 +2,7 @@
 
 use forward_renderer::{RendererSettings, TerrainSettings};
 
-use crate::ObjectSettings;
+use crate::{CameraSettings, ObjectSettings};
 
 pub struct Settings {}
 impl Settings {
@@ -28,5 +28,13 @@ impl Settings {
 
     pub fn get_object_settings(&self) -> ObjectSettings {
         ObjectSettings { max_nr_ants: 9 }
+    }
+
+    pub(crate) fn get_camera_settings(&self) -> CameraSettings {
+        CameraSettings {
+            speed: 40.0,
+            sensitivity: 1.0,
+            sensitivity_scroll: 1.0,
+        }
     }
 }
