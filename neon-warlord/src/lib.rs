@@ -504,7 +504,9 @@ impl DefaultApplicationInterface for NeonWarlord {
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub fn run() {
-    let event_loop = winit::event_loop::EventLoop::with_user_event().build().expect("Creating the event loop failed");
+    let event_loop = winit::event_loop::EventLoop::with_user_event()
+        .build()
+        .expect("Creating the event loop failed");
     let mut application: DefaultApplication<NeonWarlord> = DefaultApplication::new(&event_loop);
     event_loop.run_app(&mut application).unwrap();
 }
