@@ -110,7 +110,7 @@ impl<const SIZE: usize> DebugOverlay<SIZE> {
     ) {
         // let text = format!("{}: {}", name, val);
         let entry = &mut self.entries[index];
-        entry.label.update(font, &text);
+        entry.label.update(font, text);
         entry
             .mesh
             .update_texture(renderer.queue(), entry.label.get_image());
