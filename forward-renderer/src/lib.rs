@@ -1,7 +1,7 @@
 //! Library to instantiate a forward rendering pipeline
 
 mod animated_object;
-mod animation_shader;
+pub mod animation_shader;
 mod draw_gui;
 mod forward_renderer;
 pub mod geometry;

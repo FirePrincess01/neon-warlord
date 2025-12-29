@@ -9,6 +9,13 @@ use super::animation_bind_group_layout::AnimationBindGroupLayout;
 use wgpu_renderer::vertex_color_shader;
 use wgpu_renderer::wgpu_renderer::depth_texture;
 
+pub enum LightingModel {
+    // no lighting
+    None,
+    // per vertex lighting
+    Gouraud,
+}
+
 /// A general purpose shader using vertices, colors and an instance matrix
 pub struct Pipeline {
     render_pipeline: wgpu::RenderPipeline,
@@ -20,6 +27,7 @@ impl Pipeline {
         camera_bind_group_layout: &CameraBindGroupLayout,
         animation_bind_group_layout: &AnimationBindGroupLayout,
         surface_format: wgpu::TextureFormat,
+        lighting: &LightingModel,
     ) -> Self {
         Self::new_parameterized(
             device,
@@ -27,6 +35,7 @@ impl Pipeline {
             animation_bind_group_layout,
             surface_format,
             wgpu::PrimitiveTopology::LineList,
+            lighting
         )
     }
 
@@ -35,6 +44,7 @@ impl Pipeline {
         camera_bind_group_layout: &CameraBindGroupLayout,
         animation_bind_group_layout: &AnimationBindGroupLayout,
         surface_format: wgpu::TextureFormat,
+        lighting: &LightingModel,
     ) -> Self {
         Self::new_parameterized(
             device,
@@ -42,6 +52,7 @@ impl Pipeline {
             animation_bind_group_layout,
             surface_format,
             wgpu::PrimitiveTopology::TriangleList,
+            lighting
         )
     }
 
@@ -51,6 +62,7 @@ impl Pipeline {
         animation_bind_group_layout: &AnimationBindGroupLayout,
         surface_format: wgpu::TextureFormat,
         topology: wgpu::PrimitiveTopology,
+        lighting: &LightingModel,
     ) -> Self {
         // Shader
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -74,7 +86,10 @@ impl Pipeline {
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: Some("vs_main"),
+                entry_point: match lighting {
+                    LightingModel::None => Some("vs_main") ,
+                    LightingModel::Gouraud => Some("vs_main_gouraud") ,
+                },
                 buffers: &[Vertex::desc(), Instance::desc()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },

@@ -62,17 +62,6 @@ fn vs_main_gouraud(
     let tex_coords = info.tex_coords;
     let color = instance.color;
     let view_position = camera.view_pos.xyz;
-
-    // let light_color =  vec3<f32>(1.0, 0.8, 0.6);
-    
-
-    // read gbuffer
-    // let vertex_position: vec4<f32> = info.position;
-    // let vertex_normal: vec4<f32> = textureLoad(t_normal, index, 0);
-    // let vertex_color_raw: vec4<f32> = textureLoad(t_albedo, index, 0);
-
-    // let vertex_color = vec4(vertex_color_raw.xyz, 1.0);
-    // let specular_strength = vertex_color_raw[3];
     
     // calculate lighting
     let light_color = vec3<f32>(1.0, 1.0, 1.0);
@@ -109,11 +98,11 @@ fn vs_main_gouraud(
     let out_color: vec3<f32> = color * (ambient_strength + diffuse_lighting_strength + specular_lighting_strength);
 
     var out: VertexOutput;
-    out.clip_position = camera.view_proj * vec4<f32>(info.position, 1.0);
+    out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
     out.color = out_color;
-    out.position = info.position;
-    out.normal = info.normal;
-    out.tex_coords = info.tex_coords;
+    out.position = position;
+    out.normal = normal;
+    out.tex_coords = tex_coords;
 
     return out;
 }
@@ -124,14 +113,6 @@ var t_texture: texture_2d<f32>;
 @group(1) @binding(1)
 var s_texture: sampler;
 
-// struct FragmentOutput {
-//     // @location(0) surface: vec4<f32>,
-//     @location(0) position: vec4<f32>,
-//     @location(1) normal: vec4<f32>,
-//     @location(2) albedo: vec4<f32>,
-//     // @location(3) entity: vec4<f32>,
-// };
-
 struct FragmentOutput {
     @location(0) surface: vec4<f32>,
 };
@@ -139,27 +120,11 @@ struct FragmentOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> FragmentOutput {
 
-    // var entity0 = (in.entity >> 0u) & 0xffu;
-    // var entity1 = (in.entity >> 8u) & 0xffu;
-    // var entity2 = (in.entity >> 16u) & 0xffu;
-    // var entity3 = (in.entity >> 24u) & 0xffu;
-
     let color = textureSample(t_texture, s_texture, in.tex_coords);
-    // let color_out = vec4<f32>(in.color.xyz, color[3]);
     let color_out = vec4<f32>(in.color.xyz * color[3], color[3]);
 
     var out: FragmentOutput;
     out.surface = color_out;
-    // out.position =  vec4<f32>(in.position, 1.0);
-    // out.normal =  vec4<f32>(in.normal, 1.0);
-    // out.albedo = vec4<f32>(color.xyz, 0.5);
-    // out.albedo = color;
-    // out.albedo = color_out;
-    // out.entity =  vec4<f32>(
-    //     f32(entity0)/255.0, 
-    //     f32(entity1)/255.0, 
-    //     f32(entity2)/255.0, 
-    //     f32(entity3)/255.0);
 
     return out;
 }

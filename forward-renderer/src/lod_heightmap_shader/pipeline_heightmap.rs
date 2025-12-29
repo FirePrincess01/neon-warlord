@@ -12,9 +12,9 @@ use wgpu_renderer::wgpu_renderer::depth_texture;
 
 pub enum LightingModel {
     // no lighting
-    none,
+    None,
     // per vertex lighting
-    gouraud,
+    Gouraud,
 }
 
 pub struct Pipeline {
@@ -28,7 +28,7 @@ impl Pipeline {
         texture_bind_group_layout: &TextureBindGroupLayout,
         heightmap_bind_group_layout: &HeightmapBindGroupLayout,
         surface_format: wgpu::TextureFormat,
-        lighting: &LightingModel
+        lighting: &LightingModel,
     ) -> Self {
         
         // Shader
@@ -55,8 +55,8 @@ impl Pipeline {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: match lighting {
-                    LightingModel::none => Some("vs_main") ,
-                    LightingModel::gouraud => Some("vs_main_gouraud") ,
+                    LightingModel::None => Some("vs_main") ,
+                    LightingModel::Gouraud => Some("vs_main_gouraud") ,
                 },
                 buffers: &[Vertex::desc(), Instance::desc()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),

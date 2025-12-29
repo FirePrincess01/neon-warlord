@@ -11,6 +11,7 @@ mod animation_uniform_buffer;
 mod instance;
 mod vertex;
 
+pub use pipeline_animation::LightingModel;
 pub use animation_bind_group_layout::AnimationBindGroupLayout;
 pub use animation_shader_draw::AnimationShaderDraw;
 pub use animation_uniform::AnimationUniform;

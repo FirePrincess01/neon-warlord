@@ -30,6 +30,7 @@ pub struct RendererSettings {
     pub window_resolution: (u32, u32),
 
     pub heightmap_lighting: lod_heightmap_shader::LightingModel,
+    pub animation_lighting: animation_shader::LightingModel,
 }
 
 pub struct ForwardRenderer {
@@ -166,6 +167,7 @@ impl ForwardRenderer {
             &camera_bind_group_layout,
             &animation_bind_group_layout,
             surface_format,
+            &settings.animation_lighting,
         );
 
         // pipeline deferred heightmap

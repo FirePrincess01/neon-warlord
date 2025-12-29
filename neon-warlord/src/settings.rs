@@ -1,6 +1,6 @@
 //! Application settings
 
-use forward_renderer::{RendererSettings, TerrainSettings, lod_heightmap_shader};
+use forward_renderer::{RendererSettings, TerrainSettings, animation_shader, lod_heightmap_shader};
 
 use crate::{CameraSettings, ObjectSettings};
 
@@ -17,7 +17,8 @@ impl Settings {
             enable_fxaa: false,
             window_resolution: (1920 / 2, 1080 / 2),
             
-            heightmap_lighting: lod_heightmap_shader::LightingModel::gouraud,
+            heightmap_lighting: lod_heightmap_shader::LightingModel::Gouraud,
+            animation_lighting: animation_shader::LightingModel::Gouraud,
         }
     }
 
