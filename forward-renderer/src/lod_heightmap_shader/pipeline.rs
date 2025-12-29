@@ -28,9 +28,8 @@ impl Pipeline {
         texture_bind_group_layout: &TextureBindGroupLayout,
         heightmap_bind_group_layout: &HeightmapBindGroupLayout,
         surface_format: wgpu::TextureFormat,
-        lgithting: &LightingModel
+        lighting: &LightingModel
     ) -> Self {
-        let lighting = LightingModel::none;
         
         // Shader
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -55,16 +54,16 @@ impl Pipeline {
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: Some("vs_main"),
+                entry_point: match lighting {
+                    LightingModel::none => Some("vs_main") ,
+                    LightingModel::gouraud => Some("vs_main_gouraud") ,
+                },
                 buffers: &[Vertex::desc(), Instance::desc()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
-                entry_point: match lighting {
-                    LightingModel::none => Some("fs_main") ,
-                    LightingModel::gouraud => Some("vs_main_gouraud") ,
-                },
+                entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: surface_format,
                     blend: None,

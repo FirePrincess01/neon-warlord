@@ -34,7 +34,7 @@ impl Settings {
 
     pub(crate) fn get_camera_settings(&self) -> CameraSettings {
         CameraSettings {
-            speed: 20.0,
+            speed: 200.0,
             sensitivity: 1.0,
             sensitivity_scroll: 1.0,
         }
