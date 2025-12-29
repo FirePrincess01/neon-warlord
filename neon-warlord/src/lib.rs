@@ -426,7 +426,7 @@ impl DefaultApplicationInterface for NeonWarlord {
         {
             self.fps.update(dt);
 
-            self.debug_overlay.update(
+            self.debug_overlay.update_val(
                 renderer_interface,
                 &self.font,
                 0,
@@ -434,7 +434,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.fps.get() as f32,
             );
 
-            self.debug_overlay.update(
+            self.debug_overlay.update_val(
                 renderer_interface,
                 &self.font,
                 1,
@@ -442,7 +442,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.mouse_pos_x as f32,
             );
 
-            self.debug_overlay.update(
+            self.debug_overlay.update_val(
                 renderer_interface,
                 &self.font,
                 2,

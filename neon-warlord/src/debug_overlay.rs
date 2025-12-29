@@ -89,7 +89,7 @@ impl<const SIZE: usize> DebugOverlay<SIZE> {
         }
     }
 
-    pub fn update(
+    pub fn update_val(
         &mut self,
         renderer: &mut dyn WgpuRendererInterface,
         font: &rusttype::Font<'static>,
