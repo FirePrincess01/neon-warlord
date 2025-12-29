@@ -68,14 +68,14 @@ impl CameraController {
                 self.amount_right = amount;
                 true
             }
-            winit::keyboard::KeyCode::Space => {
-                self.amount_up = amount;
-                true
-            }
-            winit::keyboard::KeyCode::ShiftLeft => {
-                self.amount_down = amount;
-                true
-            }
+            // winit::keyboard::KeyCode::Space => {
+            //     self.amount_up = amount;
+            //     true
+            // }
+            // winit::keyboard::KeyCode::ShiftLeft => {
+            //     self.amount_down = amount;
+            //     true
+            // }
             _ => false,
         }
     }

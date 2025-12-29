@@ -4,7 +4,7 @@ mod animated_object;
 mod animation_shader;
 mod draw_gui;
 mod forward_renderer;
-mod geometry;
+pub mod geometry;
 mod lod_heightmap_shader;
 mod performance_monitor;
 mod terrain_storage;

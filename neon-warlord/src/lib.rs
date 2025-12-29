@@ -6,6 +6,7 @@ mod camera_controller;
 mod debug_overlay;
 mod heightmap_generator;
 mod settings;
+mod sun_storage;
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
 };
@@ -20,7 +21,7 @@ use winit::event::{ElementState, WindowEvent};
 
 use crate::{
     ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController,
-    debug_overlay::DebugOverlay, heightmap_generator::HeightMapGenerator,
+    debug_overlay::DebugOverlay, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage,
 };
 
 const WATCH_POINTS_SIZE: usize = 7;
@@ -64,7 +65,7 @@ struct NeonWarlord {
     force: String,
     id: String,
 
-    // Scene
+    // Terrain
     terrain: TerrainStorage,
     terrain_generator: HeightMapGenerator,
 
@@ -72,7 +73,8 @@ struct NeonWarlord {
     ants: AntStorage,
     _ant_generator: AntGenerator,
 
-
+    // Sun
+    sun: SunStorage,
 }
 
 impl NeonWarlord {
@@ -234,6 +236,9 @@ impl NeonWarlord {
         // selector
         // let selector = Selector::new();
 
+        // sun
+        let sun = SunStorage::new(renderer_interface);
+
         Self {
             _settings: settings,
             size,
@@ -257,6 +262,7 @@ impl NeonWarlord {
             location: String::new(),
             force: String::new(),
             id: String::new(),
+            sun,
             // settings,
 
             // size,
@@ -558,6 +564,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                     &self.performance_monitor_ups,
                     &self.debug_overlay,
                 ],
+                &[&self.sun],
             )
         }
         self.watch_fps.stop(1);

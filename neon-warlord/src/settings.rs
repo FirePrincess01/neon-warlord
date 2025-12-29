@@ -22,7 +22,7 @@ impl Settings {
     pub fn get_terrain_settings(&self) -> TerrainSettings {
         TerrainSettings {
             nr_tiles: 32,
-            max_depth: 4,
+            max_depth: 5,
         }
     }
 

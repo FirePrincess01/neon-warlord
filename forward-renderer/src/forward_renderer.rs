@@ -13,7 +13,7 @@ use crate::animation_shader::AnimationShaderDraw;
 // use crate::terrain_storage::TerrainStorage;
 use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
 use crate::{DrawGui, lod_heightmap_shader};
-use wgpu_renderer::vertex_color_shader;
+use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 use wgpu_renderer::vertex_texture_shader;
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
@@ -273,9 +273,9 @@ impl ForwardRenderer {
     }
 
     fn side_view_point(camera: &mut Camera) {
-        let position = cgmath::Point3::new(0.0, 5.0, 12.0);
+        let position = cgmath::Point3::new(0.0, 5.0, 2.0);
         let yaw = cgmath::Deg(-90.0).into();
-        let pitch = cgmath::Deg(60.0).into();
+        let pitch = cgmath::Deg(80.0).into();
 
         camera.position = position;
         camera.yaw = yaw;
@@ -579,6 +579,7 @@ impl ForwardRenderer {
         animations: &[&dyn AnimationShaderDraw],
         // textured_meshes: &impl VertexTextureShaderDraw,
         gui_elements: &[&dyn DrawGui],
+        vertex_color_objects: &[&dyn VertexColorShaderDraw],
         // performance_monitors: &[&mut PerformanceMonitor<{ super::WATCH_POINTS_SIZE }>],
     ) {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -623,6 +624,15 @@ impl ForwardRenderer {
         for elem in animations {
             self.pipeline_animated
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
+        }
+
+        // vertex color shader
+        for elem in vertex_color_objects {
+            self.pipeline_color.draw(
+                &mut render_pass,
+                &self.camera_uniform_buffer,
+                *elem,
+            );
         }
 
         // gui lines
@@ -683,6 +693,7 @@ impl ForwardRenderer {
         // ambient_light_quad: &deferred_light_shader::Mesh,
         animations: &[&dyn AnimationShaderDraw],
         gui_elements: &[&dyn DrawGui],
+        vertex_color_objects: &[&dyn VertexColorShaderDraw],
         // watch_fps: &mut watch::Watch<{ super::WATCH_POINTS_SIZE }>,
         // mouse_position: MousePosition,
     ) -> Result<(), wgpu::SurfaceError> {
@@ -739,6 +750,7 @@ impl ForwardRenderer {
             lod_terrains,
             animations,
             gui_elements,
+            vertex_color_objects,
         );
 
         // copy entity texture
