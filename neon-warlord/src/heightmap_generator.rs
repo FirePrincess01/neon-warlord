@@ -67,8 +67,12 @@ impl HeightMapGenerator {
                 // create canyon
                 let a = Self::depth_to_distance(7, 8);
                 height *= Self::canyon(
-                    (p_x + x as isize * distance as isize - a as isize / 2) as f32 / 20.0,
+                    (p_y + y as isize * distance as isize - a as isize / 2) as f32 / 30.0,
                 ) as f64;
+
+                if p_y < -10 {
+                    height = 0.0;
+                }
 
                 heights.push(height as f32);
                 // heights.push(0.0);

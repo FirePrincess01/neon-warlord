@@ -30,7 +30,6 @@ struct VertexInput {
 struct InstanceInput {
     @location(5) position: vec3<f32>,
     @location(6) color: vec3<f32>,
-    // @location(7) entity: vec3<u32>,
 }
 
 struct VertexOutput {
@@ -38,7 +37,6 @@ struct VertexOutput {
     @location(0) color: vec3<f32>,
     @location(1) position: vec3<f32>,
     @location(2) normal: vec3<f32>,
-    // @location(3) entity: vec3<u32>,
 };
 
 @vertex 
@@ -47,6 +45,106 @@ fn vs_main(
     instance: InstanceInput,
 ) -> VertexOutput {
 
+    let info = get_vertex_info(model, instance);
+    
+    let position = info.position;
+    let normal = info.normal;
+    let color = instance.color;
+    let view_position = camera.view_pos.xyz;
+    
+    // calculate output
+    var out: VertexOutput;
+    out.clip_position = camera.view_proj * vec4<f32>(info.position, 1.0);
+    out.color = color;
+    out.position = info.position;
+    out.normal = info.normal;
+
+    return out;
+}
+
+// Vertex shader with Gouraud shading
+@vertex 
+fn vs_main_gouraud(
+    model: VertexInput,
+    instance: InstanceInput,
+) -> VertexOutput 
+{
+    let info = get_vertex_info( model, instance);
+    let position = info.position;
+    let normal = info.normal;
+    let color = instance.color;
+    let view_position = camera.view_pos.xyz;
+    
+    // calculate lighting
+    let light_color = vec3<f32>(1.0, 1.0, 1.0);
+    let ambient_strength = 0.2;
+    let diffuse_strength = 0.2;
+    let specular_strength = 0.8;
+    
+    // diffuse lighting
+    let light_direction = normalize(vec3<f32>(0.0, 1000.0, 140.0));
+    let diffuse_lighting_strength = max(dot(normal, light_direction) * diffuse_strength, 0.0);
+    
+    // specular lighting
+    let view_dir = normalize(view_position - position);
+    
+    // pong model
+    let reflect_dir = reflect(-light_direction, normal);
+    let specular_lighting_strength = pow(max(dot(view_dir, reflect_dir), 0.0), 32.0) * specular_strength;
+
+    // bling-pong model
+    // let halfway_dir = normalize(light_direction + view_dir);
+    // let specular_lighting_strength = pow(max(dot(normal, halfway_dir), 0.0), 32.0) * specular_strength;
+
+
+    // pong shading
+    // let pong_lighting = light_color * (ambient_strength + diffuse_lighting_strength + specular_lighting_strength);
+    // let pong_lighting = light_color * (specular_lighting_strength);
+    // let pong_lighting = light_color * ((ambient_strength + diffuse_lighting_strength) * 0.4 +  (ambient_strength+ diffuse_lighting_strength + specular_lighting_strength) * specular_strength);
+    // let pong_lighting = light_color * ((ambient_strength + diffuse_lighting_strength));
+    // let pong_light: vec3<f32> = pong_lighting * color;
+
+    // blend with intensity
+    // let intensity = vertex_color[3];
+    // let out_color: vec3<f32> = vertex_color.xyz * intensity + pong_light * (1.0 -intensity);
+    let out_color: vec3<f32> = color * (ambient_strength + diffuse_lighting_strength + specular_lighting_strength);
+
+    var out: VertexOutput;
+    out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
+    out.color = out_color;
+    out.position = position;
+    out.normal = normal;
+
+    return out;
+}
+
+
+// Fragment shader
+struct FragmentOutput {
+    @location(0) surface: vec4<f32>,
+};
+
+@fragment
+fn fs_main(in: VertexOutput) -> FragmentOutput {
+
+    let color_out = vec4<f32>(in.color, 1.0);
+
+    var out: FragmentOutput;
+    out.surface = color_out;
+
+    return out;
+}
+
+struct VertexInfo {
+    position: vec3<f32>,
+    normal: vec3<f32>,
+}
+
+fn get_vertex_info(
+    model: VertexInput,
+    instance: InstanceInput,
+) -> VertexInfo
+{
     // calculate the animation
     var total_local_pos = vec4<f32>(0.0);
     var total_local_normal = vec4<f32>(0.0);
@@ -71,60 +169,9 @@ fn vs_main(
     // move to the instance position
     let world_position = instance.position + total_local_pos.xyz;
 
-    // calculate lighting
-    // let light_intensity = 0.8;
-    // let light_direction = normalize(vec3<f32>(1.0, -0.1, 1.0));
-
-    // let diffuse_lighting = clamp(dot(total_local_normal.xyz, light_direction) * light_intensity, 0.0, 1.0);
-    // let color = instance.color * diffuse_lighting;
-    let color = instance.color;
-
-    // apply camera
-    let clip_position = camera.view_proj * vec4<f32>(world_position, 1.0);
-
-    // calculate output
-    var out: VertexOutput;
-    out.clip_position = clip_position;
-    out.color = color;
-    out.position = world_position;
-    out.normal = total_local_normal.xyz;
-    // out.entity = instance.entity;
-
-    return out;
-}
-
-// Fragment shader
-struct FragmentOutput {
-    @location(0) surface: vec4<f32>,
-    // @location(0) position: vec4<f32>,
-    // @location(1) normal: vec4<f32>,
-    // @location(2) albedo: vec4<f32>,
-    // @location(3) entity: vec4<f32>,
-};
-
-@fragment
-fn fs_main(in: VertexOutput) -> FragmentOutput {
-
-    // var entity0 = (in.entity[0] >> 0u) & 0xffu;
-    // var entity1 = (in.entity[0] >> 8u) & 0xffu;
-    // var entity2 = (in.entity[0] >> 16u) & 0xffu;
-    // var entity3 = (in.entity[0] >> 24u) & 0xffu;
-
-    // var out: FragmentOutput;
-    // out.surface = vec4<f32>(in.color, 0.8);
-    // out.position =  vec4<f32>(in.position, 1.0);
-    // out.normal =  vec4<f32>(in.normal, 1.0);
-    // out.albedo = vec4<f32>(in.color, 1.0);
-    // out.entity =  vec4<f32>(
-    //     f32(entity0)/255.0, 
-    //     f32(entity1)/255.0, 
-    //     f32(entity2)/255.0, 
-    //     f32(entity3)/255.0);
-
-    let color_out = vec4<f32>(in.color, 1.0);
-
-    var out: FragmentOutput;
-    out.surface = color_out;
-
-    return out;
+    // return
+    return VertexInfo (
+        world_position,
+        total_local_normal.xyz,
+    );
 }

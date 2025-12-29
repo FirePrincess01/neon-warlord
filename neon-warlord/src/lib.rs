@@ -2,10 +2,11 @@
 
 mod ant_generator;
 mod ant_storage;
+mod camera_controller;
 mod debug_overlay;
 mod heightmap_generator;
 mod settings;
-
+mod sun_storage;
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
 };
@@ -19,8 +20,8 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_generator::AntGenerator, ant_storage::AntStorage, debug_overlay::DebugOverlay,
-    heightmap_generator::HeightMapGenerator,
+    ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController,
+    debug_overlay::DebugOverlay, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage,
 };
 
 const WATCH_POINTS_SIZE: usize = 7;
@@ -28,6 +29,12 @@ const DEBUG_OVERLAY_SIZE: usize = 10;
 
 struct ObjectSettings {
     pub max_nr_ants: usize,
+}
+
+struct CameraSettings {
+    speed: f32,
+    sensitivity: f32,
+    sensitivity_scroll: f32,
 }
 
 struct NeonWarlord {
@@ -40,6 +47,8 @@ struct NeonWarlord {
     renderer: ForwardRenderer,
     font: rusttype::Font<'static>,
 
+    camera_controller: CameraController,
+
     // Debug Utilities
     fps: Fps,
     watch_fps: Watch<WATCH_POINTS_SIZE>,
@@ -49,13 +58,23 @@ struct NeonWarlord {
     mouse_pos_y: u32,
     mouse_pos_x: u32,
 
-    // Scene
+    // debug
+    device_id: String,
+    phase: String,
+    location: String,
+    force: String,
+    id: String,
+
+    // Terrain
     terrain: TerrainStorage,
     terrain_generator: HeightMapGenerator,
 
     // Ants
     ants: AntStorage,
     _ant_generator: AntGenerator,
+
+    // Sun
+    sun: SunStorage,
 }
 
 impl NeonWarlord {
@@ -70,6 +89,13 @@ impl NeonWarlord {
 
         // font
         let font = wgpu_renderer::freefont::create_font_free_mono();
+
+        // Camera
+        let camera_controller = CameraController::new(
+            settings.get_camera_settings().speed,
+            settings.get_camera_settings().sensitivity,
+            settings.get_camera_settings().sensitivity_scroll,
+        );
 
         // world
         // let mut world = ecs2::World::new();
@@ -210,6 +236,9 @@ impl NeonWarlord {
         // selector
         // let selector = Selector::new();
 
+        // sun
+        let sun = SunStorage::new(renderer_interface);
+
         Self {
             _settings: settings,
             size,
@@ -227,6 +256,13 @@ impl NeonWarlord {
             terrain_generator,
             ants,
             _ant_generator: ant_generator,
+            camera_controller,
+            device_id: String::new(),
+            phase: String::new(),
+            location: String::new(),
+            force: String::new(),
+            id: String::new(),
+            sun,
             // settings,
 
             // size,
@@ -347,8 +383,12 @@ impl DefaultApplicationInterface for NeonWarlord {
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         dt: instant::Duration,
     ) {
+        // Render engine
+        self.camera_controller
+            .update_camera(&mut self.renderer.camera, dt);
         self.renderer.update(renderer_interface, dt);
 
+        // Animations
         self.watch_fps.start(4, "Update animations");
         {
             self.ants.animated_object_storage.update_animations(&dt);
@@ -359,6 +399,7 @@ impl DefaultApplicationInterface for NeonWarlord {
         }
         self.watch_fps.stop(4);
 
+        // Terrain
         self.watch_fps.start(3, "Update terrain");
         {
             // set terrain view position
@@ -379,12 +420,13 @@ impl DefaultApplicationInterface for NeonWarlord {
         }
         self.watch_fps.stop(3);
 
+        // Debug utilities
         self.watch_fps.update();
         self.watch_fps.start(0, "Debug utilities");
         {
             self.fps.update(dt);
 
-            self.debug_overlay.update(
+            self.debug_overlay.update_val(
                 renderer_interface,
                 &self.font,
                 0,
@@ -392,7 +434,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.fps.get() as f32,
             );
 
-            self.debug_overlay.update(
+            self.debug_overlay.update_val(
                 renderer_interface,
                 &self.font,
                 1,
@@ -400,13 +442,28 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.mouse_pos_x as f32,
             );
 
-            self.debug_overlay.update(
+            self.debug_overlay.update_val(
                 renderer_interface,
                 &self.font,
                 2,
                 "y",
                 self.mouse_pos_y as f32,
             );
+
+            self.debug_overlay
+                .update_str(renderer_interface, &self.font, 3, &self.device_id);
+
+            self.debug_overlay
+                .update_str(renderer_interface, &self.font, 4, &self.phase);
+
+            self.debug_overlay
+                .update_str(renderer_interface, &self.font, 5, &self.location);
+
+            self.debug_overlay
+                .update_str(renderer_interface, &self.font, 6, &self.force);
+
+            self.debug_overlay
+                .update_str(renderer_interface, &self.font, 7, &self.id);
 
             self.performance_monitor_fps.update_from_data(
                 renderer_interface,
@@ -458,18 +515,31 @@ impl DefaultApplicationInterface for NeonWarlord {
                         ..
                     },
                 ..
-            } => self.renderer.process_keyboard(*key, *state),
+            } => {
+                // self.renderer.process_keyboard(*key, *state),
+                self.camera_controller.process_keyboard(key, state)
+            }
             WindowEvent::MouseWheel { delta, .. } => {
-                self.renderer.process_scroll(delta);
+                // self.renderer.process_scroll(delta);
+                self.camera_controller.process_scroll(delta);
                 true
             }
             WindowEvent::CursorMoved { position, .. } => {
                 let pos = apply_scale_factor(*position, self.scale_factor);
 
-                self.mouse_pos_y = self.size.height - pos.y as u32;
+                self.mouse_pos_y = self.size.height.saturating_sub(pos.y as u32);
                 self.mouse_pos_x = pos.x as u32;
                 true
             }
+            winit::event::WindowEvent::Touch(touch) => {
+                self.device_id = format!("{:?}", touch.device_id);
+                self.phase = format!("{:?}", touch.phase);
+                self.location = format!("{:?}", touch.location);
+                self.force = format!("{:?}", touch.force);
+                self.id = format!("{:?}", touch.id);
+                true
+            }
+
             _ => false,
         };
         self.watch_fps.stop(2);
@@ -494,6 +564,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                     &self.performance_monitor_ups,
                     &self.debug_overlay,
                 ],
+                &[&self.sun],
             )
         }
         self.watch_fps.stop(1);

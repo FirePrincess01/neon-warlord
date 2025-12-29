@@ -11,15 +11,12 @@ use crate::animation_shader::AnimationShaderDraw;
 // use crate::performance_monitor::PerformanceMonitor;
 // use crate::point_light_storage::PointLightStorage;
 // use crate::terrain_storage::TerrainStorage;
-use crate::camera_controller::CameraController;
-use wgpu_renderer::vertex_color_shader;
+use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
+use crate::{DrawGui, lod_heightmap_shader};
+use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 use wgpu_renderer::vertex_texture_shader;
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
-use winit::event::{ElementState, MouseScrollDelta};
-
-use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
-use crate::{DrawGui, lod_heightmap_shader};
 
 // use crate::{
 //     deferred_animation_shader, deferred_heightmap_shader, deferred_light_shader,
@@ -31,6 +28,9 @@ pub struct RendererSettings {
     pub enable_vertical_sync: bool,
     pub enable_fxaa: bool,
     pub window_resolution: (u32, u32),
+
+    pub heightmap_lighting: lod_heightmap_shader::LightingModel,
+    pub animation_lighting: animation_shader::LightingModel,
 }
 
 pub struct ForwardRenderer {
@@ -62,7 +62,6 @@ pub struct ForwardRenderer {
 
     // camera
     pub camera: Camera,
-    camera_controller: CameraController,
     pub projection: Projection,
 
     camera_uniform: vertex_color_shader::CameraUniform,
@@ -168,6 +167,7 @@ impl ForwardRenderer {
             &camera_bind_group_layout,
             &animation_bind_group_layout,
             surface_format,
+            &settings.animation_lighting,
         );
 
         // pipeline deferred heightmap
@@ -179,6 +179,7 @@ impl ForwardRenderer {
             &texture_bind_group_layout,
             &heightmap_bind_group_layout,
             surface_format,
+            &settings.heightmap_lighting,
         );
 
         // // pipeline fxaa
@@ -205,11 +206,6 @@ impl ForwardRenderer {
         let mut camera = Camera::new(position, yaw, pitch);
         // Self::top_view_point(&mut camera);
         Self::side_view_point(&mut camera);
-
-        let speed = 40.0;
-        let sensitivity = 1.0;
-        let sensitivity_scroll = 1.0;
-        let camera_controller = CameraController::new(speed, sensitivity, sensitivity_scroll);
 
         let width = wgpu_renderer.surface_width();
         let height = wgpu_renderer.surface_height();
@@ -261,7 +257,6 @@ impl ForwardRenderer {
             // post_processing_texture,
             // pipeline_fxaa,
             camera,
-            camera_controller,
             projection,
 
             camera_uniform,
@@ -283,9 +278,9 @@ impl ForwardRenderer {
     }
 
     fn side_view_point(camera: &mut Camera) {
-        let position = cgmath::Point3::new(0.0, 5.0, 12.0);
+        let position = cgmath::Point3::new(0.0, 5.0, 2.0);
         let yaw = cgmath::Deg(-90.0).into();
-        let pitch = cgmath::Deg(60.0).into();
+        let pitch = cgmath::Deg(80.0).into();
 
         camera.position = position;
         camera.yaw = yaw;
@@ -333,22 +328,13 @@ impl ForwardRenderer {
     pub fn update(
         &mut self,
         renderer_interface: &mut dyn WgpuRendererInterface,
-        dt: instant::Duration,
+        _dt: instant::Duration,
     ) {
         // camera
-        self.camera_controller.update_camera(&mut self.camera, dt);
         self.camera_uniform
             .update_view_proj(&self.camera, &self.projection);
         self.camera_uniform_buffer
             .update(renderer_interface.queue(), self.camera_uniform);
-    }
-
-    pub fn process_keyboard(&mut self, key: winit::keyboard::KeyCode, state: ElementState) -> bool {
-        self.camera_controller.process_keyboard(key, state)
-    }
-
-    pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
-        self.camera_controller.process_scroll(delta);
     }
 
     pub fn get_view_position(&self) -> cgmath::Vector3<f32> {
@@ -589,6 +575,7 @@ impl ForwardRenderer {
     //     );
     // }
 
+    #[allow(clippy::too_many_arguments)]
     fn render_forward(
         &self,
         renderer_interface: &mut dyn WgpuRendererInterface,
@@ -598,6 +585,7 @@ impl ForwardRenderer {
         animations: &[&dyn AnimationShaderDraw],
         // textured_meshes: &impl VertexTextureShaderDraw,
         gui_elements: &[&dyn DrawGui],
+        vertex_color_objects: &[&dyn VertexColorShaderDraw],
         // performance_monitors: &[&mut PerformanceMonitor<{ super::WATCH_POINTS_SIZE }>],
     ) {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -641,6 +629,12 @@ impl ForwardRenderer {
         // animations
         for elem in animations {
             self.pipeline_animated
+                .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
+        }
+
+        // vertex color shader
+        for elem in vertex_color_objects {
+            self.pipeline_color
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
         }
 
@@ -702,6 +696,7 @@ impl ForwardRenderer {
         // ambient_light_quad: &deferred_light_shader::Mesh,
         animations: &[&dyn AnimationShaderDraw],
         gui_elements: &[&dyn DrawGui],
+        vertex_color_objects: &[&dyn VertexColorShaderDraw],
         // watch_fps: &mut watch::Watch<{ super::WATCH_POINTS_SIZE }>,
         // mouse_position: MousePosition,
     ) -> Result<(), wgpu::SurfaceError> {
@@ -758,6 +753,7 @@ impl ForwardRenderer {
             lod_terrains,
             animations,
             gui_elements,
+            vertex_color_objects,
         );
 
         // copy entity texture

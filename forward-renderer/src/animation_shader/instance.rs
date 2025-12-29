@@ -8,6 +8,12 @@ pub struct Instance {
     pub color: [f32; 3],
 }
 
+impl Default for Instance {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Instance {
     pub fn new() -> Self {
         Self {

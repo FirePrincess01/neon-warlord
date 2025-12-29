@@ -45,8 +45,12 @@ impl CameraController {
         }
     }
 
-    pub fn process_keyboard(&mut self, key: winit::keyboard::KeyCode, state: ElementState) -> bool {
-        let amount = if state == ElementState::Pressed {
+    pub fn process_keyboard(
+        &mut self,
+        key: &winit::keyboard::KeyCode,
+        state: &ElementState,
+    ) -> bool {
+        let amount = if *state == ElementState::Pressed {
             1.0
         } else {
             0.0
@@ -68,14 +72,14 @@ impl CameraController {
                 self.amount_right = amount;
                 true
             }
-            winit::keyboard::KeyCode::Space => {
-                self.amount_up = amount;
-                true
-            }
-            winit::keyboard::KeyCode::ShiftLeft => {
-                self.amount_down = amount;
-                true
-            }
+            // winit::keyboard::KeyCode::Space => {
+            //     self.amount_up = amount;
+            //     true
+            // }
+            // winit::keyboard::KeyCode::ShiftLeft => {
+            //     self.amount_down = amount;
+            //     true
+            // }
             _ => false,
         }
     }
@@ -123,7 +127,7 @@ impl CameraController {
         let scrollward =
             Vector3::new(pitch_cos * yaw_cos, pitch_sin, pitch_cos * yaw_sin).normalize();
         camera.position +=
-            scrollward * self.scroll * self.sensitivity_scroll * 0.020 * camera.position.z * 0.05;
+            scrollward * self.scroll * self.sensitivity_scroll * dt * camera.position.z * 1.0;
         self.scroll = 0.0;
 
         // Move up/down. Since we don't use roll, we can just
