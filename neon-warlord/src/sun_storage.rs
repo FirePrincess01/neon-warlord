@@ -1,6 +1,6 @@
 //! Holds the sun
 
-use cgmath::{Rotation3, Zero};
+use cgmath::Rotation3;
 use forward_renderer::geometry;
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 
