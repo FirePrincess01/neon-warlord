@@ -179,7 +179,7 @@ impl ForwardRenderer {
             &texture_bind_group_layout,
             &heightmap_bind_group_layout,
             surface_format,
-            &settings.heightmap_lighting
+            &settings.heightmap_lighting,
         );
 
         // // pipeline fxaa
@@ -634,11 +634,8 @@ impl ForwardRenderer {
 
         // vertex color shader
         for elem in vertex_color_objects {
-            self.pipeline_color.draw(
-                &mut render_pass,
-                &self.camera_uniform_buffer,
-                *elem,
-            );
+            self.pipeline_color
+                .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
         }
 
         // gui lines

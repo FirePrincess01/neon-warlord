@@ -16,7 +16,7 @@ impl Settings {
             enable_vertical_sync: false,
             enable_fxaa: false,
             window_resolution: (1920 / 2, 1080 / 2),
-            
+
             heightmap_lighting: lod_heightmap_shader::LightingModel::Gouraud,
             animation_lighting: animation_shader::LightingModel::Gouraud,
         }

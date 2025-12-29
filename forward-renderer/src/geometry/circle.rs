@@ -32,7 +32,9 @@ impl Circle {
             position: [0.0, 0.0, z],
         }); // center
 
-        colors.push(Color { color: (0.4 * color0 + 0.5 * color1).into() }); // center
+        colors.push(Color {
+            color: (0.4 * color0 + 0.5 * color1).into(),
+        }); // center
 
         let angle = 2.0 * PI / n as f32;
         for i in 0..n + 1 {
@@ -47,9 +49,10 @@ impl Circle {
                 position: [x, y, z],
             });
 
-            colors.push(Color { color: color.into() });
+            colors.push(Color {
+                color: color.into(),
+            });
         }
-
 
         // for _i in 0..n {
         //     colors.push(color);

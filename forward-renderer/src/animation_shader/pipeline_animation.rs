@@ -35,7 +35,7 @@ impl Pipeline {
             animation_bind_group_layout,
             surface_format,
             wgpu::PrimitiveTopology::LineList,
-            lighting
+            lighting,
         )
     }
 
@@ -52,7 +52,7 @@ impl Pipeline {
             animation_bind_group_layout,
             surface_format,
             wgpu::PrimitiveTopology::TriangleList,
-            lighting
+            lighting,
         )
     }
 
@@ -87,8 +87,8 @@ impl Pipeline {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: match lighting {
-                    LightingModel::None => Some("vs_main") ,
-                    LightingModel::Gouraud => Some("vs_main_gouraud") ,
+                    LightingModel::None => Some("vs_main"),
+                    LightingModel::Gouraud => Some("vs_main_gouraud"),
                 },
                 buffers: &[Vertex::desc(), Instance::desc()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),

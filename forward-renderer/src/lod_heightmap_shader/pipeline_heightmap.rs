@@ -30,7 +30,6 @@ impl Pipeline {
         surface_format: wgpu::TextureFormat,
         lighting: &LightingModel,
     ) -> Self {
-        
         // Shader
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
@@ -55,8 +54,8 @@ impl Pipeline {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: match lighting {
-                    LightingModel::None => Some("vs_main") ,
-                    LightingModel::Gouraud => Some("vs_main_gouraud") ,
+                    LightingModel::None => Some("vs_main"),
+                    LightingModel::Gouraud => Some("vs_main_gouraud"),
                 },
                 buffers: &[Vertex::desc(), Instance::desc()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),

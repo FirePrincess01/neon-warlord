@@ -45,7 +45,11 @@ impl CameraController {
         }
     }
 
-    pub fn process_keyboard(&mut self, key: &winit::keyboard::KeyCode, state: &ElementState) -> bool {
+    pub fn process_keyboard(
+        &mut self,
+        key: &winit::keyboard::KeyCode,
+        state: &ElementState,
+    ) -> bool {
         let amount = if *state == ElementState::Pressed {
             1.0
         } else {

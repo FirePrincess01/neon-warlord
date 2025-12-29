@@ -36,7 +36,11 @@ impl<const SIZE: usize> DebugOverlay<SIZE> {
         let font_scale = 16.0 * scale_factor;
 
         let entries: [Entry; 10] = core::array::from_fn(|i| {
-            let label = wgpu_renderer::label::Label::new(font, font_scale, "                              ");
+            let label = wgpu_renderer::label::Label::new(
+                font,
+                font_scale,
+                "                              ",
+            );
             let mesh = wgpu_renderer::label::LabelMesh::new(
                 renderer,
                 label.get_image(),
