@@ -10,6 +10,13 @@ use super::Vertex;
 use wgpu_renderer::vertex_color_shader;
 use wgpu_renderer::wgpu_renderer::depth_texture;
 
+pub enum LightingModel {
+    // no lighting
+    none,
+    // per vertex lighting
+    gouraud,
+}
+
 pub struct Pipeline {
     render_pipeline: wgpu::RenderPipeline,
 }
@@ -21,7 +28,10 @@ impl Pipeline {
         texture_bind_group_layout: &TextureBindGroupLayout,
         heightmap_bind_group_layout: &HeightmapBindGroupLayout,
         surface_format: wgpu::TextureFormat,
+        lgithting: &LightingModel
     ) -> Self {
+        let lighting = LightingModel::none;
+        
         // Shader
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
@@ -51,7 +61,10 @@ impl Pipeline {
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
-                entry_point: Some("fs_main"),
+                entry_point: match lighting {
+                    LightingModel::none => Some("fs_main") ,
+                    LightingModel::gouraud => Some("vs_main_gouraud") ,
+                },
                 targets: &[Some(wgpu::ColorTargetState {
                     format: surface_format,
                     blend: None,

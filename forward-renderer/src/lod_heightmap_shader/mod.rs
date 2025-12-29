@@ -10,6 +10,7 @@ mod vertex;
 pub use lod_heightmap_shader_draw::LodHeightMapShaderDraw;
 pub use mesh::Mesh;
 pub use pipeline::Pipeline;
+pub use pipeline::LightingModel;
 
 pub use wgpu_renderer::vertex_color_shader::IndexBuffer;
 

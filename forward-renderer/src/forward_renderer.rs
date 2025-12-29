@@ -28,6 +28,8 @@ pub struct RendererSettings {
     pub enable_vertical_sync: bool,
     pub enable_fxaa: bool,
     pub window_resolution: (u32, u32),
+
+    pub heightmap_lighting: lod_heightmap_shader::LightingModel,
 }
 
 pub struct ForwardRenderer {
@@ -175,6 +177,7 @@ impl ForwardRenderer {
             &texture_bind_group_layout,
             &heightmap_bind_group_layout,
             surface_format,
+            &settings.heightmap_lighting
         );
 
         // // pipeline fxaa
