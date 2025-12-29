@@ -123,7 +123,7 @@ impl CameraController {
         let scrollward =
             Vector3::new(pitch_cos * yaw_cos, pitch_sin, pitch_cos * yaw_sin).normalize();
         camera.position +=
-            scrollward * self.scroll * self.sensitivity_scroll * 0.020 * camera.position.z * 0.05;
+            scrollward * self.scroll * self.sensitivity_scroll * dt * camera.position.z * 1.0;
         self.scroll = 0.0;
 
         // Move up/down. Since we don't use roll, we can just

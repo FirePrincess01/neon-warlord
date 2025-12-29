@@ -6,7 +6,6 @@ mod camera_controller;
 mod debug_overlay;
 mod heightmap_generator;
 mod settings;
-
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
 };
@@ -58,6 +57,13 @@ struct NeonWarlord {
     mouse_pos_y: u32,
     mouse_pos_x: u32,
 
+    // debug
+    device_id: String,
+    phase: String,
+    location: String,
+    force: String,
+    id: String,
+
     // Scene
     terrain: TerrainStorage,
     terrain_generator: HeightMapGenerator,
@@ -65,6 +71,8 @@ struct NeonWarlord {
     // Ants
     ants: AntStorage,
     _ant_generator: AntGenerator,
+
+
 }
 
 impl NeonWarlord {
@@ -244,6 +252,11 @@ impl NeonWarlord {
             ants,
             _ant_generator: ant_generator,
             camera_controller,
+            device_id: String::new(),
+            phase: String::new(),
+            location: String::new(),
+            force: String::new(),
+            id: String::new(),
             // settings,
 
             // size,
@@ -431,6 +444,21 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.mouse_pos_y as f32,
             );
 
+            self.debug_overlay
+                .update_str(renderer_interface, &self.font, 3, &self.device_id);
+
+            self.debug_overlay
+                .update_str(renderer_interface, &self.font, 4, &self.phase);
+
+            self.debug_overlay
+                .update_str(renderer_interface, &self.font, 5, &self.location);
+
+            self.debug_overlay
+                .update_str(renderer_interface, &self.font, 6, &self.force);
+
+            self.debug_overlay
+                .update_str(renderer_interface, &self.font, 7, &self.id);
+
             self.performance_monitor_fps.update_from_data(
                 renderer_interface,
                 &self.font,
@@ -493,10 +521,19 @@ impl DefaultApplicationInterface for NeonWarlord {
             WindowEvent::CursorMoved { position, .. } => {
                 let pos = apply_scale_factor(*position, self.scale_factor);
 
-                self.mouse_pos_y = self.size.height - pos.y as u32;
+                self.mouse_pos_y = self.size.height.saturating_sub(pos.y as u32);
                 self.mouse_pos_x = pos.x as u32;
                 true
             }
+            winit::event::WindowEvent::Touch(touch) => {
+                self.device_id = format!("{:?}", touch.device_id);
+                self.phase = format!("{:?}", touch.phase);
+                self.location = format!("{:?}", touch.location);
+                self.force = format!("{:?}", touch.force);
+                self.id = format!("{:?}", touch.id);
+                true
+            }
+
             _ => false,
         };
         self.watch_fps.stop(2);
