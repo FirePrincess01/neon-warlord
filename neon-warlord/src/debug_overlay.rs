@@ -106,7 +106,7 @@ impl<const SIZE: usize> DebugOverlay<SIZE> {
         renderer: &mut dyn WgpuRendererInterface,
         font: &rusttype::Font<'static>,
         index: usize,
-        text: &String,
+        text: &str,
     ) {
         // let text = format!("{}: {}", name, val);
         let entry = &mut self.entries[index];

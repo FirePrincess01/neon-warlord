@@ -328,7 +328,7 @@ impl ForwardRenderer {
     pub fn update(
         &mut self,
         renderer_interface: &mut dyn WgpuRendererInterface,
-        dt: instant::Duration,
+        _dt: instant::Duration,
     ) {
         // camera
         self.camera_uniform
@@ -575,6 +575,7 @@ impl ForwardRenderer {
     //     );
     // }
 
+    #[allow(clippy::too_many_arguments)]
     fn render_forward(
         &self,
         renderer_interface: &mut dyn WgpuRendererInterface,

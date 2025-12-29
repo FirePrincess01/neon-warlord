@@ -10,6 +10,12 @@ pub struct Instance {
 }
 
 #[allow(unused)]
+impl Default for Instance {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Instance {
     pub fn new() -> Self {
         Self {
