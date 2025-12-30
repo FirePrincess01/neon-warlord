@@ -9,6 +9,7 @@ mod settings;
 mod sun_storage;
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
+    particle_storage::ParticleStorage,
 };
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -75,6 +76,9 @@ struct NeonWarlord {
 
     // Sun
     sun: SunStorage,
+
+    // Particles
+    particles: ParticleStorage,
 }
 
 impl NeonWarlord {
@@ -239,6 +243,9 @@ impl NeonWarlord {
         // sun
         let sun = SunStorage::new(renderer_interface);
 
+        // Particles
+        let particles = ParticleStorage::new(renderer_interface);
+
         Self {
             _settings: settings,
             size,
@@ -263,6 +270,7 @@ impl NeonWarlord {
             force: String::new(),
             id: String::new(),
             sun,
+            particles,
             // settings,
 
             // size,
@@ -387,6 +395,13 @@ impl DefaultApplicationInterface for NeonWarlord {
         self.camera_controller
             .update_camera(&mut self.renderer.camera, dt);
         self.renderer.update(renderer_interface, dt);
+
+        // Particles
+        self.watch_fps.start(5, "Update particles");
+        {
+            self.particles.update(renderer_interface, dt);
+        }
+        self.watch_fps.stop(5);
 
         // Animations
         self.watch_fps.start(4, "Update animations");
@@ -565,6 +580,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                     &self.debug_overlay,
                 ],
                 &[&self.sun],
+                &[&self.particles],
             )
         }
         self.watch_fps.stop(1);
