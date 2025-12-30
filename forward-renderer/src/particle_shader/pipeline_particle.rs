@@ -4,10 +4,10 @@
 //! The implementation uses wgpu for rendering
 //!
 
+use crate::particle_shader::ParticleShaderDraw;
 use wgpu_renderer::vertex_color_shader::CameraUniformBuffer;
 use wgpu_renderer::vertex_color_shader::camera_bind_group_layout;
 use wgpu_renderer::wgpu_renderer::depth_texture::DepthTexture;
-use crate::particle_shader::ParticleShaderDraw;
 
 use super::Instance;
 use super::Vertex;
@@ -45,10 +45,7 @@ impl PipelineParticle {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
-                buffers: &[
-                    Vertex::desc(),
-                    Instance::desc(),
-                ],
+                buffers: &[Vertex::desc(), Instance::desc()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {

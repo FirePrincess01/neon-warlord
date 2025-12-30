@@ -22,9 +22,7 @@ impl Quad {
             Vec3::new(-a, a, 0.0),
         );
 
-        Self {
-            rectangle,
-        }
+        Self { rectangle }
     }
 }
 

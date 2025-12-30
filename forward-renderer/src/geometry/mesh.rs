@@ -67,7 +67,6 @@ impl Mesh {
     }
 }
 
-
 impl super::mesh::MeshInterface for Mesh {
     fn vertices(&self) -> &[Vec3] {
         &self.vertices

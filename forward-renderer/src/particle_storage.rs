@@ -1,7 +1,10 @@
 //! Manages the data on the gpu of the particles
 //!
 
-use wgpu_renderer::{shape::{MeshDataInterface, UVSphere}, wgpu_renderer::WgpuRendererInterface};
+use wgpu_renderer::{
+    shape::{MeshDataInterface, UVSphere},
+    wgpu_renderer::WgpuRendererInterface,
+};
 
 use crate::{geometry, particle_shader};
 
@@ -15,7 +18,7 @@ impl ParticleStorage {
     pub fn new(renderer: &mut dyn WgpuRendererInterface) -> Self {
         let nr_particles = 25;
 
-        let sphere = UVSphere::new(1.0, 6); 
+        let sphere = UVSphere::new(1.0, 6);
         let sphere_triangles = sphere.triangles(); // 96 positions
         println!("vertices: {}", sphere_triangles.positions.len());
 
@@ -27,15 +30,12 @@ impl ParticleStorage {
             mesh_host.add_tirangles(sphere_triangles);
         }
 
-        let instances = [
-            particle_shader::Instance{
-                position: [0.0, 7.0, 1.0],
-                color: [0.01, 0.01, 0.01],
-                time: 0.0,
-            },
-        ];
-        let mesh =
-            particle_shader::Mesh::from_geometry(renderer.device(), &mesh_host, &instances);
+        let instances = [particle_shader::Instance {
+            position: [0.0, 7.0, 1.0],
+            color: [0.01, 0.01, 0.01],
+            time: 0.0,
+        }];
+        let mesh = particle_shader::Mesh::from_geometry(renderer.device(), &mesh_host, &instances);
 
         Self {
             mesh,
@@ -51,13 +51,13 @@ impl ParticleStorage {
         // self.instances[1].time = self.time + 10.0;
         // self.instances[2].time = self.time + 20.0;
 
-
         // for instance in &mut self.instances {
         //     instance.time = self.time;
         // }
 
-        self.mesh.update_instance_buffer(renderer.queue(), &self.instances);
-    } 
+        self.mesh
+            .update_instance_buffer(renderer.queue(), &self.instances);
+    }
 }
 
 impl particle_shader::ParticleShaderDraw for ParticleStorage {

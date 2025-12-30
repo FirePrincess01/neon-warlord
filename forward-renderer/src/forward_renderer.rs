@@ -1,9 +1,9 @@
 //! Renders everything
 //!
 
+use crate::animation_shader::AnimationShaderDraw;
 use crate::particle_shader::ParticleShaderDraw;
 use crate::{animation_shader, particle_shader};
-use crate::animation_shader::AnimationShaderDraw;
 // use crate::animated_object_storage::AnimatedObjectStorage;
 // use crate::deferred_color_shader::entity_buffer::MousePosition;
 // use crate::deferred_color_shader::{self, DeferredShaderDraw, EntityBuffer, GBuffer};

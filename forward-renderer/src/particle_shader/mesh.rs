@@ -36,7 +36,11 @@ impl Mesh {
         }
     }
 
-    pub fn from_geometry(device: &wgpu::Device, data: &dyn MeshInterface, instances: &[Instance]) -> Self {
+    pub fn from_geometry(
+        device: &wgpu::Device,
+        data: &dyn MeshInterface,
+        instances: &[Instance],
+    ) -> Self {
         let vertices = data.vertices();
         let normals = data.normals();
         let indices = data.indices();

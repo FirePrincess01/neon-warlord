@@ -8,7 +8,8 @@ mod heightmap_generator;
 mod settings;
 mod sun_storage;
 use forward_renderer::{
-    AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage, particle_storage::ParticleStorage,
+    AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
+    particle_storage::ParticleStorage,
 };
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -401,7 +402,6 @@ impl DefaultApplicationInterface for NeonWarlord {
             self.particles.update(renderer_interface, dt);
         }
         self.watch_fps.stop(5);
-
 
         // Animations
         self.watch_fps.start(4, "Update animations");
