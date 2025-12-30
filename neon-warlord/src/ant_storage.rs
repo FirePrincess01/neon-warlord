@@ -41,7 +41,7 @@ impl AntStorage {
 
     pub fn set_ant(&mut self, ant: &Ant) {
         if ant.id < self.max_ants {
-            let pos = cgmath::Vector3::new(ant.pos.x, ant.pos.y, 2.0);
+            let pos = cgmath::Vector3::new(ant.pos.x + 10.0, ant.pos.y, 2.0);
             // let pos = cgmath::Vector3::new(0.0, 0.0, 0.0);
             self.animated_object_storage.set_pos(ant.id, pos);
             // self.point_light_storage.set_position(&PointLightIndex{ instance_index: ant.id }, pos);

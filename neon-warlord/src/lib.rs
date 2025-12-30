@@ -395,6 +395,14 @@ impl DefaultApplicationInterface for NeonWarlord {
             .update_camera(&mut self.renderer.camera, dt);
         self.renderer.update(renderer_interface, dt);
 
+        // Particles
+        self.watch_fps.start(5, "Update particles");
+        {
+            self.particles.update(renderer_interface, dt);
+        }
+        self.watch_fps.stop(5);
+
+
         // Animations
         self.watch_fps.start(4, "Update animations");
         {

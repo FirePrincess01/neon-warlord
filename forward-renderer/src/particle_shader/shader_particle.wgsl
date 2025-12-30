@@ -1,3 +1,5 @@
+// Shader to draw a view repeating particles
+
 // Vertex shader
 struct CameraUniform {
     view_pos: vec4<f32>,
@@ -19,28 +21,51 @@ struct InstanceInput {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) color: vec3<f32>,
+    @location(0) color: vec4<f32>,
 };
 
 @vertex 
 fn vs_main(
+    @builtin(vertex_index) vertex_index: u32,
     model: VertexInput,
     instance: InstanceInput,
 ) -> VertexOutput {
+    // constants
+    const pi2 = radians(90.0);
+    const nr_vertices_per_object = 100; // must match the used objects
+    const distance = 4.0;
 
-    let position = model.position + instance.position;
+    // start time
+    let object_index= vertex_index/nr_vertices_per_object;
+    let rand_time = random2(object_index);
+    let time =  instance.time + rand_time;
 
+    // position rands
+    let rand0 = 1.0 -2 * random(object_index + 0 + u32(time));
+    let rand1 = 1.0 -2 * random(object_index + 1 + u32(time));
+    let rand2 = 1.0 -2 * random(object_index + 2 + u32(time));
+    let position_offset = vec3(rand0, rand1, rand2) * distance;
+
+    let position = model.position + position_offset ;
+
+    // time and movement function
+    let time_fn = time % 1.0;
+    let move_fn = 1.0 - cos(pi2 * time_fn);
+
+    // linear interpolate
+    let current_position = move_fn * instance.position + (1.0 - move_fn) * (instance.position + position);
+
+    // final result
     var out: VertexOutput;
-    out.color = instance.color;
-    out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
+    out.color = vec4(instance.color, time_fn);
+    out.clip_position = camera.view_proj * vec4<f32>(current_position, 1.0);
     return out;
 }
 
 // Fragment shader
-
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return vec4<f32>(in.color, 1.0);
+    return in.color;
 }
 
 
@@ -77,6 +102,16 @@ fn random(input: u32) -> f32 {
     
     let val2 = rand_xorshift(input);
     let val3 = wang_hash(val2);
+    let val4 = f32(val3) * (1.0 / 4294967296.0);
+    
+    return val4;
+}
+
+// returns a random number between 0 and 1
+fn random2(input: u32) -> f32 {
+    
+    let val2 = rand_xorshift(input);
+    let val3 = pcg_hash(val2);
     let val4 = f32(val3) * (1.0 / 4294967296.0);
     
     return val4;

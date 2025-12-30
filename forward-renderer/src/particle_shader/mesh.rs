@@ -1,6 +1,7 @@
 //! Contains the device buffers to render an object with this shader
 //!
 
+use crate::geometry::MeshInterface;
 use crate::particle_shader::ParticleShaderDraw;
 
 use super::IndexBuffer;
@@ -33,6 +34,25 @@ impl Mesh {
             index_buffer,
             instance_buffer,
         }
+    }
+
+    pub fn from_geometry(device: &wgpu::Device, data: &dyn MeshInterface, instances: &[Instance]) -> Self {
+        let vertices = data.vertices();
+        let normals = data.normals();
+        let indices = data.indices();
+
+        assert_eq!(vertices.len(), normals.len());
+
+        let len = vertices.iter().len();
+        let mut mesh_vertices = Vec::with_capacity(len);
+
+        for elem in vertices {
+            mesh_vertices.push(Vertex {
+                position: (*elem).into(),
+            });
+        }
+
+        Self::new(device, &mesh_vertices, &indices, instances)
     }
 
     pub fn update_vertex_buffer(&mut self, queue: &wgpu::Queue, vertices: &[Vertex]) {

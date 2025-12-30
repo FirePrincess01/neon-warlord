@@ -6,9 +6,8 @@ mod mesh;
 pub mod quad;
 pub mod rectangle;
 
-#[allow(unused)]
 pub use circle::Circle;
-#[allow(unused)]
 pub use frame::Frame;
-#[allow(unused)]
 pub use quad::Quad;
+pub use mesh::Mesh;
+pub use mesh::MeshInterface;
