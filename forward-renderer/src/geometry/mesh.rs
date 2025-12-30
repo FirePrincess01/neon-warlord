@@ -50,7 +50,7 @@ impl Mesh {
         }
     }
 
-    pub fn add_tirangles(&mut self, other: &MeshDataTriangles) {
+    pub fn add_triangles(&mut self, other: &MeshDataTriangles) {
         let indices_base = self.vertices.len() as u32;
 
         for elem in &other.positions {

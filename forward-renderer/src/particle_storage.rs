@@ -27,7 +27,7 @@ impl ParticleStorage {
         let mut mesh_host = geometry::Mesh::new();
         for _i in 0..nr_particles {
             // mesh_host.add(&quad);
-            mesh_host.add_tirangles(sphere_triangles);
+            mesh_host.add_triangles(sphere_triangles);
         }
 
         let instances = [particle_shader::Instance {
