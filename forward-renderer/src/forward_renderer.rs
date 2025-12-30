@@ -1,7 +1,8 @@
 //! Renders everything
 //!
 
-use crate::animation_shader;
+use crate::particle_shader::ParticleShaderDraw;
+use crate::{animation_shader, particle_shader};
 use crate::animation_shader::AnimationShaderDraw;
 // use crate::animated_object_storage::AnimatedObjectStorage;
 // use crate::deferred_color_shader::entity_buffer::MousePosition;
@@ -55,6 +56,8 @@ pub struct ForwardRenderer {
 
     pub heightmap_bind_group_layout: lod_heightmap_shader::HeightmapBindGroupLayout,
     pipeline_lod_heightmap: lod_heightmap_shader::Pipeline,
+
+    pipeline_particle: particle_shader::PipelineParticle,
 
     // post_processing_bind_group_layout: fxaa_shader::PostProcessingTextureBindGroupLayout,
     // post_processing_texture: fxaa_shader::PostProcessingTexture,
@@ -173,13 +176,20 @@ impl ForwardRenderer {
         // pipeline deferred heightmap
         let heightmap_bind_group_layout =
             lod_heightmap_shader::HeightmapBindGroupLayout::new(wgpu_renderer.device());
-        let pipeline_deferred_heightmap = lod_heightmap_shader::Pipeline::new(
+        let pipeline_lod_heightmap = lod_heightmap_shader::Pipeline::new(
             wgpu_renderer.device(),
             &camera_bind_group_layout,
             &texture_bind_group_layout,
             &heightmap_bind_group_layout,
             surface_format,
             &settings.heightmap_lighting,
+        );
+
+        // Particles
+        let pipeline_particle = particle_shader::PipelineParticle::new(
+            wgpu_renderer.device(),
+            &camera_bind_group_layout,
+            surface_format,
         );
 
         // // pipeline fxaa
@@ -250,8 +260,11 @@ impl ForwardRenderer {
             // pipeline_deferred_light_sphere,
             animation_bind_group_layout,
             pipeline_animated,
+
             heightmap_bind_group_layout,
-            pipeline_lod_heightmap: pipeline_deferred_heightmap,
+            pipeline_lod_heightmap,
+
+            pipeline_particle,
 
             // post_processing_bind_group_layout,
             // post_processing_texture,
@@ -586,6 +599,7 @@ impl ForwardRenderer {
         // textured_meshes: &impl VertexTextureShaderDraw,
         gui_elements: &[&dyn DrawGui],
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
+        particles: &[&dyn ParticleShaderDraw],
         // performance_monitors: &[&mut PerformanceMonitor<{ super::WATCH_POINTS_SIZE }>],
     ) {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -635,6 +649,12 @@ impl ForwardRenderer {
         // vertex color shader
         for elem in vertex_color_objects {
             self.pipeline_color
+                .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
+        }
+
+        // particlesr shader
+        for elem in particles {
+            self.pipeline_particle
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
         }
 
@@ -697,6 +717,7 @@ impl ForwardRenderer {
         animations: &[&dyn AnimationShaderDraw],
         gui_elements: &[&dyn DrawGui],
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
+        particles: &[&dyn ParticleShaderDraw],
         // watch_fps: &mut watch::Watch<{ super::WATCH_POINTS_SIZE }>,
         // mouse_position: MousePosition,
     ) -> Result<(), wgpu::SurfaceError> {
@@ -754,6 +775,7 @@ impl ForwardRenderer {
             animations,
             gui_elements,
             vertex_color_objects,
+            particles,
         );
 
         // copy entity texture

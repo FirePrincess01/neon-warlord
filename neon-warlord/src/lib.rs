@@ -8,7 +8,7 @@ mod heightmap_generator;
 mod settings;
 mod sun_storage;
 use forward_renderer::{
-    AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
+    AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage, particle_storage::ParticleStorage,
 };
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -75,6 +75,9 @@ struct NeonWarlord {
 
     // Sun
     sun: SunStorage,
+
+    // Particles
+    particles: ParticleStorage,
 }
 
 impl NeonWarlord {
@@ -239,6 +242,9 @@ impl NeonWarlord {
         // sun
         let sun = SunStorage::new(renderer_interface);
 
+        // Particles
+        let particles = ParticleStorage::new(renderer_interface);
+
         Self {
             _settings: settings,
             size,
@@ -263,6 +269,7 @@ impl NeonWarlord {
             force: String::new(),
             id: String::new(),
             sun,
+            particles,
             // settings,
 
             // size,
@@ -565,6 +572,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                     &self.debug_overlay,
                 ],
                 &[&self.sun],
+                &[&self.particles],
             )
         }
         self.watch_fps.stop(1);
