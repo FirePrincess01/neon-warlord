@@ -30,14 +30,14 @@ impl Quad {
 
 impl super::mesh::MeshInterface for Quad {
     fn vertices(&self) -> &[Vec3] {
-        &self.rectangle.vertices()
+        self.rectangle.vertices()
     }
 
     fn normals(&self) -> &[Vec3] {
-        &self.rectangle.normals()
+        self.rectangle.normals()
     }
 
     fn indices(&self) -> &[u32] {
-        &self.rectangle.indices()
+        self.rectangle.indices()
     }
 }

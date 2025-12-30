@@ -24,7 +24,7 @@ impl ParticleStorage {
         let mut mesh_host = geometry::Mesh::new();
         for _i in 0..nr_particles {
             // mesh_host.add(&quad);
-            mesh_host.add_tirangles(&sphere_triangles);
+            mesh_host.add_tirangles(sphere_triangles);
         }
 
         let instances = [
@@ -45,7 +45,7 @@ impl ParticleStorage {
     }
 
     pub fn update(&mut self, renderer: &mut dyn WgpuRendererInterface, dt: instant::Duration) {
-        self.time = self.time + dt.as_secs_f32() / 2.0;
+        self.time += dt.as_secs_f32() / 2.0;
 
         self.instances[0].time = self.time;
         // self.instances[1].time = self.time + 10.0;
