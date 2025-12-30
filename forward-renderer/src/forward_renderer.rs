@@ -652,7 +652,7 @@ impl ForwardRenderer {
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
         }
 
-        // particlesr shader
+        // particle shader
         for elem in particles {
             self.pipeline_particle
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);

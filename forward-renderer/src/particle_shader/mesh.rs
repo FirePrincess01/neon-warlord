@@ -64,7 +64,6 @@ impl Mesh {
     }
 
     pub fn update_instance_buffer(&mut self, queue: &wgpu::Queue, instances: &[Instance]) {
-        // let instance_data = &instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
         self.instance_buffer.update(queue, instances);
     }
 
