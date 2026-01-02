@@ -32,16 +32,21 @@ impl Animation {
         }
     }
 
+    fn get_current_key_frame_time(&self) -> f32 {
+        let animation_speed = 1.0;
+        self.current_key_frame_time.as_secs_f32() * animation_speed
+    }
+
     pub fn increment_time(&mut self, dt: &instant::Duration) {
         self.current_key_frame_time += *dt;
 
-        if self.current_key_frame_time.as_secs_f32() * 0.1 > self.max_key_frame_time {
+        if self.get_current_key_frame_time() > self.max_key_frame_time {
             self.current_key_frame_time = instant::Duration::ZERO;
         }
     }
 
     fn get_sample_poses(&self, animation_data: &AnimationData) -> Vec<Decomposed> {
-        let current_time = self.current_key_frame_time.as_secs_f32() * 0.1;
+        let current_time = self.get_current_key_frame_time();
         let joint_translations = &animation_data.joint_translations;
         let joint_rotations = &animation_data.joint_rotations;
         let len = joint_translations.len();
@@ -74,6 +79,9 @@ impl Animation {
         let sample_poses: Vec<Decomposed> = self.get_sample_poses(animation_data);
         let joint_transforms = skeleton.create_key_frame(&sample_poses);
 
+        // println!("animation_uniform.joint_transform.len() {}", animation_uniform.joint_transform.len());
+        // println!("joint_transforms.len() {}", joint_transforms.len());
+        // println!("joint_transforms {:?}", joint_transforms);
         assert!(animation_uniform.joint_transform.len() >= joint_transforms.len());
 
         let len = joint_transforms.len();

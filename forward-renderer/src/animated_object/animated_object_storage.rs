@@ -36,7 +36,8 @@ impl AnimatedObjectStorage {
         let animation_object_data = GltfImporter::create(glb_bin);
 
         let skeleton = Skeleton::new(&animation_object_data);
-        let animation_data = animation_object_data.animations[0].clone();
+        let animation_data = animation_object_data.animations[1].clone();
+        println!("animation_object_data.animations: {:?}", animation_object_data.animations);
         // let animation_0 = Animation::new(&animation_data);
         let animation_uniform = animation_shader::AnimationUniform::zero();
 

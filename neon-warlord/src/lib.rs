@@ -165,7 +165,7 @@ impl NeonWarlord {
 
         // create ant
         // let glb_bin = include_bytes!("../res/wiggle_tower2.glb");
-        let glb_bin = include_bytes!("../res/ant_0_8.glb");
+        let glb_bin = include_bytes!("../res/ant_0_10.glb");
         let animated_object_storage_ant = AnimatedObjectStorage::create_from_glb(
             renderer_interface,
             &renderer.animation_bind_group_layout,

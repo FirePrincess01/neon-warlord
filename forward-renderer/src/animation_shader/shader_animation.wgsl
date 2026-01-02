@@ -144,7 +144,7 @@ fn get_vertex_info(
     instance: InstanceInput,
 ) -> VertexInfo
 {
-    let scale = 0.2;
+    let scale = 0.1;
 
     // calculate the animation
     var total_local_pos = vec4<f32>(0.0);
