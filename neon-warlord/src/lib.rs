@@ -2,6 +2,7 @@
 
 mod ant_generator;
 mod ant_storage;
+mod ant_ai;
 mod camera_controller;
 mod debug_overlay;
 mod heightmap_generator;

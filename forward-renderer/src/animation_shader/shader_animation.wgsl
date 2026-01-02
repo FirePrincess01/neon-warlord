@@ -44,7 +44,6 @@ fn vs_main(
     model: VertexInput,
     instance: InstanceInput,
 ) -> VertexOutput {
-
     let info = get_vertex_info(model, instance);
     
     let position = info.position;
@@ -54,10 +53,10 @@ fn vs_main(
     
     // calculate output
     var out: VertexOutput;
-    out.clip_position = camera.view_proj * vec4<f32>(info.position, 1.0);
+    out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
     out.color = color;
-    out.position = info.position;
-    out.normal = info.normal;
+    out.position = position;
+    out.normal = normal;
 
     return out;
 }
@@ -145,6 +144,8 @@ fn get_vertex_info(
     instance: InstanceInput,
 ) -> VertexInfo
 {
+    let scale = 0.2;
+
     // calculate the animation
     var total_local_pos = vec4<f32>(0.0);
     var total_local_normal = vec4<f32>(0.0);
@@ -167,7 +168,7 @@ fn get_vertex_info(
     }
 
     // move to the instance position
-    let world_position = instance.position + total_local_pos.xyz;
+    let world_position = instance.position + total_local_pos.xyz * scale;
 
     // return
     return VertexInfo (

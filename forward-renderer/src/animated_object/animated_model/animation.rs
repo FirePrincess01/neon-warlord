@@ -35,13 +35,13 @@ impl Animation {
     pub fn increment_time(&mut self, dt: &instant::Duration) {
         self.current_key_frame_time += *dt;
 
-        if self.current_key_frame_time.as_secs_f32() > self.max_key_frame_time {
+        if self.current_key_frame_time.as_secs_f32() * 0.1 > self.max_key_frame_time {
             self.current_key_frame_time = instant::Duration::ZERO;
         }
     }
 
     fn get_sample_poses(&self, animation_data: &AnimationData) -> Vec<Decomposed> {
-        let current_time = self.current_key_frame_time.as_secs_f32();
+        let current_time = self.current_key_frame_time.as_secs_f32() * 0.1;
         let joint_translations = &animation_data.joint_translations;
         let joint_rotations = &animation_data.joint_rotations;
         let len = joint_translations.len();
