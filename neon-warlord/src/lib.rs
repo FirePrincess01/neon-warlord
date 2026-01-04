@@ -8,6 +8,10 @@ mod debug_overlay;
 mod heightmap_generator;
 mod settings;
 mod sun_storage;
+mod AntAiController;
+mod agent_controller;
+mod game_board;
+
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
     particle_storage::ParticleStorage,
@@ -22,8 +26,7 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController,
-    debug_overlay::DebugOverlay, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage,
+    ant_ai::AntAi, ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController, debug_overlay::DebugOverlay, game_board::GameBoard, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage, AntAiController::AntAiController
 };
 
 const WATCH_POINTS_SIZE: usize = 10;
@@ -80,6 +83,10 @@ struct NeonWarlord {
 
     // Particles
     particles: ParticleStorage,
+
+    // Ai
+    ant_ai: AntAi,
+    game_board: GameBoard,
 }
 
 impl NeonWarlord {
@@ -247,6 +254,10 @@ impl NeonWarlord {
         // Particles
         let particles = ParticleStorage::new(renderer_interface);
 
+        // Ai
+        let ant_ai = AntAi::new(ant_ai::Faction::Blue);
+        let game_board = GameBoard::new();
+
         Self {
             _settings: settings,
             size,
@@ -272,6 +283,8 @@ impl NeonWarlord {
             id: String::new(),
             sun,
             particles,
+            ant_ai,
+            game_board,
             // settings,
 
             // size,
@@ -402,14 +415,16 @@ impl DefaultApplicationInterface for NeonWarlord {
         self.renderer.update(renderer_interface, dt);
 
         // Particles
-        self.watch_fps.start(0, "Update Particles");
+        let mut watch_index = 0;
+        self.watch_fps.start(watch_index, "Update Particles");
         {
             self.particles.update(renderer_interface, dt);
         }
-        self.watch_fps.stop(0);
+        self.watch_fps.stop(watch_index);
 
         // Animations
-        self.watch_fps.start(1, "Update Animations");
+        watch_index += 1;
+        self.watch_fps.start(watch_index, "Update Animations");
         {
             self.ants.animated_object_storage.update_animations(&dt);
 
@@ -417,10 +432,11 @@ impl DefaultApplicationInterface for NeonWarlord {
                 .animated_object_storage
                 .update_device_data(renderer_interface);
         }
-        self.watch_fps.stop(1);
+        self.watch_fps.stop(watch_index);
 
         // Terrain
-        self.watch_fps.start(2, "Update Terrain");
+        watch_index += 1;
+        self.watch_fps.start(watch_index, "Update Terrain");
         {
             // set terrain view position
             self.terrain
@@ -438,10 +454,23 @@ impl DefaultApplicationInterface for NeonWarlord {
             }
             self.terrain.clear_requests();
         }
-        self.watch_fps.stop(2);
+        self.watch_fps.stop(watch_index);
+
+        // Ai
+        watch_index += 1;
+        self.watch_fps.start(watch_index, "Update AI");
+        {
+            let world_controller = AntAiController{
+                game_board: &mut self.game_board,
+            };
+
+            self.ant_ai.update(&world_controller, body);
+        }
+        self.watch_fps.stop(watch_index);
 
         // Debug utilities
-        self.watch_fps.start(3, "Update Debug");
+        watch_index += 1;
+        self.watch_fps.start(watch_index, "Update Debug");
         {
             self.fps.update(dt);
 
@@ -490,7 +519,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 &watch_fps_data,
             );
         }
-        self.watch_fps.stop(3);
+        self.watch_fps.stop(watch_index);
     }
 
     fn input(&mut self, event: &winit::event::WindowEvent) -> bool {

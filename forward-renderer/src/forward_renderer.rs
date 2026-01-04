@@ -725,7 +725,6 @@ impl ForwardRenderer {
         // watch_fps.start(0, "Wait for next frame");
 
         let mut watch_index = 5;
-        
         watch_fps.start(watch_index, "Get frame");
         let output = renderer_interface.get_current_texture()?;
         // watch_fps.stop(0);

@@ -2,6 +2,8 @@
 
 use cgmath::prelude::*;
 
+use crate::game_board;
+
 type Vec2 = cgmath::Vector2<f32>;
 
 pub struct StateData {
@@ -10,9 +12,7 @@ pub struct StateData {
 
 impl StateData {
     pub fn new() -> Self {
-        Self {
-            target_agent: None,
-        }
+        Self { target_agent: None }
     }
 }
 
@@ -46,7 +46,7 @@ impl AntAi {
                 // #######################################################
                 // get closest enemy
                 let position = body.get_position();
-                let agents = world.get_agents();
+                let agents = world.world_get_agents();
                 let closest_enemy = self.get_closest_enemy(position, agents);
 
                 // state transition
@@ -151,11 +151,13 @@ pub trait AntBodyInterface {
 }
 
 pub trait WorldInterface {
-    fn get_agents(&self) -> &[Agent];
+    fn world_get_agents(&self) -> &[game_board::Agent];
 }
 
+pub trait AntAiInterface: AntBodyInterface + WorldInterface {}
+
 #[derive(PartialEq, Clone, Copy)]
-enum Faction {
+pub enum Faction {
     Red,
     Blue,
 }
