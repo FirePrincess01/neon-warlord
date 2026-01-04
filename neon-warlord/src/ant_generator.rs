@@ -41,8 +41,8 @@ impl AntGenerator {
                     id,
 
                     pos: cgmath::Vector2 {
-                        x: x as f32 * 50.0,
-                        y: y as f32 * 50.0,
+                        x: x as f32 * 4.0,
+                        y: y as f32 * 4.0,
                     },
                     _rot_z: 0.0,
                     _light_strength: 1.0,

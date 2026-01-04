@@ -1,20 +1,23 @@
+//! Creates a bone hiarchy
+
 use cgmath::SquareMatrix;
 
 use super::joint::Joint;
 
+/// Creates a bone hiarchy
 pub struct Skeleton {
     joints: Vec<Joint>,
 }
 
 impl Skeleton {
     pub(crate) fn new(
-        animation_data: &crate::animated_object::animated_object_data::AnimatedObjectData,
+        skeleton_data: &crate::animated_object::animated_object_data::SkeletonData,
     ) -> Self {
-        let joint_names = &animation_data.skeleton.joint_names;
-        let joint_children = &animation_data.skeleton.joint_children;
-        let joint_translations = &animation_data.skeleton.joint_translations;
-        let joint_rotations = &animation_data.skeleton.joint_rotations;
-        let inverse_bind_transforms = &animation_data.skeleton.inverse_bind_transforms;
+        let joint_names = &skeleton_data.joint_names;
+        let joint_children = &skeleton_data.joint_children;
+        let joint_translations = &skeleton_data.joint_translations;
+        let joint_rotations = &skeleton_data.joint_rotations;
+        let inverse_bind_transforms = &skeleton_data.inverse_bind_transforms;
 
         let nr_joints = joint_names.len();
         assert_eq!(joint_children.len(), nr_joints);
@@ -27,7 +30,7 @@ impl Skeleton {
         for i in 0..nr_joints {
             let name = joint_names[i].clone();
             let child_names = &joint_children[i];
-            let child_indices = animation_data.joint_children_indices(i);
+            let child_indices = skeleton_data.joint_children_indices(i);
             let translation = joint_translations[i];
             let rotation = joint_rotations[i];
             let inverse_bind_transform = &inverse_bind_transforms[i];

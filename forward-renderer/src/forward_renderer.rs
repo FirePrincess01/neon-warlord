@@ -14,6 +14,7 @@ use crate::{animation_shader, particle_shader};
 // use crate::terrain_storage::TerrainStorage;
 use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
 use crate::{DrawGui, lod_heightmap_shader};
+use wgpu_renderer::performance_monitor::watch;
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 use wgpu_renderer::vertex_texture_shader;
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
@@ -718,10 +719,14 @@ impl ForwardRenderer {
         gui_elements: &[&dyn DrawGui],
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
         particles: &[&dyn ParticleShaderDraw],
-        // watch_fps: &mut watch::Watch<{ super::WATCH_POINTS_SIZE }>,
+        watch_fps: &mut watch::Watch<10>,
         // mouse_position: MousePosition,
     ) -> Result<(), wgpu::SurfaceError> {
         // watch_fps.start(0, "Wait for next frame");
+
+        let mut watch_index = 5;
+        
+        watch_fps.start(watch_index, "Get frame");
         let output = renderer_interface.get_current_texture()?;
         // watch_fps.stop(0);
 
@@ -737,6 +742,9 @@ impl ForwardRenderer {
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                     label: Some("Render Encoder"),
                 });
+
+        watch_fps.stop(watch_index);
+        
 
         // draw
         // self.render_deferred(
@@ -765,7 +773,9 @@ impl ForwardRenderer {
         // if self.settings.enable_fxaa {
         //     self.render_fxaa(&view, &mut encoder, ambient_light_quad);
         // }
-
+        watch_index += 1;
+        watch_fps.start(watch_index, "Draw Calls");
+        
         self.render_forward(
             renderer_interface,
             &view,
@@ -777,18 +787,26 @@ impl ForwardRenderer {
             vertex_color_objects,
             particles,
         );
+        watch_fps.stop(watch_index);
 
         // copy entity texture
         // self.entity_buffer
         //     .copy_texture_to_buffer(&mut encoder, mouse_position);
 
+        watch_index += 1;
+        watch_fps.start(watch_index, "Submit");
         renderer_interface
             .queue()
             .submit(std::iter::once(encoder.finish()));
         output.present();
+        watch_fps.stop(watch_index);
+
 
         // map entity texture to the host
         // self.entity_buffer.map_buffer_async();
+
+        watch_index += 1;
+        watch_fps.start(watch_index, "Wait Finish");
 
         // wait to see how high the gpu load is
         if self.settings.wait_for_render_loop_to_finish {
@@ -799,6 +817,7 @@ impl ForwardRenderer {
         } else {
             let _res = renderer_interface.device().poll(wgpu::PollType::Poll);
         }
+        watch_fps.stop(watch_index);
 
         // watch_fps.stop(1);
 

@@ -30,7 +30,7 @@ impl Settings {
     }
 
     pub fn get_object_settings(&self) -> ObjectSettings {
-        ObjectSettings { max_nr_ants: 9 }
+        ObjectSettings { max_nr_ants: 100 }
     }
 
     pub(crate) fn get_camera_settings(&self) -> CameraSettings {

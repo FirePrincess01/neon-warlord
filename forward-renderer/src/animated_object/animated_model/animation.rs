@@ -12,6 +12,13 @@ pub struct Animation {
 }
 
 impl Animation {
+    pub fn zero() -> Self {
+        Self {
+            max_key_frame_time: 0.0,
+            current_key_frame_time: instant::Duration::default(),
+        }
+    }
+
     pub fn new(animation_data: &AnimationData) -> Self {
         let mut max_key_frame_time: f32 = 0.0;
         for elem in &animation_data.joint_rotations {

@@ -26,7 +26,7 @@ use crate::{
     debug_overlay::DebugOverlay, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage,
 };
 
-const WATCH_POINTS_SIZE: usize = 7;
+const WATCH_POINTS_SIZE: usize = 10;
 const DEBUG_OVERLAY_SIZE: usize = 10;
 
 struct ObjectSettings {
@@ -392,20 +392,24 @@ impl DefaultApplicationInterface for NeonWarlord {
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         dt: instant::Duration,
     ) {
+        self.watch_fps.stop(WATCH_POINTS_SIZE -1);
+        self.watch_fps.update();
+        let watch_fps_data = self.watch_fps.get_viewer_data();
+
         // Render engine
         self.camera_controller
             .update_camera(&mut self.renderer.camera, dt);
         self.renderer.update(renderer_interface, dt);
 
         // Particles
-        self.watch_fps.start(5, "Update particles");
+        self.watch_fps.start(0, "Update Particles");
         {
             self.particles.update(renderer_interface, dt);
         }
-        self.watch_fps.stop(5);
+        self.watch_fps.stop(0);
 
         // Animations
-        self.watch_fps.start(4, "Update animations");
+        self.watch_fps.start(1, "Update Animations");
         {
             self.ants.animated_object_storage.update_animations(&dt);
 
@@ -413,10 +417,10 @@ impl DefaultApplicationInterface for NeonWarlord {
                 .animated_object_storage
                 .update_device_data(renderer_interface);
         }
-        self.watch_fps.stop(4);
+        self.watch_fps.stop(1);
 
         // Terrain
-        self.watch_fps.start(3, "Update terrain");
+        self.watch_fps.start(2, "Update Terrain");
         {
             // set terrain view position
             self.terrain
@@ -434,11 +438,10 @@ impl DefaultApplicationInterface for NeonWarlord {
             }
             self.terrain.clear_requests();
         }
-        self.watch_fps.stop(3);
+        self.watch_fps.stop(2);
 
         // Debug utilities
-        self.watch_fps.update();
-        self.watch_fps.start(0, "Debug utilities");
+        self.watch_fps.start(3, "Update Debug");
         {
             self.fps.update(dt);
 
@@ -484,14 +487,14 @@ impl DefaultApplicationInterface for NeonWarlord {
             self.performance_monitor_fps.update_from_data(
                 renderer_interface,
                 &self.font,
-                &self.watch_fps.get_viewer_data(),
+                &watch_fps_data,
             );
         }
-        self.watch_fps.stop(0);
+        self.watch_fps.stop(3);
     }
 
     fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
-        self.watch_fps.start(2, "Process user inputs");
+        // self.watch_fps.start(4, "Inputs");
 
         let res = match event {
             WindowEvent::KeyboardInput {
@@ -558,7 +561,7 @@ impl DefaultApplicationInterface for NeonWarlord {
 
             _ => false,
         };
-        self.watch_fps.stop(2);
+        // self.watch_fps.stop(4);
 
         res
     }
@@ -569,7 +572,6 @@ impl DefaultApplicationInterface for NeonWarlord {
     ) -> Result<(), wgpu::SurfaceError> {
         // render current frame
         let res;
-        self.watch_fps.start(1, "Draw");
         {
             res = self.renderer.render(
                 renderer_interface,
@@ -582,9 +584,10 @@ impl DefaultApplicationInterface for NeonWarlord {
                 ],
                 &[&self.sun],
                 &[&self.particles],
+                &mut self.watch_fps,
             )
         }
-        self.watch_fps.stop(1);
+         self.watch_fps.start(WATCH_POINTS_SIZE -1, "Wait");
 
         res
     }

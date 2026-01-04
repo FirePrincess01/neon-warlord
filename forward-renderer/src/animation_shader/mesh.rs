@@ -60,14 +60,14 @@ impl Mesh {
     pub fn from_animation_data(
         wgpu_renderer: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         // animation_bind_group_layout: &AnimationBindGroupLayout,
-        animation_object_data: &crate::animated_object::animated_object_data::AnimatedObjectData,
+        mesh_data: &crate::animated_object::animated_object_data::MeshData,
         // instances: &[Instance],
     ) -> Self {
-        let positions = &animation_object_data.mesh.positions;
-        let normals = &animation_object_data.mesh.normals;
-        let joints = &animation_object_data.mesh.joints;
-        let weights = &animation_object_data.mesh.weights;
-        let indices_u16 = &animation_object_data.mesh.indices;
+        let positions = &mesh_data.positions;
+        let normals = &mesh_data.normals;
+        let joints = &mesh_data.joints;
+        let weights = &mesh_data.weights;
+        let indices_u16 = &mesh_data.indices;
 
         let len = positions.len();
         assert_eq!(normals.len(), len);
