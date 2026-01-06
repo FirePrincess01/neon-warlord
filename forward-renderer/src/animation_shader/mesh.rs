@@ -72,17 +72,12 @@ impl Mesh {
             indices.push(*elem as u32);
         }
 
-        Self::new(
-            wgpu_renderer,
-            &vertices,
-            &indices,
-        )
+        Self::new(wgpu_renderer, &vertices, &indices)
     }
 
     pub fn update_vertex_buffer(&mut self, queue: &wgpu::Queue, vertices: &[Vertex]) {
         self.vertex_buffer.update(queue, vertices);
     }
-
 
     pub fn draw<'a>(
         &'a self,
