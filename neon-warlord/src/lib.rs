@@ -11,6 +11,8 @@ mod game_board;
 mod heightmap_generator;
 mod settings;
 mod sun_storage;
+mod worker;
+mod worker_instance;
 
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
@@ -26,7 +28,7 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_ai::AntAi, ant_ai_controller::AntAiController, ant_generator::AntGenerator, ant_state::AntState, ant_storage::AntStorage, camera_controller::CameraController, debug_overlay::DebugOverlay, game_board::{Faction, GameBoard}, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage
+    ant_ai::AntAi, ant_ai_controller::AntAiController, ant_generator::AntGenerator, ant_state::AntState, ant_storage::AntStorage, camera_controller::CameraController, debug_overlay::DebugOverlay, game_board::{Faction, GameBoard}, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage, worker::MainMessage, worker_instance::WorkerInstance
 };
 
 const WATCH_POINTS_SIZE: usize = 10;
@@ -56,6 +58,7 @@ struct NeonWarlord {
 
     // Debug Utilities
     fps: Fps,
+    ups: u32,
     watch_fps: Watch<WATCH_POINTS_SIZE>,
     performance_monitor_fps: PerformanceMonitor<WATCH_POINTS_SIZE>,
     performance_monitor_ups: PerformanceMonitor<WATCH_POINTS_SIZE>,
@@ -72,7 +75,7 @@ struct NeonWarlord {
 
     // Terrain
     terrain: TerrainStorage,
-    terrain_generator: HeightMapGenerator,
+    // terrain_generator: HeightMapGenerator,
 
     // Ants
     ants: AntStorage,
@@ -88,6 +91,9 @@ struct NeonWarlord {
     game_board: GameBoard,
     ant_state: AntState,
     ant_ai: AntAi,
+
+    // Worker
+    worker: WorkerInstance,
 }
 
 impl NeonWarlord {
@@ -244,7 +250,7 @@ impl NeonWarlord {
             &renderer.texture_bind_group_layout,
             include_bytes!("../res/tile.png"),
         );
-        let terrain_generator = heightmap_generator::HeightMapGenerator::new();
+        // let terrain_generator = heightmap_generator::HeightMapGenerator::new();
 
         // selector
         // let selector = Selector::new();
@@ -260,6 +266,9 @@ impl NeonWarlord {
         let ant_state = AntState::new();
         let ant_ai = AntAi::new(Faction::Blue);
 
+        // Worker
+        let worker = WorkerInstance::new();
+
         Self {
             _settings: settings,
             size,
@@ -274,7 +283,7 @@ impl NeonWarlord {
             fps,
             debug_overlay,
             terrain,
-            terrain_generator,
+            // terrain_generator,
             ants,
             _ant_generator: ant_generator,
             camera_controller,
@@ -288,6 +297,8 @@ impl NeonWarlord {
             game_board,
             ant_state,
             ant_ai,
+            worker,
+            ups: 0,
             // settings,
 
             // size,
@@ -417,8 +428,42 @@ impl DefaultApplicationInterface for NeonWarlord {
             .update_camera(&mut self.renderer.camera, dt);
         self.renderer.update(renderer_interface, dt);
 
-        // Ai
+        // Worker
         let mut watch_index = 0;
+        self.watch_fps.start(watch_index, "Update Worker");
+        {
+            let messages = self.worker.receive();
+            for message in messages.try_iter() {
+                match message {
+                    worker::WorkerMessage::UpdateWatchPoints(watch_ups_data) => {
+                        // ##########################################################                       
+                        self.performance_monitor_ups.update_from_data(
+                            renderer_interface,
+                            &self.font,
+                            &watch_ups_data,
+                        );
+                    },
+                    worker::WorkerMessage::TerrainData(terrain_part) => {
+                        // ##########################################################
+                        self.terrain.update_height_map(
+                            renderer_interface,
+                            &self.renderer.heightmap_bind_group_layout,
+                            terrain_part,
+                        );
+                    },
+                    worker::WorkerMessage::Ups(ups) => {
+                        self.ups = ups;
+                    },
+                }
+            }
+            
+            self.worker.update(dt);
+        }
+        let worker = self.worker.send();
+        self.watch_fps.stop(watch_index);
+
+        // Ai
+        watch_index += 1;
         self.watch_fps.start(watch_index, "Update AI");
         {
             // update ant_state by ant_ai
@@ -454,8 +499,8 @@ impl DefaultApplicationInterface for NeonWarlord {
         self.watch_fps.stop(watch_index);
 
         // Terrain
-        watch_index += 1;
-        self.watch_fps.start(watch_index, "Update Terrain");
+        // watch_index += 1;
+        // self.watch_fps.start(watch_index, "Update Terrain");
         {
             // set terrain view position
             self.terrain
@@ -464,16 +509,18 @@ impl DefaultApplicationInterface for NeonWarlord {
             // generate map
             let requests = self.terrain.get_requests().clone();
             for request in requests {
-                let terrain_part = self.terrain_generator.generate(&request);
-                self.terrain.update_height_map(
-                    renderer_interface,
-                    &self.renderer.heightmap_bind_group_layout,
-                    terrain_part,
-                );
+                worker.send(MainMessage::GetTerrain((request)));
+
+                // let terrain_part = self.terrain_generator.generate(&request);
+                // self.terrain.update_height_map(
+                //     renderer_interface,
+                //     &self.renderer.heightmap_bind_group_layout,
+                //     terrain_part,
+                // );
             }
             self.terrain.clear_requests();
         }
-        self.watch_fps.stop(watch_index);
+        // self.watch_fps.stop(watch_index);
 
 
         // Debug utilities
@@ -494,6 +541,14 @@ impl DefaultApplicationInterface for NeonWarlord {
                 renderer_interface,
                 &self.font,
                 1,
+                "ups",
+                self.ups as f32,
+            );
+
+            self.debug_overlay.update_val(
+                renderer_interface,
+                &self.font,
+                2,
                 "x",
                 self.mouse_pos_x as f32,
             );
@@ -501,25 +556,25 @@ impl DefaultApplicationInterface for NeonWarlord {
             self.debug_overlay.update_val(
                 renderer_interface,
                 &self.font,
-                2,
+                3,
                 "y",
                 self.mouse_pos_y as f32,
             );
 
             self.debug_overlay
-                .update_str(renderer_interface, &self.font, 3, &self.device_id);
+                .update_str(renderer_interface, &self.font, 4, &self.device_id);
 
             self.debug_overlay
-                .update_str(renderer_interface, &self.font, 4, &self.phase);
+                .update_str(renderer_interface, &self.font, 5, &self.phase);
 
             self.debug_overlay
-                .update_str(renderer_interface, &self.font, 5, &self.location);
+                .update_str(renderer_interface, &self.font, 6, &self.location);
 
             self.debug_overlay
-                .update_str(renderer_interface, &self.font, 6, &self.force);
+                .update_str(renderer_interface, &self.font, 7, &self.force);
 
             self.debug_overlay
-                .update_str(renderer_interface, &self.font, 7, &self.id);
+                .update_str(renderer_interface, &self.font, 8, &self.id);
 
             self.performance_monitor_fps.update_from_data(
                 renderer_interface,
