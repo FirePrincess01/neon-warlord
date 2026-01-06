@@ -2,7 +2,6 @@
 
 use cgmath::InnerSpace;
 
-
 type Vec2 = cgmath::Vector2<f32>;
 
 #[derive(Clone)]
@@ -43,7 +42,7 @@ impl AntState {
             Some(pos) => pos,
             None => self.position,
         };
-        
+
         // calculate vector to to new position
         let delta = (target_position - self.position).normalize() * 0.1;
 

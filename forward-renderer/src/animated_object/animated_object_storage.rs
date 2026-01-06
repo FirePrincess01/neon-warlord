@@ -1,7 +1,6 @@
 //! Manages all instances of one single animated object
 //!
 
-
 use cgmath::{InnerSpace, Matrix4};
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 
@@ -163,7 +162,11 @@ impl AnimatedObjectStorage {
 
     // The model is assumed to look in x-direction
     // Creates 3 orthogonal vectors to assemble a rotation matrix
-    pub fn look_to_rh(pos: cgmath::Point3<f32>, dir: cgmath::Vector3<f32>, up: cgmath::Vector3<f32>) -> Matrix4<f32> {
+    pub fn look_to_rh(
+        pos: cgmath::Point3<f32>,
+        dir: cgmath::Vector3<f32>,
+        up: cgmath::Vector3<f32>,
+    ) -> Matrix4<f32> {
         let f = dir.normalize();
         let s = f.cross(up).normalize();
         let u = s.cross(f);
@@ -195,12 +198,12 @@ impl AnimatedObjectStorage {
         //     cgmath::Vector3::unit_z(),
         // );
         let model = Self::look_to_rh(
-                        cgmath::Point3 {
+            cgmath::Point3 {
                 x: pos.x,
                 y: pos.y,
                 z: pos.z,
             },
-        cgmath::Vector3 {
+            cgmath::Vector3 {
                 x: look_at.x,
                 y: look_at.y,
                 z: look_at.z,

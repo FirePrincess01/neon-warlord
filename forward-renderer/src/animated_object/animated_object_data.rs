@@ -112,4 +112,3 @@ pub struct AnimatedObjectData {
     pub skeleton: SkeletonData,
     pub animations: Vec<AnimationData>,
 }
-

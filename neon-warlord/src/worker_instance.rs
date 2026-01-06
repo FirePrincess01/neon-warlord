@@ -107,7 +107,7 @@ impl WorkerMultiThreaded {
 
             let mut tick = 0;
 
-            let  mut last_update_time = instant::Instant::now();
+            let mut last_update_time = instant::Instant::now();
 
             loop {
                 let start_time = instant::Instant::now();

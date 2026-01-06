@@ -557,8 +557,6 @@ impl DefaultApplicationInterface for NeonWarlord {
     }
 
     fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
-        
-
         match event {
             // #########################################################
             WindowEvent::KeyboardInput {

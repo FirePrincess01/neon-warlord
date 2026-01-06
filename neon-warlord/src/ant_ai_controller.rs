@@ -1,7 +1,9 @@
 //! Implements the WorldInterface from AntAi
 
 use crate::{
-    ant_ai::{AntAiInterface, AntBodyInterface, WorldInterface}, ant_state::AntState, game_board::{self, GameBoard}
+    ant_ai::{AntAiInterface, AntBodyInterface, WorldInterface},
+    ant_state::AntState,
+    game_board::{self, GameBoard},
 };
 
 type Vec2 = cgmath::Vector2<f32>;

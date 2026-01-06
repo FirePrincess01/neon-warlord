@@ -52,7 +52,7 @@ impl<const SIZE: usize> SortedTable<SIZE> {
         let mut label_names: Vec<wgpu_renderer::label::Label> = Vec::with_capacity(size);
         let mut mesh_names: Vec<wgpu_renderer::label::LabelMesh> = Vec::with_capacity(size);
 
-        const MAX_LINES:usize = 10;
+        const MAX_LINES: usize = 10;
         let max_width = 20.0 * scale;
 
         // mesh_colors
@@ -110,7 +110,10 @@ impl<const SIZE: usize> SortedTable<SIZE> {
                 texture_bind_group_layout,
                 &vertex_color_shader::Instance {
                     position: cgmath::Vector3::new(
-                        position.x + scale + label_percent_with as f32 + max_width * (i / MAX_LINES) as f32,
+                        position.x
+                            + scale
+                            + label_percent_with as f32
+                            + max_width * (i / MAX_LINES) as f32,
                         position.y + (i % MAX_LINES) as f32 * scale,
                         0.0,
                     ),

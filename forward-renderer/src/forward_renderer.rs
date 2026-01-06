@@ -743,7 +743,6 @@ impl ForwardRenderer {
                 });
 
         watch_fps.stop(watch_index);
-        
 
         // draw
         // self.render_deferred(
@@ -774,7 +773,7 @@ impl ForwardRenderer {
         // }
         watch_index += 1;
         watch_fps.start(watch_index, "Draw Calls");
-        
+
         self.render_forward(
             renderer_interface,
             &view,
@@ -799,7 +798,6 @@ impl ForwardRenderer {
             .submit(std::iter::once(encoder.finish()));
         output.present();
         watch_fps.stop(watch_index);
-
 
         // map entity texture to the host
         // self.entity_buffer.map_buffer_async();

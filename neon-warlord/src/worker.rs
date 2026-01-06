@@ -3,9 +3,18 @@
 use std::{sync::mpsc, time::Duration};
 
 use forward_renderer::{HeightMap, TerrainTextureDetails};
-use wgpu_renderer::performance_monitor::{Fps, watch::{self, Watch}};
+use wgpu_renderer::performance_monitor::{
+    Fps,
+    watch::{self, Watch},
+};
 
-use crate::{ant_ai::AntAi, ant_ai_controller::AntAiController, ant_state::{AntPosition, AntState}, game_board::{Faction, GameBoard}, heightmap_generator::HeightMapGenerator};
+use crate::{
+    ant_ai::AntAi,
+    ant_ai_controller::AntAiController,
+    ant_state::{AntPosition, AntState},
+    game_board::{Faction, GameBoard},
+    heightmap_generator::HeightMapGenerator,
+};
 
 const WATCH_POINTS_SIZE: usize = 10;
 
@@ -33,7 +42,7 @@ pub struct Worker {
     terrain_generator: HeightMapGenerator,
 
     // Game board
-    game_board:GameBoard,
+    game_board: GameBoard,
 
     // Ant
     ant_state: AntState,
