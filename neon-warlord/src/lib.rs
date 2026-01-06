@@ -28,17 +28,8 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_ai::AntAi,
-    ant_ai_controller::AntAiController,
-    ant_generator::AntGenerator,
-    ant_state::AntState,
-    ant_storage::AntStorage,
-    camera_controller::CameraController,
-    debug_overlay::DebugOverlay,
-    game_board::{Faction, GameBoard},
-    heightmap_generator::HeightMapGenerator,
-    sun_storage::SunStorage,
-    worker::MainMessage,
+    ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController,
+    debug_overlay::DebugOverlay, sun_storage::SunStorage, worker::MainMessage,
     worker_instance::WorkerInstance,
 };
 
@@ -267,7 +258,6 @@ impl NeonWarlord {
         // Particles
         let particles = ParticleStorage::new(renderer_interface);
 
-
         // Worker
         let worker = WorkerInstance::new();
 
@@ -434,25 +424,27 @@ impl DefaultApplicationInterface for NeonWarlord {
             let messages = self.worker.receive();
             for message in messages.try_iter() {
                 match message {
+                    // ##########################################################
+                    worker::WorkerMessage::Ups(ups) => {
+                        self.ups = ups;
+                    }
+                    // ##########################################################
                     worker::WorkerMessage::UpdateWatchPoints(watch_ups_data) => {
-                        // ##########################################################
                         self.performance_monitor_ups.update_from_data(
                             renderer_interface,
                             &self.font,
                             &watch_ups_data,
                         );
                     }
+                    // ##########################################################
                     worker::WorkerMessage::TerrainData(terrain_part) => {
-                        // ##########################################################
                         self.terrain.update_height_map(
                             renderer_interface,
                             &self.renderer.heightmap_bind_group_layout,
                             terrain_part,
                         );
                     }
-                    worker::WorkerMessage::Ups(ups) => {
-                        self.ups = ups;
-                    }
+                    // ##########################################################
                     worker::WorkerMessage::AntState(ant_pos) => {
                         self.ants
                             .set_position(ant_pos.index, ant_pos.pos, ant_pos.look_at);
@@ -497,13 +489,6 @@ impl DefaultApplicationInterface for NeonWarlord {
             let requests = self.terrain.get_requests().clone();
             for request in requests {
                 let _ = worker.send(MainMessage::GetTerrain((request)));
-
-                // let terrain_part = self.terrain_generator.generate(&request);
-                // self.terrain.update_height_map(
-                //     renderer_interface,
-                //     &self.renderer.heightmap_bind_group_layout,
-                //     terrain_part,
-                // );
             }
             self.terrain.clear_requests();
         }
@@ -572,9 +557,8 @@ impl DefaultApplicationInterface for NeonWarlord {
     }
 
     fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
-        // self.watch_fps.start(4, "Inputs");
-
         let res = match event {
+            // #########################################################
             WindowEvent::KeyboardInput {
                 event:
                     winit::event::KeyEvent {
@@ -589,6 +573,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.performance_monitor_fps.show = !self.performance_monitor_fps.show;
                 true
             }
+            // #########################################################
             WindowEvent::KeyboardInput {
                 event:
                     winit::event::KeyEvent {
@@ -603,6 +588,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.performance_monitor_ups.show = !self.performance_monitor_ups.show;
                 true
             }
+            // #########################################################
             WindowEvent::KeyboardInput {
                 event:
                     winit::event::KeyEvent {
@@ -616,11 +602,13 @@ impl DefaultApplicationInterface for NeonWarlord {
                 // self.renderer.process_keyboard(*key, *state),
                 self.camera_controller.process_keyboard(key, state)
             }
+            // #########################################################
             WindowEvent::MouseWheel { delta, .. } => {
                 // self.renderer.process_scroll(delta);
                 self.camera_controller.process_scroll(delta);
                 true
             }
+            // #########################################################
             WindowEvent::CursorMoved { position, .. } => {
                 let pos = apply_scale_factor(*position, self.scale_factor);
 
@@ -628,6 +616,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.mouse_pos_x = pos.x as u32;
                 true
             }
+            // #########################################################
             winit::event::WindowEvent::Touch(touch) => {
                 self.device_id = format!("{:?}", touch.device_id);
                 self.phase = format!("{:?}", touch.phase);
@@ -639,7 +628,6 @@ impl DefaultApplicationInterface for NeonWarlord {
 
             _ => false,
         };
-        // self.watch_fps.stop(4);
 
         res
     }
