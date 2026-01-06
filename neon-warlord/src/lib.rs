@@ -1,12 +1,19 @@
 //! Creates the Neon-Warlord application
 
+mod ant_ai;
+mod ant_ai_controller;
 mod ant_generator;
+mod ant_state;
 mod ant_storage;
 mod camera_controller;
 mod debug_overlay;
+mod game_board;
 mod heightmap_generator;
 mod settings;
 mod sun_storage;
+mod worker;
+mod worker_instance;
+
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
     particle_storage::ParticleStorage,
@@ -22,10 +29,11 @@ use winit::event::{ElementState, WindowEvent};
 
 use crate::{
     ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController,
-    debug_overlay::DebugOverlay, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage,
+    debug_overlay::DebugOverlay, sun_storage::SunStorage, worker::MainMessage,
+    worker_instance::WorkerInstance,
 };
 
-const WATCH_POINTS_SIZE: usize = 7;
+const WATCH_POINTS_SIZE: usize = 10;
 const DEBUG_OVERLAY_SIZE: usize = 10;
 
 struct ObjectSettings {
@@ -52,6 +60,7 @@ struct NeonWarlord {
 
     // Debug Utilities
     fps: Fps,
+    ups: u32,
     watch_fps: Watch<WATCH_POINTS_SIZE>,
     performance_monitor_fps: PerformanceMonitor<WATCH_POINTS_SIZE>,
     performance_monitor_ups: PerformanceMonitor<WATCH_POINTS_SIZE>,
@@ -68,7 +77,6 @@ struct NeonWarlord {
 
     // Terrain
     terrain: TerrainStorage,
-    terrain_generator: HeightMapGenerator,
 
     // Ants
     ants: AntStorage,
@@ -79,6 +87,9 @@ struct NeonWarlord {
 
     // Particles
     particles: ParticleStorage,
+
+    // Worker
+    worker: WorkerInstance,
 }
 
 impl NeonWarlord {
@@ -100,21 +111,6 @@ impl NeonWarlord {
             settings.get_camera_settings().sensitivity,
             settings.get_camera_settings().sensitivity_scroll,
         );
-
-        // world
-        // let mut world = ecs2::World::new();
-
-        // let blue_token = world.resources.blues2.create(0.0, 1.0, 1.0);
-
-        // world
-        //     .base_factory
-        //     .add_blue(blue_token, &mut world.resources);
-        // world
-        //     .base_factory
-        //     .produce(&mut world.resources, &mut world.agents);
-
-        // world mesh
-        // let _world_mesh = world_mesh::WorldMesh::new(renderer_interface, &world);
 
         // performance monitor
         let watch_fps = Watch::new();
@@ -150,35 +146,15 @@ impl NeonWarlord {
         let _mouse_pos_y = 0;
         let _mouse_pos_x = 0;
 
-        // Debug Overlay
-        // let debug_overlay = DebugOverlay::new(
-        //     renderer_interface,
-        //     &renderer.texture_bind_group_layout,
-        //     &font,
-        //     cgmath::Vector3 {
-        //         x: 20.0,
-        //         y: 120.0,
-        //         z: 0.0,
-        //     },
-        // );
-
         // create ant
         // let glb_bin = include_bytes!("../res/wiggle_tower2.glb");
-        let glb_bin = include_bytes!("../res/ant_0_8.glb");
+        let glb_bin = include_bytes!("../res/ant_0_10.glb");
         let animated_object_storage_ant = AnimatedObjectStorage::create_from_glb(
             renderer_interface,
             &renderer.animation_bind_group_layout,
             glb_bin,
             settings.get_object_settings().max_nr_ants,
         );
-
-        // println!("{:?}", animated_object_storage_ant);
-
-        // let point_light_storage_ant = PointLightStorage::new(
-        //     renderer_interface,
-        //     settings.max_nr_ants,
-        //     settings.dbg_point_lights,
-        // );
 
         let mut ants = AntStorage::new(
             // point_light_storage_ant,
@@ -191,43 +167,6 @@ impl NeonWarlord {
             ants.set_ant(elem);
         }
 
-        // ant_storage.set_ant(&Ant{
-        //     id: todo!(),
-        //     pos: todo!(),
-        //     rot_z: todo!(),
-        //     light_strength: todo!(),
-        //     light_color: todo!(),
-        // });
-
-        // create game server
-        // let game_logic =
-        //     market_economy_simulation_server::GameLogicServer::new(settings.get_server_settings());
-
-        // create ant
-        // let ant = ant::Ant::new(renderer_interface);
-
-        // let ambient_light_quad_vertices = geometry::Quad::new(2.0);
-        // let ambient_light_quad_instance = deferred_light_shader::Instance {
-        //     position: [-1.0, -1.0, 0.1],
-        //     light_color: [0.4, 0.4, 0.4],
-        //     radius: 0.0,
-        //     linear: 0.0,
-        //     quadratic: 0.0,
-        // };
-        // let ambient_light_quad = deferred_light_shader::Mesh::new(
-        //     renderer_interface.device(),
-        //     &ambient_light_quad_vertices.vertices,
-        //     &ambient_light_quad_vertices.indices,
-        //     &[ambient_light_quad_instance],
-        // );
-
-        // // point light storage
-        // let point_light_storage = point_light_storage::PointLightStorage::new(
-        //     renderer_interface,
-        //     settings.max_point_light_instances,
-        //     settings.dbg_point_lights,
-        // );
-
         // terrain
         let terrain = TerrainStorage::new(
             settings.get_terrain_settings(),
@@ -235,16 +174,15 @@ impl NeonWarlord {
             &renderer.texture_bind_group_layout,
             include_bytes!("../res/tile.png"),
         );
-        let terrain_generator = heightmap_generator::HeightMapGenerator::new();
-
-        // selector
-        // let selector = Selector::new();
 
         // sun
         let sun = SunStorage::new(renderer_interface);
 
         // Particles
         let particles = ParticleStorage::new(renderer_interface);
+
+        // Worker
+        let worker = WorkerInstance::new();
 
         Self {
             _settings: settings,
@@ -260,7 +198,7 @@ impl NeonWarlord {
             fps,
             debug_overlay,
             terrain,
-            terrain_generator,
+            // terrain_generator,
             ants,
             _ant_generator: ant_generator,
             camera_controller,
@@ -271,37 +209,8 @@ impl NeonWarlord {
             id: String::new(),
             sun,
             particles,
-            // settings,
-
-            // size,
-            // scale_factor,
-
-            // renderer,
-
-            // _world: world,
-            // // world_mesh,
-            // ant_storage,
-
-            // watch_fps,
-            // performance_monitor_fps,
-            // performance_monitor_ups,
-
-            // mouse_pos_y,
-            // mouse_pos_x,
-            // entity_index: 0,
-            // font,
-
-            // debug_overlay,
-
-            // game_logic,
-
-            // ant,
-
-            // ambient_light_quad,
-            // // point_light_storage,
-            // terrain_storage,
-
-            // selector,
+            worker,
+            ups: 0,
         }
     }
 }
@@ -391,20 +300,66 @@ impl DefaultApplicationInterface for NeonWarlord {
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         dt: instant::Duration,
     ) {
+        self.watch_fps.stop(WATCH_POINTS_SIZE - 1);
+        self.watch_fps.update();
+        let watch_fps_data = self.watch_fps.get_viewer_data();
+
         // Render engine
         self.camera_controller
             .update_camera(&mut self.renderer.camera, dt);
         self.renderer.update(renderer_interface, dt);
 
+        // Worker
+        let mut watch_index = 0;
+        self.watch_fps.start(watch_index, "Update Worker");
+        {
+            let messages = self.worker.receive();
+            for message in messages.try_iter() {
+                match message {
+                    // ##########################################################
+                    worker::WorkerMessage::Ups(ups) => {
+                        self.ups = ups;
+                    }
+                    // ##########################################################
+                    worker::WorkerMessage::UpdateWatchPoints(watch_ups_data) => {
+                        self.performance_monitor_ups.update_from_data(
+                            renderer_interface,
+                            &self.font,
+                            &watch_ups_data,
+                        );
+                    }
+                    // ##########################################################
+                    worker::WorkerMessage::TerrainData(terrain_part) => {
+                        self.terrain.update_height_map(
+                            renderer_interface,
+                            &self.renderer.heightmap_bind_group_layout,
+                            *terrain_part,
+                        );
+                    }
+                    // ##########################################################
+                    worker::WorkerMessage::AntState(ant_pos) => {
+                        self.ants
+                            .set_position(ant_pos.index, ant_pos.pos, ant_pos.look_at);
+                    }
+                }
+            }
+
+            self.worker.update(dt);
+        }
+        let worker = self.worker.send();
+        self.watch_fps.stop(watch_index);
+
         // Particles
-        self.watch_fps.start(5, "Update particles");
+        watch_index += 1;
+        self.watch_fps.start(watch_index, "Update Particles");
         {
             self.particles.update(renderer_interface, dt);
         }
-        self.watch_fps.stop(5);
+        self.watch_fps.stop(watch_index);
 
         // Animations
-        self.watch_fps.start(4, "Update animations");
+        watch_index += 1;
+        self.watch_fps.start(watch_index, "Update Animations");
         {
             self.ants.animated_object_storage.update_animations(&dt);
 
@@ -412,10 +367,11 @@ impl DefaultApplicationInterface for NeonWarlord {
                 .animated_object_storage
                 .update_device_data(renderer_interface);
         }
-        self.watch_fps.stop(4);
+        self.watch_fps.stop(watch_index);
 
         // Terrain
-        self.watch_fps.start(3, "Update terrain");
+        // watch_index += 1;
+        // self.watch_fps.start(watch_index, "Update Terrain");
         {
             // set terrain view position
             self.terrain
@@ -424,20 +380,15 @@ impl DefaultApplicationInterface for NeonWarlord {
             // generate map
             let requests = self.terrain.get_requests().clone();
             for request in requests {
-                let terrain_part = self.terrain_generator.generate(&request);
-                self.terrain.update_height_map(
-                    renderer_interface,
-                    &self.renderer.heightmap_bind_group_layout,
-                    terrain_part,
-                );
+                let _ = worker.send(MainMessage::GetTerrain(request));
             }
             self.terrain.clear_requests();
         }
-        self.watch_fps.stop(3);
+        // self.watch_fps.stop(watch_index);
 
         // Debug utilities
-        self.watch_fps.update();
-        self.watch_fps.start(0, "Debug utilities");
+        watch_index += 1;
+        self.watch_fps.start(watch_index, "Update Debug");
         {
             self.fps.update(dt);
 
@@ -453,6 +404,14 @@ impl DefaultApplicationInterface for NeonWarlord {
                 renderer_interface,
                 &self.font,
                 1,
+                "ups",
+                self.ups as f32,
+            );
+
+            self.debug_overlay.update_val(
+                renderer_interface,
+                &self.font,
+                2,
                 "x",
                 self.mouse_pos_x as f32,
             );
@@ -460,39 +419,38 @@ impl DefaultApplicationInterface for NeonWarlord {
             self.debug_overlay.update_val(
                 renderer_interface,
                 &self.font,
-                2,
+                3,
                 "y",
                 self.mouse_pos_y as f32,
             );
 
             self.debug_overlay
-                .update_str(renderer_interface, &self.font, 3, &self.device_id);
+                .update_str(renderer_interface, &self.font, 4, &self.device_id);
 
             self.debug_overlay
-                .update_str(renderer_interface, &self.font, 4, &self.phase);
+                .update_str(renderer_interface, &self.font, 5, &self.phase);
 
             self.debug_overlay
-                .update_str(renderer_interface, &self.font, 5, &self.location);
+                .update_str(renderer_interface, &self.font, 6, &self.location);
 
             self.debug_overlay
-                .update_str(renderer_interface, &self.font, 6, &self.force);
+                .update_str(renderer_interface, &self.font, 7, &self.force);
 
             self.debug_overlay
-                .update_str(renderer_interface, &self.font, 7, &self.id);
+                .update_str(renderer_interface, &self.font, 8, &self.id);
 
             self.performance_monitor_fps.update_from_data(
                 renderer_interface,
                 &self.font,
-                &self.watch_fps.get_viewer_data(),
+                &watch_fps_data,
             );
         }
-        self.watch_fps.stop(0);
+        self.watch_fps.stop(watch_index);
     }
 
     fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
-        self.watch_fps.start(2, "Process user inputs");
-
-        let res = match event {
+        match event {
+            // #########################################################
             WindowEvent::KeyboardInput {
                 event:
                     winit::event::KeyEvent {
@@ -507,6 +465,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.performance_monitor_fps.show = !self.performance_monitor_fps.show;
                 true
             }
+            // #########################################################
             WindowEvent::KeyboardInput {
                 event:
                     winit::event::KeyEvent {
@@ -521,6 +480,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.performance_monitor_ups.show = !self.performance_monitor_ups.show;
                 true
             }
+            // #########################################################
             WindowEvent::KeyboardInput {
                 event:
                     winit::event::KeyEvent {
@@ -534,11 +494,13 @@ impl DefaultApplicationInterface for NeonWarlord {
                 // self.renderer.process_keyboard(*key, *state),
                 self.camera_controller.process_keyboard(key, state)
             }
+            // #########################################################
             WindowEvent::MouseWheel { delta, .. } => {
                 // self.renderer.process_scroll(delta);
                 self.camera_controller.process_scroll(delta);
                 true
             }
+            // #########################################################
             WindowEvent::CursorMoved { position, .. } => {
                 let pos = apply_scale_factor(*position, self.scale_factor);
 
@@ -546,6 +508,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 self.mouse_pos_x = pos.x as u32;
                 true
             }
+            // #########################################################
             winit::event::WindowEvent::Touch(touch) => {
                 self.device_id = format!("{:?}", touch.device_id);
                 self.phase = format!("{:?}", touch.phase);
@@ -556,10 +519,7 @@ impl DefaultApplicationInterface for NeonWarlord {
             }
 
             _ => false,
-        };
-        self.watch_fps.stop(2);
-
-        res
+        }
     }
 
     fn render(
@@ -568,7 +528,6 @@ impl DefaultApplicationInterface for NeonWarlord {
     ) -> Result<(), wgpu::SurfaceError> {
         // render current frame
         let res;
-        self.watch_fps.start(1, "Draw");
         {
             res = self.renderer.render(
                 renderer_interface,
@@ -581,9 +540,10 @@ impl DefaultApplicationInterface for NeonWarlord {
                 ],
                 &[&self.sun],
                 &[&self.particles],
+                &mut self.watch_fps,
             )
         }
-        self.watch_fps.stop(1);
+        self.watch_fps.start(WATCH_POINTS_SIZE - 1, "Wait");
 
         res
     }

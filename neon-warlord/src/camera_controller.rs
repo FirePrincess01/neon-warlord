@@ -21,7 +21,8 @@ pub struct CameraController {
     amount_down: f32,
     rotate_horizontal: f32,
     rotate_vertical: f32,
-    scroll: f32,
+    scroll_line_delta: f32,
+    scroll_pixel_delta: f32,
     speed: f32,
     sensitivity: f32,
     sensitivity_scroll: f32,
@@ -38,7 +39,8 @@ impl CameraController {
             amount_down: 0.0,
             rotate_horizontal: 0.0,
             rotate_vertical: 0.0,
-            scroll: 0.0,
+            scroll_line_delta: 0.0,
+            scroll_pixel_delta: 0.0,
             speed,
             sensitivity,
             sensitivity_scroll,
@@ -90,10 +92,14 @@ impl CameraController {
     }
 
     pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
-        self.scroll = match delta {
+        match delta {
             // I'm assuming a line is about 100 pixels
-            MouseScrollDelta::LineDelta(_, scroll) => scroll * 100.0,
-            MouseScrollDelta::PixelDelta(PhysicalPosition { y: scroll, .. }) => *scroll as f32,
+            MouseScrollDelta::LineDelta(_, scroll) => {
+                self.scroll_line_delta = scroll * 100.0;
+            }
+            MouseScrollDelta::PixelDelta(PhysicalPosition { y: scroll, .. }) => {
+                self.scroll_pixel_delta = *scroll as f32
+            }
         };
     }
 
@@ -126,9 +132,24 @@ impl CameraController {
         // let scrollward = Vector3::new(0.0, 0.0, -1.0).normalize();
         let scrollward =
             Vector3::new(pitch_cos * yaw_cos, pitch_sin, pitch_cos * yaw_sin).normalize();
-        camera.position +=
-            scrollward * self.scroll * self.sensitivity_scroll * dt * camera.position.z * 1.0;
-        self.scroll = 0.0;
+
+        // scroll with mouse
+        camera.position += scrollward
+            * self.scroll_line_delta
+            * self.sensitivity_scroll
+            * camera.position.z
+            * 1.0
+            * 0.01;
+        self.scroll_line_delta = 0.0;
+
+        // scroll with touchpad and on the web
+        camera.position += scrollward
+            * self.scroll_pixel_delta
+            * self.sensitivity_scroll
+            * camera.position.z
+            * 1.0
+            * dt;
+        self.scroll_pixel_delta = 0.0;
 
         // Move up/down. Since we don't use roll, we can just
         // modify the y coordinate directly.

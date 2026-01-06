@@ -28,8 +28,12 @@ struct VertexInput {
 }
 
 struct InstanceInput {
-    @location(5) position: vec3<f32>,
-    @location(6) color: vec3<f32>,
+    @location(5) model_matrix_0: vec4<f32>,
+    @location(6) model_matrix_1: vec4<f32>,
+    @location(7) model_matrix_2: vec4<f32>,
+    @location(8) model_matrix_3: vec4<f32>,
+
+    @location(9) color: vec4<f32>,
 }
 
 struct VertexOutput {
@@ -44,7 +48,6 @@ fn vs_main(
     model: VertexInput,
     instance: InstanceInput,
 ) -> VertexOutput {
-
     let info = get_vertex_info(model, instance);
     
     let position = info.position;
@@ -54,10 +57,10 @@ fn vs_main(
     
     // calculate output
     var out: VertexOutput;
-    out.clip_position = camera.view_proj * vec4<f32>(info.position, 1.0);
-    out.color = color;
-    out.position = info.position;
-    out.normal = info.normal;
+    out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
+    out.color = color.xyz;
+    out.position = position;
+    out.normal = normal;
 
     return out;
 }
@@ -96,18 +99,7 @@ fn vs_main_gouraud(
     // let halfway_dir = normalize(light_direction + view_dir);
     // let specular_lighting_strength = pow(max(dot(normal, halfway_dir), 0.0), 32.0) * specular_strength;
 
-
-    // pong shading
-    // let pong_lighting = light_color * (ambient_strength + diffuse_lighting_strength + specular_lighting_strength);
-    // let pong_lighting = light_color * (specular_lighting_strength);
-    // let pong_lighting = light_color * ((ambient_strength + diffuse_lighting_strength) * 0.4 +  (ambient_strength+ diffuse_lighting_strength + specular_lighting_strength) * specular_strength);
-    // let pong_lighting = light_color * ((ambient_strength + diffuse_lighting_strength));
-    // let pong_light: vec3<f32> = pong_lighting * color;
-
-    // blend with intensity
-    // let intensity = vertex_color[3];
-    // let out_color: vec3<f32> = vertex_color.xyz * intensity + pong_light * (1.0 -intensity);
-    let out_color: vec3<f32> = color * (ambient_strength + diffuse_lighting_strength + specular_lighting_strength);
+    let out_color: vec3<f32> = color.xyz * (ambient_strength + diffuse_lighting_strength + specular_lighting_strength);
 
     var out: VertexOutput;
     out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
@@ -145,6 +137,15 @@ fn get_vertex_info(
     instance: InstanceInput,
 ) -> VertexInfo
 {
+    let model_matrix = mat4x4<f32>(
+        instance.model_matrix_0,
+        instance.model_matrix_1,
+        instance.model_matrix_2,
+        instance.model_matrix_3,
+    );
+
+    let scale = 0.1;
+
     // calculate the animation
     var total_local_pos = vec4<f32>(0.0);
     var total_local_normal = vec4<f32>(0.0);
@@ -167,11 +168,11 @@ fn get_vertex_info(
     }
 
     // move to the instance position
-    let world_position = instance.position + total_local_pos.xyz;
+    let world_position = model_matrix * vec4<f32>((total_local_pos * scale).xyz, 1.0);
 
     // return
     return VertexInfo (
-        world_position,
+        world_position.xyz,
         total_local_normal.xyz,
     );
 }

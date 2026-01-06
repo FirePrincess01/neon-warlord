@@ -89,19 +89,13 @@ pub struct SkeletonData {
     pub inverse_bind_transforms: Vec<cgmath::Matrix4<f32>>,
 }
 
-pub struct AnimatedObjectData {
-    pub mesh: MeshData,
-    pub skeleton: SkeletonData,
-    pub animations: Vec<AnimationData>,
-}
-
-impl AnimatedObjectData {
+impl SkeletonData {
     pub fn joint_children_indices(&self, index: usize) -> Vec<usize> {
         let mut res = Vec::new();
 
-        let children = &self.skeleton.joint_children[index];
+        let children = &self.joint_children[index];
         for child in children {
-            let joint_names = &self.skeleton.joint_names;
+            let joint_names = &self.joint_names;
             for (i, name) in joint_names.iter().enumerate() {
                 if child == name {
                     res.push(i);
@@ -111,4 +105,10 @@ impl AnimatedObjectData {
 
         res
     }
+}
+
+pub struct AnimatedObjectData {
+    pub mesh: MeshData,
+    pub skeleton: SkeletonData,
+    pub animations: Vec<AnimationData>,
 }

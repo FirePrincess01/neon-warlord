@@ -1,6 +1,7 @@
 //! Manages all instances of one single animated object
 //!
 
+use cgmath::{InnerSpace, Matrix4};
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 
 use crate::animated_object::animated_model::animation::Animation;
@@ -9,21 +10,38 @@ use crate::animated_object::animated_object_data::AnimationData;
 use crate::animated_object::gltf_importer::GltfImporter;
 use crate::animation_shader::{self, AnimationShaderDraw};
 
+struct AnimationObjectInstance {
+    current_animation_index: usize,
+    current_animation: Animation,
+
+    instance: animation_shader::Instance,
+    transformations: animation_shader::AnimationUniform,
+
+    _requires_update: bool,
+
+    is_active: bool,
+}
+
+struct AnimationObjectInstanceDevice {
+    instance_buffer: animation_shader::InstanceBuffer<animation_shader::Instance>,
+    transformations_buffer: animation_shader::AnimationUniformBuffer,
+}
+
 pub struct AnimatedObjectStorage {
     // host data
     skeleton: Skeleton,
-    animation_data: AnimationData,
+    animations: Vec<AnimationData>,
 
-    instance_host: Vec<AnimatedObjectInstanceHost>,
+    // host instance data
+    instance_data: Vec<AnimationObjectInstance>,
 
     // device data
     mesh: animation_shader::Mesh,
-    instance_device: Vec<AnimatedObjectInstanceDevice>,
 
-    update_done: usize,
+    // device instance data
+    instance_data_device: Vec<AnimationObjectInstanceDevice>,
 
-    instances: Vec<animation_shader::Instance>,
-    instance_buffer: animation_shader::InstanceBuffer<animation_shader::Instance>,
+    max_instances: usize,
 }
 
 impl AnimatedObjectStorage {
@@ -33,88 +51,87 @@ impl AnimatedObjectStorage {
         glb_bin: &[u8],
         max_instances: usize,
     ) -> Self {
+        // imported data
         let animation_object_data = GltfImporter::create(glb_bin);
+        let mesh_data = animation_object_data.mesh;
+        let skeleton_data = animation_object_data.skeleton;
+        let animations_data = animation_object_data.animations;
 
-        let skeleton = Skeleton::new(&animation_object_data);
-        let animation_data = animation_object_data.animations[0].clone();
-        // let animation_0 = Animation::new(&animation_data);
-        let animation_uniform = animation_shader::AnimationUniform::zero();
+        // host data
+        let skeleton = Skeleton::new(&skeleton_data);
+        let animations = animations_data;
+        // println!("skeleton {:?}", skeleton);
+        // println!("animations {:?}", animations);
 
-        // let instance = deferred_animation_shader::Instance {
-        //     position: [0.0, 20.0, 5.0],
-        //     color: [0.5, 0.5, 0.8],
-        //     entity: [99, 0, 0],
-        // };
-
-        let mesh = animation_shader::Mesh::from_animation_data(
-            wgpu_renderer,
-            // animation_bind_group_layout,
-            &animation_object_data,
-            // &[instance],
-        );
-
-        let mut instance_host = Vec::with_capacity(max_instances);
-        let mut instance_device = Vec::with_capacity(max_instances);
-
+        // host instance data
+        let mut instance_data: Vec<AnimationObjectInstance> = Vec::new();
         for _i in 0..max_instances {
-            instance_host.push(AnimatedObjectInstanceHost {
-                animation: Animation::new(&animation_data),
-                is_active: false,
-                animation_uniform,
-                _instance: animation_shader::Instance {
-                    position: [0.0, 20.0, 5.0],
-                    color: [0.5, 0.5, 0.8],
-                    // entity: [i as u32 | ENTITY_ANT_BIT, 0, 0],
-                },
+            let current_animation_index = 1;
+            let current_animation = Animation::new(&animations[current_animation_index]);
+
+            let position = cgmath::Vector3::new(0.0, 20.0, 5.0);
+            let model = cgmath::Matrix4::from_translation(position);
+            let instance = animation_shader::Instance {
+                model: model.into(),
+                color: [0.5, 0.5, 0.8, 1.0],
+            };
+            let transformations = animation_shader::AnimationUniform::zero();
+            let requires_update = false;
+            let is_active = false;
+
+            instance_data.push(AnimationObjectInstance {
+                current_animation_index,
+                current_animation,
+                instance,
+                transformations,
+                _requires_update: requires_update,
+                is_active,
             });
         }
 
+        // device data
+        let mesh = animation_shader::Mesh::from_animation_data(wgpu_renderer, &mesh_data);
+
+        // device instance data
+        let mut instance_data_device: Vec<AnimationObjectInstanceDevice> = Vec::new();
         for _i in 0..max_instances {
-            instance_device.push(AnimatedObjectInstanceDevice {
-                animation_uniform_buffer: animation_shader::AnimationUniformBuffer::new(
-                    wgpu_renderer.device(),
-                    animation_bind_group_layout,
-                ),
-                _instance_buffer: animation_shader::InstanceBuffer::new(
-                    wgpu_renderer.device(),
-                    &[animation_shader::Instance::new()],
-                ),
+            let instance_buffer = animation_shader::InstanceBuffer::new(
+                wgpu_renderer.device(),
+                &[animation_shader::Instance::new()],
+            );
+            let transformations_buffer = animation_shader::AnimationUniformBuffer::new(
+                wgpu_renderer.device(),
+                animation_bind_group_layout,
+            );
+
+            instance_data_device.push(AnimationObjectInstanceDevice {
+                instance_buffer,
+                transformations_buffer,
             });
         }
-
-        let mut instances = Vec::with_capacity(max_instances);
-        for _i in 0..max_instances {
-            instances.push(animation_shader::Instance {
-                position: [0.0, 20.0, 5.0],
-                color: [0.5, 0.5, 0.8],
-                // entity: [i as u32 | ENTITY_ANT_BIT, 0, 0],
-            });
-        }
-
-        let instance_buffer =
-            animation_shader::InstanceBuffer::new(wgpu_renderer.device(), &instances);
 
         Self {
             skeleton,
-            animation_data,
+            animations,
+            instance_data,
             mesh,
-            instance_host,
-            instance_device,
-            update_done: 0,
-            instances,
-            instance_buffer,
+            instance_data_device,
+            max_instances,
         }
     }
 
     /// Updates the animations
     pub fn update_animations(&mut self, dt: &instant::Duration) {
-        for elem in &mut self.instance_host {
+        for elem in &mut self.instance_data {
             if elem.is_active {
-                elem.animation.increment_time(dt);
-                elem.animation.update_animation_uniform(
+                // update time
+                elem.current_animation.increment_time(dt);
+
+                // calculate transformations
+                elem.current_animation.update_animation_uniform(
                     &self.skeleton,
-                    &self.animation_data,
-                    &mut elem.animation_uniform,
+                    &self.animations[elem.current_animation_index],
+                    &mut elem.transformations,
                 );
             }
         }
@@ -122,41 +139,93 @@ impl AnimatedObjectStorage {
 
     /// Copies the data from the host to the device
     pub fn update_device_data(&mut self, renderer: &mut dyn WgpuRendererInterface) {
-        let size = self.instance_host.len();
-        assert_eq!(size, self.instance_device.len());
+        for i in 0..self.max_instances {
+            // host data
+            let instance_data_host = &self.instance_data[i];
+            let instance_host = instance_data_host.instance;
+            let transformations_host = &instance_data_host.transformations;
 
-        for i in 0..1 {
-            // if self.update_done < 1000000 {
-            self.update_done += 1;
+            // device data
+            let instance_data_device = &mut self.instance_data_device[i];
+            let instance_device = &mut instance_data_device.instance_buffer;
+            let transformations_device = &mut instance_data_device.transformations_buffer;
 
-            // if self.instance_host[i].is_active {
-            self.instance_device[i]
-                .animation_uniform_buffer
-                .update(renderer.queue(), &self.instance_host[i].animation_uniform);
-
-            //     self.instance_device[i]
-            //         .instance_buffersa
-            //         .update(renderer.queue(), &[self.instance_host[i].instance]);
-            // }
-            // }
-            // }
+            // copy
+            instance_device.update(renderer.queue(), &[instance_host]);
+            transformations_device.update(renderer.queue(), transformations_host);
         }
-
-        self.instance_buffer
-            .update(renderer.queue(), &self.instances);
     }
 
     pub fn max_instances(&self) -> usize {
-        self.instance_host.len()
+        self.max_instances
     }
 
-    pub fn set_pos(&mut self, id: usize, pos: cgmath::Vector3<f32>) {
-        // self.instance_host[id].instance.position = pos.into();
-        self.instances[id].position = pos.into();
+    // The model is assumed to look in x-direction
+    // Creates 3 orthogonal vectors to assemble a rotation matrix
+    pub fn look_to_rh(
+        pos: cgmath::Point3<f32>,
+        dir: cgmath::Vector3<f32>,
+        up: cgmath::Vector3<f32>,
+    ) -> Matrix4<f32> {
+        let f = dir.normalize();
+        let s = f.cross(up).normalize();
+        let u = s.cross(f);
+        let s = -s;
+
+        #[cfg_attr(any(), rustfmt::skip)]
+        Matrix4::new(
+            f.x, f.y, f.z, 0.0,
+            s.x, s.y, s.z, 0.0,
+            u.x, u.y, u.z, 0.0,
+            pos.x, pos.y, pos.z, 1.0,
+        )
+    }
+
+    pub fn set_pos(&mut self, id: usize, pos: cgmath::Vector3<f32>, look_at: cgmath::Vector3<f32>) {
+        // let look_at = pos + look_at;
+
+        let model = Self::look_to_rh(
+            cgmath::Point3 {
+                x: pos.x,
+                y: pos.y,
+                z: pos.z,
+            },
+            cgmath::Vector3 {
+                x: look_at.x,
+                y: look_at.y,
+                z: look_at.z,
+            },
+            cgmath::Vector3::unit_z(),
+        );
+
+        // inverts the x axis
+        #[cfg_attr(any(), rustfmt::skip)]
+        let invert_x = Matrix4::new(
+            -1.0, 0.0, 0.0, 0.0,
+            0.0, -1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        );
+
+        // inverts the y axis
+        #[cfg_attr(any(), rustfmt::skip)]
+        let _invert_y = Matrix4::new(
+            0.0, -1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        );
+
+        let model = model * invert_x;
+
+        // let angle: cgmath::Rad<f32> = cgmath::Deg(-90.0).into();
+        // let model = cgmath::Matrix4::from_translation(*pos) * cgmath::Matrix4::from_angle_z(angle);
+
+        self.instance_data[id].instance.model = model.into();
     }
 
     pub fn set_active(&mut self, id: usize) {
-        self.instance_host[id].is_active = true;
+        self.instance_data[id].is_active = true;
     }
 }
 
@@ -169,7 +238,7 @@ impl std::fmt::Debug for AnimatedObjectStorage {
         writeln!(f, "{:?}", self.skeleton)?;
 
         writeln!(f, "Animation:")?;
-        writeln!(f, "{:?}", self.animation_data)?;
+        writeln!(f, "{:?}", self.animations)?;
 
         Ok(())
     }
@@ -177,26 +246,15 @@ impl std::fmt::Debug for AnimatedObjectStorage {
 
 impl AnimationShaderDraw for AnimatedObjectStorage {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
-        let size = self.instance_host.len();
-        assert_eq!(size, self.instance_device.len());
+        for i in 0..self.max_instances {
+            let mesh = &self.mesh;
+            let instance_data_device = &self.instance_data_device[i];
 
-        self.mesh.draw(
-            render_pass,
-            &self.instance_device[0].animation_uniform_buffer,
-            &self.instance_buffer,
-        );
+            mesh.draw(
+                render_pass,
+                &instance_data_device.transformations_buffer,
+                &instance_data_device.instance_buffer,
+            );
+        }
     }
-}
-
-struct AnimatedObjectInstanceHost {
-    pub animation: Animation,
-    pub animation_uniform: animation_shader::AnimationUniform,
-    pub _instance: animation_shader::Instance,
-
-    pub is_active: bool,
-}
-
-struct AnimatedObjectInstanceDevice {
-    pub animation_uniform_buffer: animation_shader::AnimationUniformBuffer,
-    pub _instance_buffer: animation_shader::InstanceBuffer<animation_shader::Instance>,
 }

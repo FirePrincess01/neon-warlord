@@ -13,11 +13,7 @@ use super::VertexBuffer;
 /// A general purpose shader using vertices, colors and an instance matrix
 pub struct Mesh {
     vertex_buffer: VertexBuffer<Vertex>,
-    // animation_buffer: AnimationUniformBuffer,
     index_buffer: IndexBuffer<u32>,
-    // instance_buffer: InstanceBuffer<Instance>,
-    // max_instances: u32,
-    // nr_instances: u32,
     _nr_vertices: u32,
 }
 
@@ -25,49 +21,29 @@ pub struct Mesh {
 impl Mesh {
     pub fn new(
         wgpu_renderer: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
-        // animation_bind_group_layout: &AnimationBindGroupLayout,
         vertices: &[Vertex],
-        // animation: &AnimationUniform,
         indices: &[u32],
-        // instances: &[Instance],
     ) -> Self {
         let vertex_buffer = VertexBuffer::new(wgpu_renderer.device(), vertices);
-
-        // let mut animation_buffer =
-        //     AnimationUniformBuffer::new(wgpu_renderer.device(), animation_bind_group_layout);
-        // animation_buffer.update(wgpu_renderer.queue(), animation);
-
         let index_buffer = IndexBuffer::new(wgpu_renderer.device(), indices);
-
-        // let mut instance_buffer = InstanceBuffer::new(wgpu_renderer.device(), instances);
-        // instance_buffer.update(wgpu_renderer.queue(), instances);
-
-        // let max_instances = instances.len() as u32;
-        // let nr_instances = instances.len() as u32;
         let nr_vertices = vertices.len() as u32;
 
         Self {
             vertex_buffer,
-            // animation_buffer,
             index_buffer,
-            // instance_buffer,
-            // max_instances,
-            // nr_instances,
             _nr_vertices: nr_vertices,
         }
     }
 
     pub fn from_animation_data(
         wgpu_renderer: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
-        // animation_bind_group_layout: &AnimationBindGroupLayout,
-        animation_object_data: &crate::animated_object::animated_object_data::AnimatedObjectData,
-        // instances: &[Instance],
+        mesh_data: &crate::animated_object::animated_object_data::MeshData,
     ) -> Self {
-        let positions = &animation_object_data.mesh.positions;
-        let normals = &animation_object_data.mesh.normals;
-        let joints = &animation_object_data.mesh.joints;
-        let weights = &animation_object_data.mesh.weights;
-        let indices_u16 = &animation_object_data.mesh.indices;
+        let positions = &mesh_data.positions;
+        let normals = &mesh_data.normals;
+        let joints = &mesh_data.joints;
+        let weights = &mesh_data.weights;
+        let indices_u16 = &mesh_data.indices;
 
         let len = positions.len();
         assert_eq!(normals.len(), len);
@@ -96,32 +72,12 @@ impl Mesh {
             indices.push(*elem as u32);
         }
 
-        Self::new(
-            wgpu_renderer,
-            // animation_bind_group_layout,
-            &vertices,
-            // &animation_uniform,
-            &indices,
-            // instances,
-        )
+        Self::new(wgpu_renderer, &vertices, &indices)
     }
 
     pub fn update_vertex_buffer(&mut self, queue: &wgpu::Queue, vertices: &[Vertex]) {
         self.vertex_buffer.update(queue, vertices);
     }
-
-    // pub fn update_animation_buffer(
-    //     &mut self,
-    //     queue: &wgpu::Queue,
-    //     animation_uniform: &AnimationUniform,
-    // ) {
-    //     self.animation_buffer.update(queue, animation_uniform);
-    // }
-
-    // pub fn update_instance_buffer(&mut self, queue: &wgpu::Queue, instances: &[Instance]) {
-    //     self.instance_buffer.update(queue, instances);
-    //     self.nr_instances = u32::min(instances.len() as u32, self.max_instances);
-    // }
 
     pub fn draw<'a>(
         &'a self,
@@ -144,18 +100,3 @@ impl std::fmt::Debug for Mesh {
         writeln!(f, "Indices: {}", self.index_buffer.size())
     }
 }
-
-// impl DeferredAnimationShaderDraw for Mesh {
-//     fn draw<'a>(&'a self,
-//     render_pass: &mut wgpu::RenderPass<'a>,
-//     animation_buffer: &AnimationUniformBuffer,
-//     instance_buffer: &InstanceBuffer<Instance>,
-// ) {
-//         self.vertex_buffer.bind(render_pass);
-//         self.animation_buffer.bind(render_pass);
-//         self.index_buffer.bind(render_pass);
-//         self.instance_buffer.bind(render_pass);
-
-//         render_pass.draw_indexed(0..self.index_buffer.size(), 0, 0..self.nr_instances);
-//     }
-// }
