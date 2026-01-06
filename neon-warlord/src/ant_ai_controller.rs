@@ -9,7 +9,7 @@ type Vec2 = cgmath::Vector2<f32>;
 pub struct AntAiController<'a> {
     pub game_board: &'a GameBoard,
     pub ant_state: &'a mut AntState,
-    pub ant_index: usize,
+    pub _ant_index: usize,
 }
 
 impl WorldInterface for AntAiController<'_> {

@@ -441,7 +441,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                         self.terrain.update_height_map(
                             renderer_interface,
                             &self.renderer.heightmap_bind_group_layout,
-                            terrain_part,
+                            *terrain_part,
                         );
                     }
                     // ##########################################################

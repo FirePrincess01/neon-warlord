@@ -172,9 +172,9 @@ impl AnimatedObjectStorage {
 
         #[cfg_attr(rustfmt, rustfmt_skip)]
         Matrix4::new(
-            f.x.clone(), f.y.clone(), f.z.clone(), 0.0,
-            s.x.clone(), s.y.clone(), s.z.clone(), 0.0,
-            u.x.clone(), u.y.clone(), u.z.clone(), 0.0,
+            f.x, f.y, f.z, 0.0,
+            s.x, s.y, s.z, 0.0,
+            u.x, u.y, u.z, 0.0,
             pos.x, pos.y, pos.z, 1.0,
         )
     }

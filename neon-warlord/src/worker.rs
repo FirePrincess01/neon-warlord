@@ -14,9 +14,9 @@ pub enum MainMessage {
 }
 
 pub enum WorkerMessage {
-    UpdateWatchPoints(watch::WatchViewerData<10>), // all the data for a point of the performance monitor
+    UpdateWatchPoints(Box<watch::WatchViewerData<10>>), // all the data for a point of the performance monitor
     Ups(u32),
-    TerrainData(HeightMap),
+    TerrainData(Box<HeightMap>),
     AntState(AntPosition),
 }
 
@@ -82,7 +82,7 @@ impl Worker {
         // Update watch
         self.watch_ups.update();
         let watch_ups_data = self.watch_ups.get_viewer_data();
-        let _ = main.send(WorkerMessage::UpdateWatchPoints(watch_ups_data));
+        let _ = main.send(WorkerMessage::UpdateWatchPoints(Box::new(watch_ups_data)));
         let mut watch_index = 0;
 
         // update ups
@@ -110,7 +110,7 @@ impl Worker {
         {
             for elem in terrain_detail {
                 let terrain_part = self.terrain_generator.generate(&elem);
-                let _ = main.send(WorkerMessage::TerrainData(terrain_part));
+                let _ = main.send(WorkerMessage::TerrainData(Box::new(terrain_part)));
             }
         }
         self.watch_ups.stop(watch_index);
@@ -123,7 +123,7 @@ impl Worker {
             self.ant_ai.update(&mut AntAiController {
                 game_board: &mut self.game_board,
                 ant_state: &mut self.ant_state,
-                ant_index: 0,
+                _ant_index: 0,
             });
 
             // update state

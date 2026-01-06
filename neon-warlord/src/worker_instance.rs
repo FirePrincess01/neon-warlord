@@ -49,9 +49,9 @@ impl WorkerInstance {
     }
 }
 
+#[allow(dead_code)] // unused in wasm
 enum WorkerExecution {
     SingleThreaded(WorkerSingleThreaded),
-    #[allow(dead_code)] // unused in wasm
     Multithreaded(WorkerMultiThreaded),
 }
 
@@ -64,6 +64,7 @@ pub struct WorkerSingleThreaded {
     tick: u64,
 }
 
+#[allow(dead_code)] // unused in x86
 impl WorkerSingleThreaded {
     pub fn new() -> Self {
         let (channel_0_tx, channel_0_rx) = mpsc::channel();
@@ -92,9 +93,10 @@ pub struct WorkerMultiThreaded {
     channel_0_tx: mpsc::Sender<MainMessage>,
     channel_1_rx: mpsc::Receiver<WorkerMessage>,
 
-    worker: thread::JoinHandle<()>,
+    _worker: thread::JoinHandle<()>,
 }
 
+#[allow(dead_code)] // unused in wasm
 impl WorkerMultiThreaded {
     pub fn new() -> Self {
         let (channel_0_tx, channel_0_rx) = mpsc::channel();
@@ -127,7 +129,7 @@ impl WorkerMultiThreaded {
         Self {
             channel_0_tx,
             channel_1_rx,
-            worker,
+            _worker: worker,
         }
     }
 }

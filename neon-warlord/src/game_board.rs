@@ -20,21 +20,17 @@ pub struct GameBoard {
 
 impl GameBoard {
     pub fn new() -> Self {
-        let mut agents: Vec<Agent> = Vec::new();
-
-        agents.push(Agent {
-            faction: Faction::Blue,
-            position: Vec2::new(0.0, 0.0),
-        });
-
-        agents.push(Agent {
-            faction: Faction::Red,
-            position: Vec2::new(0.0, 10.0),
-        });
+        let agents: Vec<Agent> = vec![
+            Agent {
+                faction: Faction::Blue,
+                position: Vec2::new(0.0, 0.0),
+            },
+            Agent {
+                faction: Faction::Red,
+                position: Vec2::new(0.0, 10.0),
+            },
+        ];
 
         Self { agents }
     }
 }
-
-
-
