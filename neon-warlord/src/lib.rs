@@ -77,7 +77,6 @@ struct NeonWarlord {
 
     // Terrain
     terrain: TerrainStorage,
-    // terrain_generator: HeightMapGenerator,
 
     // Ants
     ants: AntStorage,
@@ -113,21 +112,6 @@ impl NeonWarlord {
             settings.get_camera_settings().sensitivity_scroll,
         );
 
-        // world
-        // let mut world = ecs2::World::new();
-
-        // let blue_token = world.resources.blues2.create(0.0, 1.0, 1.0);
-
-        // world
-        //     .base_factory
-        //     .add_blue(blue_token, &mut world.resources);
-        // world
-        //     .base_factory
-        //     .produce(&mut world.resources, &mut world.agents);
-
-        // world mesh
-        // let _world_mesh = world_mesh::WorldMesh::new(renderer_interface, &world);
-
         // performance monitor
         let watch_fps = Watch::new();
         let performance_monitor_fps = PerformanceMonitor::new(
@@ -162,18 +146,6 @@ impl NeonWarlord {
         let _mouse_pos_y = 0;
         let _mouse_pos_x = 0;
 
-        // Debug Overlay
-        // let debug_overlay = DebugOverlay::new(
-        //     renderer_interface,
-        //     &renderer.texture_bind_group_layout,
-        //     &font,
-        //     cgmath::Vector3 {
-        //         x: 20.0,
-        //         y: 120.0,
-        //         z: 0.0,
-        //     },
-        // );
-
         // create ant
         // let glb_bin = include_bytes!("../res/wiggle_tower2.glb");
         let glb_bin = include_bytes!("../res/ant_0_10.glb");
@@ -183,14 +155,6 @@ impl NeonWarlord {
             glb_bin,
             settings.get_object_settings().max_nr_ants,
         );
-
-        // println!("{:?}", animated_object_storage_ant);
-
-        // let point_light_storage_ant = PointLightStorage::new(
-        //     renderer_interface,
-        //     settings.max_nr_ants,
-        //     settings.dbg_point_lights,
-        // );
 
         let mut ants = AntStorage::new(
             // point_light_storage_ant,
@@ -203,43 +167,6 @@ impl NeonWarlord {
             ants.set_ant(elem);
         }
 
-        // ant_storage.set_ant(&Ant{
-        //     id: todo!(),
-        //     pos: todo!(),
-        //     rot_z: todo!(),
-        //     light_strength: todo!(),
-        //     light_color: todo!(),
-        // });
-
-        // create game server
-        // let game_logic =
-        //     market_economy_simulation_server::GameLogicServer::new(settings.get_server_settings());
-
-        // create ant
-        // let ant = ant::Ant::new(renderer_interface);
-
-        // let ambient_light_quad_vertices = geometry::Quad::new(2.0);
-        // let ambient_light_quad_instance = deferred_light_shader::Instance {
-        //     position: [-1.0, -1.0, 0.1],
-        //     light_color: [0.4, 0.4, 0.4],
-        //     radius: 0.0,
-        //     linear: 0.0,
-        //     quadratic: 0.0,
-        // };
-        // let ambient_light_quad = deferred_light_shader::Mesh::new(
-        //     renderer_interface.device(),
-        //     &ambient_light_quad_vertices.vertices,
-        //     &ambient_light_quad_vertices.indices,
-        //     &[ambient_light_quad_instance],
-        // );
-
-        // // point light storage
-        // let point_light_storage = point_light_storage::PointLightStorage::new(
-        //     renderer_interface,
-        //     settings.max_point_light_instances,
-        //     settings.dbg_point_lights,
-        // );
-
         // terrain
         let terrain = TerrainStorage::new(
             settings.get_terrain_settings(),
@@ -247,10 +174,6 @@ impl NeonWarlord {
             &renderer.texture_bind_group_layout,
             include_bytes!("../res/tile.png"),
         );
-        // let terrain_generator = heightmap_generator::HeightMapGenerator::new();
-
-        // selector
-        // let selector = Selector::new();
 
         // sun
         let sun = SunStorage::new(renderer_interface);
@@ -288,37 +211,6 @@ impl NeonWarlord {
             particles,
             worker,
             ups: 0,
-            // settings,
-
-            // size,
-            // scale_factor,
-
-            // renderer,
-
-            // _world: world,
-            // // world_mesh,
-            // ant_storage,
-
-            // watch_fps,
-            // performance_monitor_fps,
-            // performance_monitor_ups,
-
-            // mouse_pos_y,
-            // mouse_pos_x,
-            // entity_index: 0,
-            // font,
-
-            // debug_overlay,
-
-            // game_logic,
-
-            // ant,
-
-            // ambient_light_quad,
-            // // point_light_storage,
-            // terrain_storage,
-
-            // selector,
         }
     }
 }

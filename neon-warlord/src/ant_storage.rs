@@ -50,7 +50,6 @@ impl AntStorage {
             //     PointLightIndex {
             //         instance_index: ant.id,
             //     },
-
             //     pos,
             //     ant.light_color,
             //     Attenuation::_200,

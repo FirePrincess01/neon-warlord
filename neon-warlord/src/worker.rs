@@ -104,8 +104,8 @@ impl Worker {
         {
             for message in messages.try_iter() {
                 match message {
+                    // ##########################################################
                     MainMessage::GetTerrain(terrain_texture_details) => {
-                        // ##########################################################
                         terrain_detail.push(terrain_texture_details);
                     }
                 }

@@ -33,7 +33,6 @@ struct InstanceInput {
     @location(7) model_matrix_2: vec4<f32>,
     @location(8) model_matrix_3: vec4<f32>,
 
-    // @location(5) position: vec3<f32>,
     @location(9) color: vec4<f32>,
 }
 
@@ -100,17 +99,6 @@ fn vs_main_gouraud(
     // let halfway_dir = normalize(light_direction + view_dir);
     // let specular_lighting_strength = pow(max(dot(normal, halfway_dir), 0.0), 32.0) * specular_strength;
 
-
-    // pong shading
-    // let pong_lighting = light_color * (ambient_strength + diffuse_lighting_strength + specular_lighting_strength);
-    // let pong_lighting = light_color * (specular_lighting_strength);
-    // let pong_lighting = light_color * ((ambient_strength + diffuse_lighting_strength) * 0.4 +  (ambient_strength+ diffuse_lighting_strength + specular_lighting_strength) * specular_strength);
-    // let pong_lighting = light_color * ((ambient_strength + diffuse_lighting_strength));
-    // let pong_light: vec3<f32> = pong_lighting * color;
-
-    // blend with intensity
-    // let intensity = vertex_color[3];
-    // let out_color: vec3<f32> = vertex_color.xyz * intensity + pong_light * (1.0 -intensity);
     let out_color: vec3<f32> = color.xyz * (ambient_strength + diffuse_lighting_strength + specular_lighting_strength);
 
     var out: VertexOutput;

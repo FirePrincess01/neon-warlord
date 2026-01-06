@@ -359,201 +359,6 @@ impl ForwardRenderer {
         self.camera.get_view_direction()
     }
 
-    // #[allow(clippy::too_many_arguments)]
-    // fn render_deferred(
-    //     &self,
-    //     renderer_interface: &mut dyn WgpuRendererInterface,
-    //     _view: &wgpu::TextureView,
-    //     encoder: &mut wgpu::CommandEncoder,
-    //     // meshes: &[&dyn DeferredShaderDraw],
-    //     // ant_light_orbs: &dyn DeferredShaderDraw,
-    //     // terrain_storage: &mut TerrainStorage,
-    //     // animated_object_storage: &AnimatedObjectStorage,
-    // ) {
-    //     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-    //         label: Some("Deferred Render Pass"),
-    //         color_attachments: &[
-    //             //     Some(wgpu::RenderPassColorAttachment {
-    //             //         view,
-    //             //         resolve_target: None,
-    //             //         ops: wgpu::Operations {
-    //             //             load: wgpu::LoadOp::Clear(wgpu::Color {
-    //             //                 r: 0.00,
-    //             //                 g: 0.00,
-    //             //                 b: 0.00,
-    //             //                 a: 1.0,
-    //             //             }),
-    //             //             store: wgpu::StoreOp::default(),
-    //             //         },
-    //             //     }),
-    //             // None,
-    //             // None,
-    //             Some(wgpu::RenderPassColorAttachment {
-    //                 view: &self.g_buffer.position.view,
-    //                 resolve_target: None,
-    //                 ops: wgpu::Operations {
-    //                     load: wgpu::LoadOp::Clear(wgpu::Color {
-    //                         r: 0.00,
-    //                         g: 0.00,
-    //                         b: 0.00,
-    //                         a: 1.0,
-    //                     }),
-    //                     store: wgpu::StoreOp::default(),
-    //                 },
-    //             }),
-    //             Some(wgpu::RenderPassColorAttachment {
-    //                 view: &self.g_buffer.normal.view,
-    //                 resolve_target: None,
-    //                 ops: wgpu::Operations {
-    //                     load: wgpu::LoadOp::Clear(wgpu::Color {
-    //                         r: 0.00,
-    //                         g: 0.00,
-    //                         b: 0.00,
-    //                         a: 1.0,
-    //                     }),
-    //                     store: wgpu::StoreOp::default(),
-    //                 },
-    //             }),
-    //             Some(wgpu::RenderPassColorAttachment {
-    //                 view: &self.g_buffer.albedo.view,
-    //                 resolve_target: None,
-    //                 ops: wgpu::Operations {
-    //                     load: wgpu::LoadOp::Clear(wgpu::Color {
-    //                         r: 0.00,
-    //                         g: 0.00,
-    //                         b: 0.00,
-    //                         a: 1.0,
-    //                     }),
-    //                     store: wgpu::StoreOp::default(),
-    //                 },
-    //             }),
-    //             // Some(wgpu::RenderPassColorAttachment {
-    //             //     view: &self.entity_buffer.view,
-    //             //     resolve_target: None,
-    //             //     ops: wgpu::Operations {
-    //             //         load: wgpu::LoadOp::Clear(wgpu::Color {
-    //             //             r: 0.00,
-    //             //             g: 0.00,
-    //             //             b: 0.00,
-    //             //             a: 1.0,
-    //             //         }),
-    //             //         store: wgpu::StoreOp::default(),
-    //             //     },
-    //             // }),
-    //         ],
-    //         depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-    //             view: renderer_interface.get_depth_texture_view(),
-    //             depth_ops: Some(wgpu::Operations {
-    //                 load: wgpu::LoadOp::Clear(1.0),
-    //                 store: wgpu::StoreOp::default(),
-    //             }),
-    //             stencil_ops: None,
-    //         }),
-    //         timestamp_writes: None,
-    //         occlusion_query_set: None,
-    //     });
-
-    //     // ants
-    //     self.pipeline_deferred_animated.draw(
-    //         &mut render_pass,
-    //         &self.camera_uniform_buffer,
-    //         animated_object_storage,
-    //     );
-
-    //     // light orbs (shining through the ants)
-    //     self.pipeline_deferred_color.draw(
-    //         &mut render_pass,
-    //         &self.camera_uniform_buffer,
-    //         ant_light_orbs,
-    //     );
-
-    //     // terrain
-    //     self.pipeline_deferred_heightmap.draw(
-    //         &mut render_pass,
-    //         &self.camera_uniform_buffer,
-    //         terrain_storage,
-    //     );
-
-    //     // other
-    //     for mesh in meshes {
-    //         self.pipeline_deferred_color
-    //             .draw(&mut render_pass, &self.camera_uniform_buffer, *mesh);
-    //     }
-    // }
-
-    // fn render_light(
-    //     &self,
-    //     renderer_interface: &mut dyn WgpuRendererInterface,
-    //     view: &wgpu::TextureView,
-    //     encoder: &mut wgpu::CommandEncoder,
-    //     meshes: &[&dyn DeferredLightShaderDraw],
-    //     ambient_light_quad: &impl DeferredLightShaderDraw,
-    //     point_light_storage: &PointLightStorage,
-    // ) {
-    //     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-    //         label: Some("Light Render Pass"),
-    //         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-    //             view,
-    //             resolve_target: None,
-    //             ops: wgpu::Operations {
-    //                 // load: wgpu::LoadOp::Load,
-    //                 load: wgpu::LoadOp::Clear(wgpu::Color {
-    //                     r: 0.00,
-    //                     g: 0.00,
-    //                     b: 0.00,
-    //                     a: 1.0,
-    //                 }),
-    //                 store: wgpu::StoreOp::default(),
-    //             },
-    //         })],
-    //         depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-    //             view: renderer_interface.get_depth_texture_view(),
-    //             depth_ops: Some(wgpu::Operations {
-    //                 // load: wgpu::LoadOp::Clear(1.0),
-    //                 load: wgpu::LoadOp::Load,
-    //                 store: wgpu::StoreOp::default(),
-    //             }),
-    //             stencil_ops: None,
-    //         }),
-    //         timestamp_writes: None,
-    //         occlusion_query_set: None,
-    //     });
-
-    //     // ambient light
-    //     self.pipeline_deferred_light_ambient.draw(
-    //         &mut render_pass,
-    //         &self.camera_uniform_buffer,
-    //         &self.g_buffer,
-    //         ambient_light_quad,
-    //     );
-
-    //     // lights
-    //     for mesh in meshes {
-    //         self.pipeline_deferred_light.draw(
-    //             &mut render_pass,
-    //             &self.camera_uniform_buffer,
-    //             &self.g_buffer,
-    //             *mesh,
-    //         );
-    //     }
-
-    //     // point lights
-    //     self.pipeline_deferred_light.draw(
-    //         &mut render_pass,
-    //         &self.camera_uniform_buffer,
-    //         &self.g_buffer,
-    //         point_light_storage,
-    //     );
-
-    //     // debug spheres
-    //     self.pipeline_deferred_light_sphere.draw(
-    //         &mut render_pass,
-    //         &self.camera_uniform_buffer,
-    //         &self.g_buffer,
-    //         point_light_storage,
-    //     );
-    // }
-
     // fn render_fxaa(
     //     &self,
     //     view: &wgpu::TextureView,
@@ -685,51 +490,23 @@ impl ForwardRenderer {
                 *elem,
             );
         }
-
-        // textured meshes
-        // self.pipeline_texture_gui.draw(
-        //     &mut render_pass,
-        //     &self.camera_uniform_orthographic_buffer,
-        //     textured_meshes,
-        // );
     }
-
-    // pub fn read_entity_index(&mut self) -> u32 {
-    //     {
-    //         // self.entity_buffer.read_pixel()
-    //         0
-    //     }
-    // }
 
     #[allow(clippy::too_many_arguments)]
     pub fn render(
         &mut self,
         renderer_interface: &mut dyn WgpuRendererInterface,
-        // deferred: & impl DeferredShaderDraw,
-        // deferred_light: & impl DeferredLightShaderDraw,
-        // deferred_combined: &(impl DeferredShaderDraw + DeferredLightShaderDraw),
-        // animated_object_storage: &AnimatedObjectStorage,
-        // point_light_storage: &PointLightStorage,
         lod_terrains: &mut dyn LodHeightMapShaderDraw,
-
-        // ant_light_orbs: &(impl DeferredShaderDraw + DeferredLightShaderDraw),
-        // mesh_textured_gui: &impl VertexTextureShaderDraw,
-        // ambient_light_quad: &deferred_light_shader::Mesh,
         animations: &[&dyn AnimationShaderDraw],
         gui_elements: &[&dyn DrawGui],
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
         particles: &[&dyn ParticleShaderDraw],
         watch_fps: &mut watch::Watch<10>,
-        // mouse_position: MousePosition,
     ) -> Result<(), wgpu::SurfaceError> {
-        // watch_fps.start(0, "Wait for next frame");
+        let output = renderer_interface.get_current_texture()?;
 
         let mut watch_index = 5;
         watch_fps.start(watch_index, "Get frame");
-        let output = renderer_interface.get_current_texture()?;
-        // watch_fps.stop(0);
-
-        // watch_fps.start(1, "Draw");
 
         let view: wgpu::TextureView = output
             .texture
@@ -744,30 +521,6 @@ impl ForwardRenderer {
 
         watch_fps.stop(watch_index);
 
-        // draw
-        // self.render_deferred(
-        //     renderer_interface,
-        //     &view,
-        //     &mut encoder,
-        //     &[],
-        //     ant_light_orbs,
-        //     terrain_storage,
-        //     animated_object_storage,
-        // );
-
-        // self.render_light(
-        //     renderer_interface,
-        //     if self.settings.enable_fxaa {
-        //         &self.post_processing_texture.view
-        //     } else {
-        //         &view
-        //     },
-        //     &mut encoder,
-        //     &[ant_light_orbs],
-        //     ambient_light_quad,
-        //     point_light_storage,
-        // );
-
         // if self.settings.enable_fxaa {
         //     self.render_fxaa(&view, &mut encoder, ambient_light_quad);
         // }
@@ -778,18 +531,12 @@ impl ForwardRenderer {
             renderer_interface,
             &view,
             &mut encoder,
-            // mesh_textured_gui,
             lod_terrains,
             animations,
             gui_elements,
             vertex_color_objects,
             particles,
         );
-        watch_fps.stop(watch_index);
-
-        // copy entity texture
-        // self.entity_buffer
-        //     .copy_texture_to_buffer(&mut encoder, mouse_position);
 
         watch_index += 1;
         watch_fps.start(watch_index, "Submit");
@@ -798,9 +545,6 @@ impl ForwardRenderer {
             .submit(std::iter::once(encoder.finish()));
         output.present();
         watch_fps.stop(watch_index);
-
-        // map entity texture to the host
-        // self.entity_buffer.map_buffer_async();
 
         watch_index += 1;
         watch_fps.start(watch_index, "Wait Finish");
@@ -815,8 +559,6 @@ impl ForwardRenderer {
             let _res = renderer_interface.device().poll(wgpu::PollType::Poll);
         }
         watch_fps.stop(watch_index);
-
-        // watch_fps.stop(1);
 
         Ok(())
     }

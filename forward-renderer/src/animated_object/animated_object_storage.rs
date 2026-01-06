@@ -60,10 +60,10 @@ impl AnimatedObjectStorage {
         // host data
         let skeleton = Skeleton::new(&skeleton_data);
         let animations = animations_data;
-        println!("skeleton {:?}", skeleton);
-        println!("animations {:?}", animations);
+        // println!("skeleton {:?}", skeleton);
+        // println!("animations {:?}", animations);
 
-        // host instace data
+        // host instance data
         let mut instance_data: Vec<AnimationObjectInstance> = Vec::new();
         for _i in 0..max_instances {
             let current_animation_index = 1;
@@ -184,19 +184,6 @@ impl AnimatedObjectStorage {
     pub fn set_pos(&mut self, id: usize, pos: cgmath::Vector3<f32>, look_at: cgmath::Vector3<f32>) {
         // let look_at = pos + look_at;
 
-        // let model = Matrix4::look_at_rh(
-        //     cgmath::Point3 {
-        //         x: pos.x,
-        //         y: pos.y,
-        //         z: pos.z,
-        //     },
-        //     cgmath::Point3 {
-        //         x: look_at.x,
-        //         y: look_at.y,
-        //         z: look_at.z,
-        //     },
-        //     cgmath::Vector3::unit_z(),
-        // );
         let model = Self::look_to_rh(
             cgmath::Point3 {
                 x: pos.x,

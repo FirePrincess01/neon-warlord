@@ -1,10 +1,10 @@
-//! Creates a bone hiarchy
+//! Creates a bone hierarchy
 
 use cgmath::SquareMatrix;
 
 use super::joint::Joint;
 
-/// Creates a bone hiarchy
+/// Creates a bone hierarchy
 pub struct Skeleton {
     joints: Vec<Joint>,
 }

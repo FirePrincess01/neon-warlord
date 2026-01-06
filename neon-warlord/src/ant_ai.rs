@@ -160,15 +160,3 @@ pub trait WorldInterface {
 }
 
 pub trait AntAiInterface: AntBodyInterface + WorldInterface {}
-
-// #[derive(PartialEq, Clone, Copy)]
-// pub enum Faction {
-//     Red,
-//     Blue,
-// }
-
-// #[derive(Clone, Copy)]
-// pub struct Agent {
-//     faction: Faction,
-//     position: cgmath::Vector2<f32>,
-// }

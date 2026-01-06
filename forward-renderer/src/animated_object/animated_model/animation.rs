@@ -5,7 +5,6 @@ use super::skeleton::Skeleton;
 type Decomposed = cgmath::Decomposed<cgmath::Vector3<f32>, cgmath::Quaternion<f32>>;
 
 pub struct Animation {
-    // animation_data: AnimationData,
     max_key_frame_time: f32,
 
     current_key_frame_time: instant::Duration,
@@ -32,7 +31,6 @@ impl Animation {
         }
 
         Self {
-            // animation_data,
             max_key_frame_time,
 
             current_key_frame_time: instant::Duration::ZERO,
