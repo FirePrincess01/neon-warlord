@@ -75,7 +75,7 @@ impl Worker {
         }
     }
 
-    pub fn update(&mut self, tick: u64, dt: Duration) {
+    pub fn update(&mut self, _tick: u64, dt: Duration) {
         let main = &self.channel_1_tx;
         let messages = &self.channel_0_rx;
 

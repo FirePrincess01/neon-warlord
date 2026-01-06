@@ -2,7 +2,6 @@
 
 use cgmath::InnerSpace;
 
-use crate::ant_storage::{Ant, AntStorage};
 
 type Vec2 = cgmath::Vector2<f32>;
 

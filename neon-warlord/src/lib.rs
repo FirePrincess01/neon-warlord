@@ -488,7 +488,7 @@ impl DefaultApplicationInterface for NeonWarlord {
             // generate map
             let requests = self.terrain.get_requests().clone();
             for request in requests {
-                let _ = worker.send(MainMessage::GetTerrain((request)));
+                let _ = worker.send(MainMessage::GetTerrain(request));
             }
             self.terrain.clear_requests();
         }
@@ -557,7 +557,9 @@ impl DefaultApplicationInterface for NeonWarlord {
     }
 
     fn input(&mut self, event: &winit::event::WindowEvent) -> bool {
-        let res = match event {
+        
+
+        match event {
             // #########################################################
             WindowEvent::KeyboardInput {
                 event:
@@ -627,9 +629,7 @@ impl DefaultApplicationInterface for NeonWarlord {
             }
 
             _ => false,
-        };
-
-        res
+        }
     }
 
     fn render(

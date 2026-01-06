@@ -3,7 +3,6 @@
 
 // use market_economy_simulation_server::{ants, point_lights::Attenuation};
 
-use std::thread::LocalKey;
 
 // use crate::point_light_storage::{PointLightIndex, PointLightInterface, PointLightStorage};
 use forward_renderer::AnimatedObjectStorage;
