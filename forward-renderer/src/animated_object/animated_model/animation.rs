@@ -12,7 +12,7 @@ pub struct Animation {
 }
 
 impl Animation {
-    pub fn zero() -> Self {
+    pub fn _zero() -> Self {
         Self {
             max_key_frame_time: 0.0,
             current_key_frame_time: instant::Duration::default(),

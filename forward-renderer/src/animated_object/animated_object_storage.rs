@@ -1,9 +1,8 @@
 //! Manages all instances of one single animated object
 //!
 
-use std::thread::LocalKey;
 
-use cgmath::{EuclideanSpace, InnerSpace, Matrix4};
+use cgmath::{InnerSpace, Matrix4};
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 
 use crate::animated_object::animated_model::animation::Animation;
@@ -19,7 +18,7 @@ struct AnimationObjectInstance {
     instance: animation_shader::Instance,
     transformations: animation_shader::AnimationUniform,
 
-    requires_update: bool,
+    _requires_update: bool,
 
     is_active: bool,
 }
@@ -86,7 +85,7 @@ impl AnimatedObjectStorage {
                 current_animation,
                 instance,
                 transformations,
-                requires_update,
+                _requires_update: requires_update,
                 is_active,
             });
         }
@@ -154,7 +153,7 @@ impl AnimatedObjectStorage {
 
             // copy
             instance_device.update(renderer.queue(), &[instance_host]);
-            transformations_device.update(renderer.queue(), &transformations_host);
+            transformations_device.update(renderer.queue(), transformations_host);
         }
     }
 
@@ -170,7 +169,7 @@ impl AnimatedObjectStorage {
         let u = s.cross(f);
         let s = -s;
 
-        #[cfg_attr(rustfmt, rustfmt_skip)]
+        #[cfg_attr(any(), rustfmt::skip)]
         Matrix4::new(
             f.x, f.y, f.z, 0.0,
             s.x, s.y, s.z, 0.0,
@@ -210,7 +209,7 @@ impl AnimatedObjectStorage {
         );
 
         // inverts the x axis
-        #[cfg_attr(rustfmt, rustfmt_skip)]
+        #[cfg_attr(any(), rustfmt::skip)]
         let invert_x = Matrix4::new(
             -1.0, 0.0, 0.0, 0.0,
             0.0, -1.0, 0.0, 0.0,
@@ -219,7 +218,7 @@ impl AnimatedObjectStorage {
         );
 
         // inverts the y axis
-        #[cfg_attr(rustfmt, rustfmt_skip)]
+        #[cfg_attr(any(), rustfmt::skip)]
         let _invert_y = Matrix4::new(
             0.0, -1.0, 0.0, 0.0,
             1.0, 0.0, 0.0, 0.0,
