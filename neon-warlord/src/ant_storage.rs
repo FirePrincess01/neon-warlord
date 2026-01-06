@@ -3,6 +3,8 @@
 
 // use market_economy_simulation_server::{ants, point_lights::Attenuation};
 
+use std::thread::LocalKey;
+
 // use crate::point_light_storage::{PointLightIndex, PointLightInterface, PointLightStorage};
 use forward_renderer::AnimatedObjectStorage;
 
@@ -43,7 +45,7 @@ impl AntStorage {
         if ant.id < self.max_ants {
             let pos = cgmath::Vector3::new(ant.pos.x + 0.0, ant.pos.y + 15.0, 0.00);
             // let pos = cgmath::Vector3::new(0.0, 0.0, 0.0);
-            self.animated_object_storage.set_pos(ant.id, pos);
+            self.animated_object_storage.set_pos(ant.id, &pos, &cgmath::Vector3::unit_x());
             // self.point_light_storage.set_position(&PointLightIndex{ instance_index: ant.id }, pos);
             // self.point_light_storage.set_light(
             //     PointLightIndex {
@@ -62,5 +64,14 @@ impl AntStorage {
             //     true,
             // );
         }
+    }
+
+    pub fn set_position(
+        &mut self,
+        index: usize,
+        pos: &cgmath::Vector3<f32>,
+        look_at: &cgmath::Vector3<f32>,
+    ) {
+        self.animated_object_storage.set_pos(index, pos, look_at);
     }
 }

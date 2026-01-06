@@ -1,16 +1,16 @@
 //! Creates the Neon-Warlord application
 
+mod ant_state;
+mod ant_ai_controller; 
+mod ant_ai;
 mod ant_generator;
 mod ant_storage;
-mod ant_ai;
 mod camera_controller;
 mod debug_overlay;
+mod game_board;
 mod heightmap_generator;
 mod settings;
 mod sun_storage;
-mod AntAiController;
-mod agent_controller;
-mod game_board;
 
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
@@ -26,7 +26,7 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_ai::AntAi, ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController, debug_overlay::DebugOverlay, game_board::GameBoard, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage, AntAiController::AntAiController
+    ant_ai::AntAi, ant_ai_controller::AntAiController, ant_generator::AntGenerator, ant_state::AntState, ant_storage::AntStorage, camera_controller::CameraController, debug_overlay::DebugOverlay, game_board::{Faction, GameBoard}, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage
 };
 
 const WATCH_POINTS_SIZE: usize = 10;
@@ -85,8 +85,9 @@ struct NeonWarlord {
     particles: ParticleStorage,
 
     // Ai
-    ant_ai: AntAi,
     game_board: GameBoard,
+    ant_state: AntState,
+    ant_ai: AntAi,
 }
 
 impl NeonWarlord {
@@ -255,8 +256,9 @@ impl NeonWarlord {
         let particles = ParticleStorage::new(renderer_interface);
 
         // Ai
-        let ant_ai = AntAi::new(ant_ai::Faction::Blue);
         let game_board = GameBoard::new();
+        let ant_state = AntState::new();
+        let ant_ai = AntAi::new(Faction::Blue);
 
         Self {
             _settings: settings,
@@ -283,8 +285,9 @@ impl NeonWarlord {
             id: String::new(),
             sun,
             particles,
-            ant_ai,
             game_board,
+            ant_state,
+            ant_ai,
             // settings,
 
             // size,
@@ -405,7 +408,7 @@ impl DefaultApplicationInterface for NeonWarlord {
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         dt: instant::Duration,
     ) {
-        self.watch_fps.stop(WATCH_POINTS_SIZE -1);
+        self.watch_fps.stop(WATCH_POINTS_SIZE - 1);
         self.watch_fps.update();
         let watch_fps_data = self.watch_fps.get_viewer_data();
 
@@ -414,8 +417,24 @@ impl DefaultApplicationInterface for NeonWarlord {
             .update_camera(&mut self.renderer.camera, dt);
         self.renderer.update(renderer_interface, dt);
 
-        // Particles
+        // Ai
         let mut watch_index = 0;
+        self.watch_fps.start(watch_index, "Update AI");
+        {
+            // update ant_state by ant_ai
+            self.ant_ai.update(&mut AntAiController {
+                game_board: &mut self.game_board,
+                ant_state: &mut self.ant_state,
+                ant_index: 0,
+            });
+
+            // update mesh by ant_state
+            self.ant_state.update(&mut self.ants);
+        }
+        self.watch_fps.stop(watch_index);
+
+        // Particles
+        watch_index += 1;
         self.watch_fps.start(watch_index, "Update Particles");
         {
             self.particles.update(renderer_interface, dt);
@@ -456,17 +475,6 @@ impl DefaultApplicationInterface for NeonWarlord {
         }
         self.watch_fps.stop(watch_index);
 
-        // Ai
-        watch_index += 1;
-        self.watch_fps.start(watch_index, "Update AI");
-        {
-            let world_controller = AntAiController{
-                game_board: &mut self.game_board,
-            };
-
-            self.ant_ai.update(&world_controller, body);
-        }
-        self.watch_fps.stop(watch_index);
 
         // Debug utilities
         watch_index += 1;
@@ -616,7 +624,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 &mut self.watch_fps,
             )
         }
-         self.watch_fps.start(WATCH_POINTS_SIZE -1, "Wait");
+        self.watch_fps.start(WATCH_POINTS_SIZE - 1, "Wait");
 
         res
     }

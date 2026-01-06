@@ -33,6 +33,7 @@ fastrand = "2.0"
 gltf = "1.4.1"
 noise = "0.9.0"
 colorous = "1.0.16"
+# wasm_thread = "0.3.3"
 
 [dependencies.image]
 version = "0.25"

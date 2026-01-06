@@ -2,7 +2,7 @@
 
 use cgmath::prelude::*;
 
-use crate::game_board;
+use crate::game_board::{self, Agent, Faction};
 
 type Vec2 = cgmath::Vector2<f32>;
 
@@ -40,13 +40,13 @@ impl AntAi {
         }
     }
 
-    pub fn update(&mut self, world: &dyn WorldInterface, body: &mut dyn AntBodyInterface) {
+    pub fn update(&mut self, interface: &mut dyn AntAiInterface) {
         match self.state {
             State::LookForEnemies => {
                 // #######################################################
                 // get closest enemy
-                let position = body.get_position();
-                let agents = world.world_get_agents();
+                let position = interface.get_position();
+                let agents = interface.world_get_agents();
                 let closest_enemy = self.get_closest_enemy(position, agents);
 
                 // state transition
@@ -54,11 +54,14 @@ impl AntAi {
                     self.state_data.target_agent = closest_enemy;
                     self.state = State::MoveUntilInRange;
                 }
+
+                self.state_data.target_agent = Some(Agent { faction: Faction::Red, position: Vec2::new(0.0, 80.0) })
+
             }
             State::MoveToTarget => {
                 // #######################################################
                 // get positions
-                let position = body.get_position();
+                let position = interface.get_position();
                 let target_agent = self.state_data.target_agent.unwrap();
                 let target_agent_position = target_agent.position;
 
@@ -72,14 +75,14 @@ impl AntAi {
                 let target_position = target_agent_position + self.range * direction;
 
                 // state transition
-                body.move_to(target_position);
+                interface.move_to(target_position);
                 self.state = State::MoveUntilInRange;
             }
             State::MoveUntilInRange => {
                 // #######################################################
 
                 // wait for finish moving
-                if body.is_moving() {
+                if interface.is_moving() {
                     return;
                 }
 
@@ -88,18 +91,18 @@ impl AntAi {
             }
             State::ChargeShot => {
                 // #######################################################
-                body.charge_shot();
+                interface.charge_shot();
                 self.state = State::WaitUntilShotCharged;
             }
             State::WaitUntilShotCharged => {
                 // #######################################################
-                if body.is_shot_ready() {
+                if interface.is_shot_ready() {
                     self.state = State::Shoot;
                 }
             }
             State::Shoot => {
                 // #######################################################
-                body.shoot();
+                interface.shoot();
                 self.state = State::LookForEnemies;
             }
         }
@@ -143,7 +146,7 @@ enum State {
 
 pub trait AntBodyInterface {
     fn get_position(&self) -> Vec2;
-    fn move_to(&mut self, target_position: Vec2) -> Vec2;
+    fn move_to(&mut self, target_position: Vec2);
     fn is_moving(&self) -> bool;
     fn charge_shot(&mut self);
     fn is_shot_ready(&self) -> bool;
@@ -156,14 +159,14 @@ pub trait WorldInterface {
 
 pub trait AntAiInterface: AntBodyInterface + WorldInterface {}
 
-#[derive(PartialEq, Clone, Copy)]
-pub enum Faction {
-    Red,
-    Blue,
-}
+// #[derive(PartialEq, Clone, Copy)]
+// pub enum Faction {
+//     Red,
+//     Blue,
+// }
 
-#[derive(Clone, Copy)]
-pub struct Agent {
-    faction: Faction,
-    position: cgmath::Vector2<f32>,
-}
+// #[derive(Clone, Copy)]
+// pub struct Agent {
+//     faction: Faction,
+//     position: cgmath::Vector2<f32>,
+// }

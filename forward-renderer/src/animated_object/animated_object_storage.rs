@@ -1,6 +1,9 @@
 //! Manages all instances of one single animated object
 //!
 
+use std::thread::LocalKey;
+
+use cgmath::{EuclideanSpace, InnerSpace, Matrix4};
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 
 use crate::animated_object::animated_model::animation::Animation;
@@ -68,9 +71,11 @@ impl AnimatedObjectStorage {
             let current_animation_index = 1;
             let current_animation = Animation::new(&animations[current_animation_index]);
 
+            let position = cgmath::Vector3::new(0.0, 20.0, 5.0);
+            let model = cgmath::Matrix4::from_translation(position);
             let instance = animation_shader::Instance {
-                position: [0.0, 20.0, 5.0],
-                color: [0.5, 0.5, 0.8],
+                model: model.into(),
+                color: [0.5, 0.5, 0.8, 1.0],
             };
             let transformations = animation_shader::AnimationUniform::zero();
             let requires_update = false;
@@ -157,8 +162,77 @@ impl AnimatedObjectStorage {
         self.max_instances
     }
 
-    pub fn set_pos(&mut self, id: usize, pos: cgmath::Vector3<f32>) {
-        self.instance_data[id].instance.position = pos.into();
+    // The model is assumed to look in x-direction
+    // Creates 3 orthogonal vectors to assemble a rotation matrix
+    pub fn look_to_rh(pos: cgmath::Point3<f32>, dir: cgmath::Vector3<f32>, up: cgmath::Vector3<f32>) -> Matrix4<f32> {
+        let f = dir.normalize();
+        let s = f.cross(up).normalize();
+        let u = s.cross(f);
+        let s = -s;
+
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        Matrix4::new(
+            f.x.clone(), f.y.clone(), f.z.clone(), 0.0,
+            s.x.clone(), s.y.clone(), s.z.clone(), 0.0,
+            u.x.clone(), u.y.clone(), u.z.clone(), 0.0,
+            pos.x, pos.y, pos.z, 1.0,
+        )
+    }
+
+    pub fn set_pos(&mut self, id: usize, pos: &cgmath::Vector3<f32>, look_at: &cgmath::Vector3<f32>) {
+        // let look_at = pos + look_at;
+
+        // let model = Matrix4::look_at_rh(
+        //     cgmath::Point3 {
+        //         x: pos.x,
+        //         y: pos.y,
+        //         z: pos.z,
+        //     },
+        //     cgmath::Point3 {
+        //         x: look_at.x,
+        //         y: look_at.y,
+        //         z: look_at.z,
+        //     },
+        //     cgmath::Vector3::unit_z(),
+        // );
+        let model = Self::look_to_rh(
+                        cgmath::Point3 {
+                x: pos.x,
+                y: pos.y,
+                z: pos.z,
+            },
+        cgmath::Vector3 {
+                x: look_at.x,
+                y: look_at.y,
+                z: look_at.z,
+            },
+            cgmath::Vector3::unit_z(),
+        );
+
+        // inverts the x axis
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let invert_x = Matrix4::new(
+            -1.0, 0.0, 0.0, 0.0,
+            0.0, -1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        );
+
+        // inverts the y axis
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let _invert_y = Matrix4::new(
+            0.0, -1.0, 0.0, 0.0,
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        );
+
+        let model = model * invert_x;
+
+        // let angle: cgmath::Rad<f32> = cgmath::Deg(-90.0).into();
+        // let model = cgmath::Matrix4::from_translation(*pos) * cgmath::Matrix4::from_angle_z(angle);
+
+        self.instance_data[id].instance.model = model.into();
     }
 
     pub fn set_active(&mut self, id: usize) {

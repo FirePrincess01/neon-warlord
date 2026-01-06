@@ -28,8 +28,13 @@ struct VertexInput {
 }
 
 struct InstanceInput {
-    @location(5) position: vec3<f32>,
-    @location(6) color: vec3<f32>,
+    @location(5) model_matrix_0: vec4<f32>,
+    @location(6) model_matrix_1: vec4<f32>,
+    @location(7) model_matrix_2: vec4<f32>,
+    @location(8) model_matrix_3: vec4<f32>,
+
+    // @location(5) position: vec3<f32>,
+    @location(9) color: vec4<f32>,
 }
 
 struct VertexOutput {
@@ -54,7 +59,7 @@ fn vs_main(
     // calculate output
     var out: VertexOutput;
     out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
-    out.color = color;
+    out.color = color.xyz;
     out.position = position;
     out.normal = normal;
 
@@ -106,7 +111,7 @@ fn vs_main_gouraud(
     // blend with intensity
     // let intensity = vertex_color[3];
     // let out_color: vec3<f32> = vertex_color.xyz * intensity + pong_light * (1.0 -intensity);
-    let out_color: vec3<f32> = color * (ambient_strength + diffuse_lighting_strength + specular_lighting_strength);
+    let out_color: vec3<f32> = color.xyz * (ambient_strength + diffuse_lighting_strength + specular_lighting_strength);
 
     var out: VertexOutput;
     out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
@@ -144,6 +149,13 @@ fn get_vertex_info(
     instance: InstanceInput,
 ) -> VertexInfo
 {
+    let model_matrix = mat4x4<f32>(
+        instance.model_matrix_0,
+        instance.model_matrix_1,
+        instance.model_matrix_2,
+        instance.model_matrix_3,
+    );
+
     let scale = 0.1;
 
     // calculate the animation
@@ -168,11 +180,11 @@ fn get_vertex_info(
     }
 
     // move to the instance position
-    let world_position = instance.position + total_local_pos.xyz * scale;
+    let world_position = model_matrix * vec4<f32>((total_local_pos * scale).xyz, 1.0);
 
     // return
     return VertexInfo (
-        world_position,
+        world_position.xyz,
         total_local_normal.xyz,
     );
 }
