@@ -32,7 +32,7 @@ pub struct AnimatedObjectStorage {
     skeleton: Skeleton,
     animations: Vec<AnimationData>,
 
-    // host isntance data
+    // host instance data
     instance_data: Vec<AnimationObjectInstance>,
 
     // device data
@@ -127,7 +127,7 @@ impl AnimatedObjectStorage {
                 // update time
                 elem.current_animation.increment_time(dt);
 
-                // calculate transfomations
+                // calculate transformations
                 elem.current_animation.update_animation_uniform(
                     &self.skeleton,
                     &self.animations[elem.current_animation_index],
