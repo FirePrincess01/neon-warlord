@@ -179,7 +179,7 @@ impl AnimatedObjectStorage {
         )
     }
 
-    pub fn set_pos(&mut self, id: usize, pos: &cgmath::Vector3<f32>, look_at: &cgmath::Vector3<f32>) {
+    pub fn set_pos(&mut self, id: usize, pos: cgmath::Vector3<f32>, look_at: cgmath::Vector3<f32>) {
         // let look_at = pos + look_at;
 
         // let model = Matrix4::look_at_rh(

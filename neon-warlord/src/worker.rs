@@ -1,11 +1,11 @@
 //! Runs the physics simulation
 
-use std::{sync::mpsc, thread, time::Duration};
+use std::{sync::mpsc, time::Duration};
 
 use forward_renderer::{HeightMap, TerrainTextureDetails};
 use wgpu_renderer::performance_monitor::{Fps, watch::{self, Watch}};
 
-use crate::heightmap_generator::HeightMapGenerator;
+use crate::{ant_ai::AntAi, ant_ai_controller::AntAiController, ant_state::{AntPosition, AntState}, game_board::{Faction, GameBoard}, heightmap_generator::HeightMapGenerator};
 
 const WATCH_POINTS_SIZE: usize = 10;
 
@@ -17,6 +17,7 @@ pub enum WorkerMessage {
     UpdateWatchPoints(watch::WatchViewerData<10>), // all the data for a point of the performance monitor
     Ups(u32),
     TerrainData(HeightMap),
+    AntState(AntPosition),
 }
 
 pub struct Worker {
@@ -30,6 +31,13 @@ pub struct Worker {
 
     // Terrain
     terrain_generator: HeightMapGenerator,
+
+    // Game board
+    game_board:GameBoard,
+
+    // Ant
+    ant_state: AntState,
+    ant_ai: AntAi,
 }
 
 impl Worker {
@@ -44,6 +52,13 @@ impl Worker {
         // Terrain
         let terrain_generator = HeightMapGenerator::new();
 
+        // Game board
+        let game_board = GameBoard::new();
+
+        // Ant
+        let ant_state = AntState::new();
+        let ant_ai = AntAi::new(Faction::Blue);
+
         Self {
             channel_0_rx,
             channel_1_tx,
@@ -52,6 +67,11 @@ impl Worker {
             watch_ups,
 
             terrain_generator,
+
+            game_board,
+
+            ant_state,
+            ant_ai,
         }
     }
 
@@ -84,6 +104,7 @@ impl Worker {
         }
         self.watch_ups.stop(watch_index);
 
+        // Terrain
         watch_index += 1;
         self.watch_ups.start(watch_index, "Update Terrain");
         {
@@ -91,6 +112,25 @@ impl Worker {
                 let terrain_part = self.terrain_generator.generate(&elem);
                 let _ = main.send(WorkerMessage::TerrainData(terrain_part));
             }
+        }
+        self.watch_ups.stop(watch_index);
+
+        // Ant
+        watch_index += 1;
+        self.watch_ups.start(watch_index, "Update Ant");
+        {
+            // update ant_state by ant_ai
+            self.ant_ai.update(&mut AntAiController {
+                game_board: &mut self.game_board,
+                ant_state: &mut self.ant_state,
+                ant_index: 0,
+            });
+
+            // update state
+            let ant_pos = self.ant_state.update();
+
+            // send to main
+            let _ = main.send(WorkerMessage::AntState(ant_pos));
         }
         self.watch_ups.stop(watch_index);
     }

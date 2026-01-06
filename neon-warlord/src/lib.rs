@@ -1,9 +1,9 @@
 //! Creates the Neon-Warlord application
 
-mod ant_state;
-mod ant_ai_controller; 
 mod ant_ai;
+mod ant_ai_controller;
 mod ant_generator;
+mod ant_state;
 mod ant_storage;
 mod camera_controller;
 mod debug_overlay;
@@ -28,7 +28,18 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_ai::AntAi, ant_ai_controller::AntAiController, ant_generator::AntGenerator, ant_state::AntState, ant_storage::AntStorage, camera_controller::CameraController, debug_overlay::DebugOverlay, game_board::{Faction, GameBoard}, heightmap_generator::HeightMapGenerator, sun_storage::SunStorage, worker::MainMessage, worker_instance::WorkerInstance
+    ant_ai::AntAi,
+    ant_ai_controller::AntAiController,
+    ant_generator::AntGenerator,
+    ant_state::AntState,
+    ant_storage::AntStorage,
+    camera_controller::CameraController,
+    debug_overlay::DebugOverlay,
+    game_board::{Faction, GameBoard},
+    heightmap_generator::HeightMapGenerator,
+    sun_storage::SunStorage,
+    worker::MainMessage,
+    worker_instance::WorkerInstance,
 };
 
 const WATCH_POINTS_SIZE: usize = 10;
@@ -86,11 +97,6 @@ struct NeonWarlord {
 
     // Particles
     particles: ParticleStorage,
-
-    // Ai
-    game_board: GameBoard,
-    ant_state: AntState,
-    ant_ai: AntAi,
 
     // Worker
     worker: WorkerInstance,
@@ -261,10 +267,6 @@ impl NeonWarlord {
         // Particles
         let particles = ParticleStorage::new(renderer_interface);
 
-        // Ai
-        let game_board = GameBoard::new();
-        let ant_state = AntState::new();
-        let ant_ai = AntAi::new(Faction::Blue);
 
         // Worker
         let worker = WorkerInstance::new();
@@ -294,9 +296,6 @@ impl NeonWarlord {
             id: String::new(),
             sun,
             particles,
-            game_board,
-            ant_state,
-            ant_ai,
             worker,
             ups: 0,
             // settings,
@@ -436,13 +435,13 @@ impl DefaultApplicationInterface for NeonWarlord {
             for message in messages.try_iter() {
                 match message {
                     worker::WorkerMessage::UpdateWatchPoints(watch_ups_data) => {
-                        // ##########################################################                       
+                        // ##########################################################
                         self.performance_monitor_ups.update_from_data(
                             renderer_interface,
                             &self.font,
                             &watch_ups_data,
                         );
-                    },
+                    }
                     worker::WorkerMessage::TerrainData(terrain_part) => {
                         // ##########################################################
                         self.terrain.update_height_map(
@@ -450,32 +449,20 @@ impl DefaultApplicationInterface for NeonWarlord {
                             &self.renderer.heightmap_bind_group_layout,
                             terrain_part,
                         );
-                    },
+                    }
                     worker::WorkerMessage::Ups(ups) => {
                         self.ups = ups;
-                    },
+                    }
+                    worker::WorkerMessage::AntState(ant_pos) => {
+                        self.ants
+                            .set_position(ant_pos.index, ant_pos.pos, ant_pos.look_at);
+                    }
                 }
             }
-            
+
             self.worker.update(dt);
         }
         let worker = self.worker.send();
-        self.watch_fps.stop(watch_index);
-
-        // Ai
-        watch_index += 1;
-        self.watch_fps.start(watch_index, "Update AI");
-        {
-            // update ant_state by ant_ai
-            self.ant_ai.update(&mut AntAiController {
-                game_board: &mut self.game_board,
-                ant_state: &mut self.ant_state,
-                ant_index: 0,
-            });
-
-            // update mesh by ant_state
-            self.ant_state.update(&mut self.ants);
-        }
         self.watch_fps.stop(watch_index);
 
         // Particles
@@ -509,7 +496,7 @@ impl DefaultApplicationInterface for NeonWarlord {
             // generate map
             let requests = self.terrain.get_requests().clone();
             for request in requests {
-                worker.send(MainMessage::GetTerrain((request)));
+                let _ = worker.send(MainMessage::GetTerrain((request)));
 
                 // let terrain_part = self.terrain_generator.generate(&request);
                 // self.terrain.update_height_map(
@@ -521,7 +508,6 @@ impl DefaultApplicationInterface for NeonWarlord {
             self.terrain.clear_requests();
         }
         // self.watch_fps.stop(watch_index);
-
 
         // Debug utilities
         watch_index += 1;

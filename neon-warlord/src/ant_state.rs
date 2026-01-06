@@ -6,6 +6,7 @@ use crate::ant_storage::{Ant, AntStorage};
 
 type Vec2 = cgmath::Vector2<f32>;
 
+#[derive(Clone)]
 pub struct AntState {
     // state
     pub index: usize,
@@ -38,37 +39,45 @@ impl AntState {
         }
     }
 
-    pub fn update(&mut self, ant_storage: &mut AntStorage) {
-        if let Some(target_position) = self.target_position {
-            
-            // calculate vector to to new position
-            let delta = (target_position - self.position).normalize() * 0.1;
+    pub fn update(&mut self) -> AntPosition {
+        let target_position = match self.target_position {
+            Some(pos) => pos,
+            None => self.position,
+        };
+        
+        // calculate vector to to new position
+        let delta = (target_position - self.position).normalize() * 0.1;
 
-            // set new position
-            let new_position = self.position + delta;
+        // set new position
+        let new_position = self.position + delta;
 
-            // check if position has been reached
-            if (target_position - new_position).magnitude2() < (target_position - self.position).magnitude2() {
-                self.position = new_position;
-            } 
-            else {
-                self.position = target_position;
-            }
+        // check if position has been reached
+        if (target_position - new_position).magnitude2()
+            < (target_position - self.position).magnitude2()
+        {
+            self.position = new_position;
+        } else {
+            self.position = target_position;
+        }
 
-            // set new mesh position
-            ant_storage.set_position(
-                self.index,
-                &cgmath::Vector3 {
-                    x: self.position.x,
-                    y: self.position.y,
-                    z: 0.0,
-                },
-                &cgmath::Vector3{
-                    x: target_position.x,
-                    y: target_position.y,
-                    z: 0.0,
-                }
-            );
+        AntPosition {
+            index: self.index,
+            pos: cgmath::Vector3 {
+                x: self.position.x,
+                y: self.position.y,
+                z: 0.0,
+            },
+            look_at: cgmath::Vector3 {
+                x: target_position.x,
+                y: target_position.y,
+                z: 0.0,
+            },
         }
     }
+}
+
+pub struct AntPosition {
+    pub index: usize,
+    pub pos: cgmath::Vector3<f32>,
+    pub look_at: cgmath::Vector3<f32>,
 }
