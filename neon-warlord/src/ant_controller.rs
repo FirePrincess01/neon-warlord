@@ -1,6 +1,6 @@
 //! Implements the WorldInterface from AntAi
 
-use cgmath::InnerSpace;
+use cgmath::{InnerSpace, Zero};
 
 use crate::{
     ant_ai::{AntAiInterface, AntBodyInterface, WorldInterface},
@@ -22,11 +22,34 @@ pub enum AntAnimation {
 pub struct AntPosition {
     pub pos: InterpolatedPosition,
     pub look_at: cgmath::Vector3<f32>,
+    pub is_final: bool,
+}
+
+impl AntPosition {
+    pub fn new() -> Self {
+        let pos = InterpolatedPosition::zero();
+        let look_at = cgmath::Vector3::zero();
+        let is_final = true;
+
+        Self {
+            pos,
+            look_at,
+            is_final,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct AntPositionSnapshot {
+    pub pos: cgmath::Vector3<f32>,
+    pub look_at: cgmath::Vector3<f32>,
+    pub time_stamp: instant::Instant,
 }
 
 #[derive(Clone, Copy)]
 pub enum AntAction {
-    SetPosition(AntPosition),
+    UpdatePosition(AntPositionSnapshot),
+    FinalPosition(AntPositionSnapshot),
     SetAnimation(AntAnimation),
 }
 
@@ -43,9 +66,34 @@ impl AntActionStruct {
             index,
         }
     }
-    pub fn from_translation(pos: InterpolatedPosition, look_at: cgmath::Vector3<f32>, index: usize) -> Self {
+    pub fn update_position(
+        pos: cgmath::Vector3<f32>,
+        look_at: cgmath::Vector3<f32>,
+        time_stamp: instant::Instant,
+        index: usize,
+    ) -> Self {
         Self {
-            action: AntAction::SetPosition(AntPosition { pos, look_at }),
+            action: AntAction::UpdatePosition(AntPositionSnapshot {
+                pos,
+                look_at,
+                time_stamp,
+            }),
+            index,
+        }
+    }
+
+    pub fn final_position(
+        pos: cgmath::Vector3<f32>,
+        look_at: cgmath::Vector3<f32>,
+        time_stamp: instant::Instant,
+        index: usize,
+    ) -> Self {
+        Self {
+            action: AntAction::FinalPosition(AntPositionSnapshot {
+                pos,
+                look_at,
+                time_stamp,
+            }),
             index,
         }
     }
@@ -66,8 +114,6 @@ pub struct AntController {
     position: cgmath::Vector2<f32>,
     target_position: cgmath::Vector2<f32>,
 
-    interpolated_position: InterpolatedPosition,
-    interpolated_position_initialized: bool,
     animation: AntAnimation,
 
     state: State,
@@ -78,15 +124,18 @@ pub struct AntController {
 impl AntController {
     pub fn new(position: cgmath::Vector2<f32>, index: usize) -> Self {
         let target_position = position;
-        let interpolated_position = InterpolatedPosition::zero();
-        let interpolated_position_initialized = false;
         let animation = AntAnimation::Idle;
         let state = State::Idle;
 
-
-        Self { position, target_position, interpolated_position, interpolated_position_initialized, animation, state, index }
+        Self {
+            position,
+            target_position,
+            animation,
+            state,
+            index,
+        }
     }
-    
+
     pub fn update(&mut self, time_stamp: &instant::Instant, actions: &mut Vec<AntActionStruct>) {
         match self.state {
             // ##################################################
@@ -119,31 +168,35 @@ impl AntController {
 
                 // set position
                 let speed = 0.1;
-                let new_position = self.position + (self.target_position -self.position).normalize() * speed;
+                let new_position =
+                    self.position + (self.target_position - self.position).normalize() * speed;
                 // println!("position{:?}", self.position);
                 // println!("target position{:?}", self.target_position);
                 // println!("new position {:?}", new_position);
 
                 // check if position has been reached
-                if (self.target_position - new_position).magnitude2()
-                    < (self.target_position - self.position).magnitude2()
-                {
+                let finish_reached = (self.target_position - new_position).magnitude2()
+                    < (self.target_position - self.position).magnitude2();
+
+                if finish_reached {
                     self.position = new_position;
                 } else {
                     self.position = self.target_position;
                 }
 
-                let pos = cgmath::Vector3 { x: self.position.x, y: self.position.y, z: 0.0 };
-                if !self.interpolated_position_initialized {
-                    self.interpolated_position_initialized = true;
-                    self.interpolated_position = InterpolatedPosition::new(pos, *time_stamp);
-                }
-                else {
-                    self.interpolated_position.add(pos, *time_stamp);
-                }
+                let pos = cgmath::Vector3 {
+                    x: self.position.x,
+                    y: self.position.y,
+                    z: 0.0,
+                };
+                let target =
+                    cgmath::Vector3::new(self.target_position.x, self.target_position.y, 0.0);
 
-                let target = cgmath::Vector3::new(self.target_position.x, self.target_position.y, 0.0);
-                actions.push(AntActionStruct::from_translation(self.interpolated_position, target, self.index));
+                actions.push(if finish_reached {
+                    AntActionStruct::update_position(pos, target, *time_stamp, self.index)
+                } else {
+                    AntActionStruct::final_position(pos, target, *time_stamp, self.index)
+                });
             }
             // ##################################################
             State::ChargeShot => {}

@@ -30,12 +30,13 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
+    ant_controller::AntPosition,
     ant_generator::AntGenerator,
     ant_storage::AntStorage,
     camera_controller::CameraController,
     debug_overlay::DebugOverlay,
     sun_storage::SunStorage,
-    worker::{MainMessage, Snapshot},
+    worker::MainMessage,
     worker_instance::WorkerInstance,
 };
 
@@ -96,8 +97,7 @@ struct NeonWarlord {
 
     // Worker
     worker: WorkerInstance,
-    last_snapshot: worker::Snapshot,
-    snapshot: worker::Snapshot,
+    ant_positions: [AntPosition; 1],
 }
 
 impl NeonWarlord {
@@ -192,8 +192,7 @@ impl NeonWarlord {
         // Worker
         let worker = WorkerInstance::new();
 
-        let last_snapshot = Snapshot::new();
-        let snapshot = last_snapshot.clone();
+        let ant_positions = [AntPosition::new(); 1];
 
         Self {
             _settings: settings,
@@ -222,8 +221,7 @@ impl NeonWarlord {
             particles,
             worker,
             ups: 0,
-            last_snapshot,
-            snapshot,
+            ant_positions,
         }
     }
 }
@@ -358,11 +356,20 @@ impl DefaultApplicationInterface for NeonWarlord {
                             let index = elem.index;
                             match elem.action {
                                 // ##########################################################
-                                ant_controller::AntAction::SetPosition(ant_position) => {
-                                    let pos = ant_position.pos.lerp(time_stamp);
-                                    let look_at = ant_position.look_at;
-                                    // println!("pos: {:?}", ant_position.pos);
-                                    self.ants.set_position(index, pos, look_at);
+                                ant_controller::AntAction::UpdatePosition(snapshot) => {
+                                    self.ant_positions[index]
+                                        .pos
+                                        .add(snapshot.pos, snapshot.time_stamp);
+                                    self.ant_positions[index].look_at = snapshot.look_at;
+                                    self.ant_positions[index].is_final = false
+                                }
+                                // ##########################################################
+                                ant_controller::AntAction::FinalPosition(snapshot) => {
+                                    self.ant_positions[index]
+                                        .pos
+                                        .add(snapshot.pos, snapshot.time_stamp);
+                                    self.ant_positions[index].look_at = snapshot.look_at;
+                                    self.ant_positions[index].is_final = true
                                 }
                                 // ##########################################################
                                 ant_controller::AntAction::SetAnimation(ant_animation) => {
@@ -387,7 +394,16 @@ impl DefaultApplicationInterface for NeonWarlord {
         let worker = self.worker.send();
         self.watch_fps.stop(watch_index);
 
-        // // Calculate current Snapshot
+        // Calculate current Snapshot
+        for (i, elem) in self.ant_positions.iter().enumerate() {
+            let pos = if elem.is_final {
+                elem.pos.pos
+            } else {
+                elem.pos.lerp(time_stamp)
+            };
+            self.ants.set_position(i, pos, elem.look_at);
+        }
+
         // let snapshot = self.last_snapshot.lerp(&self.snapshot, time_stamp);
 
         // let ant = snapshot.ants[0];

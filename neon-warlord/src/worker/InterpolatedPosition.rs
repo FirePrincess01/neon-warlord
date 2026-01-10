@@ -7,7 +7,7 @@ pub struct InterpolatedPosition {
     last_pos: cgmath::Vector3<f32>,
     last_time_stamp: instant::Instant,
 
-    pos: cgmath::Vector3<f32>,
+    pub pos: cgmath::Vector3<f32>,
     time_stamp: instant::Instant,
 }
 
@@ -43,7 +43,6 @@ impl InterpolatedPosition {
         let amount = (time_stamp - self.last_time_stamp).as_nanos() as f32
             / (self.time_stamp - self.last_time_stamp).as_nanos() as f32;
 
-        println!("amount {}", amount);
         let res = self.last_pos.lerp(self.pos, amount);
 
         res
