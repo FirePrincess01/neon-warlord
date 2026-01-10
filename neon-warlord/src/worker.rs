@@ -1,10 +1,9 @@
 //! Runs the physics simulation
 
-pub mod InterpolatedPosition;
+pub mod interpolated_position;
 
 use std::{sync::mpsc, time::Duration};
 
-use cgmath::Zero;
 use forward_renderer::{HeightMap, TerrainTextureDetails};
 use instant::Instant;
 use wgpu_renderer::performance_monitor::{
@@ -32,47 +31,47 @@ pub enum WorkerMessage {
     Snapshot(Snapshot),
 }
 
-#[derive(Clone)]
+// #[derive(Clone)]
 pub struct Snapshot {
     pub ant_actions: Vec<AntActionStruct>,
 }
 
-impl Snapshot {
-    pub fn new() -> Self {
-        Self { ant_actions: Vec::new() }
-    }
+// impl Snapshot {
+//     pub fn new() -> Self {
+//         Self { ant_actions: Vec::new() }
+//     }
     
-    // pub fn lerp(&self, next: &Snapshot, time_stamp: Instant) -> Snapshot {
-    //     let mut ants = [AnimationPosition::zero(); 16];
+//     // pub fn lerp(&self, next: &Snapshot, time_stamp: Instant) -> Snapshot {
+//     //     let mut ants = [AnimationPosition::zero(); 16];
 
-    //     let amount = 1.0 /  (next.time_stamp - self.time_stamp).as_nanos() as f32 * (time_stamp - self.time_stamp).as_nanos() as f32;
+//     //     let amount = 1.0 /  (next.time_stamp - self.time_stamp).as_nanos() as f32 * (time_stamp - self.time_stamp).as_nanos() as f32;
 
-    //     for i in 0..ants.len() {
-    //         ants[i].pos = self.ants[i].pos.lerp(next.ants[i].pos, amount);
-    //         // ants[i].look_at = self.ants[i].look_at.lerp(next.ants[i].look_at, amount);
-    //         ants[i].look_at = next.ants[i].look_at;
-    //     }
+//     //     for i in 0..ants.len() {
+//     //         ants[i].pos = self.ants[i].pos.lerp(next.ants[i].pos, amount);
+//     //         // ants[i].look_at = self.ants[i].look_at.lerp(next.ants[i].look_at, amount);
+//     //         ants[i].look_at = next.ants[i].look_at;
+//     //     }
 
-    //     Snapshot { ants, time_stamp }
-    // }
-}
+//     //     Snapshot { ants, time_stamp }
+//     // }
+// }
 
-// Input |   |  |
-// Render  |######| |#######| |#######|
-// Tick          |#######|   |######|
-//
-#[derive(Clone, Copy)]
-pub struct AnimationPosition {
-    pub pos: cgmath::Vector3<f32>,
-    pub look_at: cgmath::Vector3<f32>,
-    pub animation: u32,
-}
+// // Input |   |  |
+// // Render  |######| |#######| |#######|
+// // Tick          |#######|   |######|
+// //
+// #[derive(Clone, Copy)]
+// pub struct AnimationPosition {
+//     pub pos: cgmath::Vector3<f32>,
+//     pub look_at: cgmath::Vector3<f32>,
+//     pub animation: u32,
+// }
 
-impl AnimationPosition {
-    pub fn zero() -> Self {
-        Self { pos: cgmath::Vector3::zero(), look_at: cgmath::Vector3::zero(), animation: 0 }
-    }
-}
+// impl AnimationPosition {
+//     pub fn zero() -> Self {
+//         Self { pos: cgmath::Vector3::zero(), look_at: cgmath::Vector3::zero(), animation: 0 }
+//     }
+// }
 
 pub struct Worker {
     channel_0_rx: mpsc::Receiver<MainMessage>,

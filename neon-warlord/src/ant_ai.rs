@@ -159,4 +159,4 @@ pub trait WorldInterface {
     fn world_get_agents(&self) -> &[game_board::Agent];
 }
 
-pub trait AntAiInterface: AntBodyInterface + WorldInterface {}
+// pub trait AntAiInterface: AntBodyInterface + WorldInterface {}

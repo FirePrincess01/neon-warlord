@@ -27,7 +27,7 @@ impl InterpolatedPosition {
         }
     }
 
-    pub fn new(pos: cgmath::Vector3<f32>, time_stamp: instant::Instant) -> Self {
+    pub fn _new(pos: cgmath::Vector3<f32>, time_stamp: instant::Instant) -> Self {
         let last_pos = pos;
         let last_time_stamp = time_stamp;
 

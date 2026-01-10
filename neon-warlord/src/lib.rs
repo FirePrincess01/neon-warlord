@@ -371,19 +371,15 @@ impl DefaultApplicationInterface for NeonWarlord {
                                     let animation_index = match ant_animation {
                                         ant_controller::AntAnimation::Idle => 0,
                                         ant_controller::AntAnimation::Walk => 1,
-                                        ant_controller::AntAnimation::ChargeShot => 0,
+                                        ant_controller::AntAnimation::_ChargeShot => 0,
                                     };
 
-                                    self.ants
-                                        .animated_object_storage
-                                        .set_animation(index, animation_index);
+                                    self.ants.set_animation(index, animation_index);
                                 }
                                 // ##########################################################
                                 ant_controller::AntAction::SetAnimationSpeed(speed) => {
-                                    self.ants
-                                        .animated_object_storage
-                                        .set_animation_speed(index, speed * 60.0);
-                                },
+                                    self.ants.set_animation_speed(index, speed);
+                                }
                             }
                         }
                     }

@@ -4,7 +4,7 @@ use cgmath::{InnerSpace, Zero};
 
 use crate::{
     ant_ai::AntBodyInterface,
-    worker::InterpolatedPosition::InterpolatedPosition,
+    worker::interpolated_position::InterpolatedPosition,
 };
 
 type Vec2 = cgmath::Vector2<f32>;
@@ -13,7 +13,7 @@ type Vec2 = cgmath::Vector2<f32>;
 pub enum AntAnimation {
     Idle,
     Walk,
-    ChargeShot,
+    _ChargeShot,
 }
 
 #[derive(Clone, Copy, Debug)]
