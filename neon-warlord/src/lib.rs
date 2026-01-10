@@ -14,12 +14,11 @@ mod sun_storage;
 mod worker;
 mod worker_instance;
 
-use std::time::Instant;
-
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
     particle_storage::ParticleStorage,
 };
+use instant::Instant;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use wgpu_renderer::{
