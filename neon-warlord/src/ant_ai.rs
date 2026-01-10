@@ -40,13 +40,13 @@ impl AntAi {
         }
     }
 
-    pub fn update(&mut self, interface: &mut dyn AntAiInterface) {
+    pub fn update(&mut self, interface: &mut dyn AntBodyInterface, world: &mut dyn WorldInterface) {
         match self.state {
             State::LookForEnemies => {
                 // #######################################################
                 // get closest enemy
                 let position = interface.get_position();
-                let agents = interface.world_get_agents();
+                let agents = world.world_get_agents();
                 let closest_enemy = self.get_closest_enemy(position, agents);
 
                 // state transition

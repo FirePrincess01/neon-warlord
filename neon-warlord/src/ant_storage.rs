@@ -73,4 +73,12 @@ impl AntStorage {
     ) {
         self.animated_object_storage.set_pos(index, pos, look_at);
     }
+
+    pub fn set_animation(
+                &mut self,
+        index: usize,
+        animation_index: usize,
+    ) {
+        self.animated_object_storage.set_animation(index, animation_index);
+    }
 }
