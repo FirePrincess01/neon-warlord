@@ -43,9 +43,9 @@ impl InterpolatedPosition {
         let amount = (time_stamp - self.last_time_stamp).as_nanos() as f32
             / (self.time_stamp - self.last_time_stamp).as_nanos() as f32;
 
-        let res = self.last_pos.lerp(self.pos, amount);
+        
 
-        res
+        self.last_pos.lerp(self.pos, amount)
     }
 
     pub fn add(&mut self, pos: cgmath::Vector3<f32>, time_stamp: instant::Instant) {

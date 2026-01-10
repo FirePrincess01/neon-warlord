@@ -2,10 +2,9 @@
 
 pub mod InterpolatedPosition;
 
-use core::time;
-use std::{clone, sync::mpsc, time::Duration};
+use std::{sync::mpsc, time::Duration};
 
-use cgmath::{Array, VectorSpace, Zero};
+use cgmath::Zero;
 use forward_renderer::{HeightMap, TerrainTextureDetails};
 use instant::Instant;
 use wgpu_renderer::performance_monitor::{
@@ -16,7 +15,6 @@ use wgpu_renderer::performance_monitor::{
 use crate::{
     ant_ai::AntAi,
     ant_controller::{AntActionStruct, AntController},
-    ant_state::{AntPosition, AntState},
     game_board::{Faction, GameBoard},
     heightmap_generator::HeightMapGenerator,
 };
@@ -185,7 +183,7 @@ impl Worker {
 
             // update state
             let mut actions: Vec<AntActionStruct> = Vec::new();
-            let ant_pos = self.ant_state.update(&time_stamp, &mut actions);
+            self.ant_state.update(&time_stamp, &mut actions);
 
             // // send to main
             // let mut ants = [AnimationPosition::zero(); 16];

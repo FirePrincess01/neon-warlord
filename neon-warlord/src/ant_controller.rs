@@ -3,9 +3,7 @@
 use cgmath::{InnerSpace, Zero};
 
 use crate::{
-    ant_ai::{AntAiInterface, AntBodyInterface, WorldInterface},
-    ant_state::AntState,
-    game_board::{self, GameBoard},
+    ant_ai::AntBodyInterface,
     worker::InterpolatedPosition::InterpolatedPosition,
 };
 
