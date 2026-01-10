@@ -1,7 +1,7 @@
 //! Creates the Neon-Warlord application
 
 mod ant_ai;
-mod ant_ai_controller;
+mod ant_controller;
 mod ant_generator;
 mod ant_state;
 mod ant_storage;
@@ -18,6 +18,7 @@ use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
     particle_storage::ParticleStorage,
 };
+use instant::Instant;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use wgpu_renderer::{
@@ -28,9 +29,9 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController,
-    debug_overlay::DebugOverlay, sun_storage::SunStorage, worker::MainMessage,
-    worker_instance::WorkerInstance,
+    ant_controller::AntPosition, ant_generator::AntGenerator, ant_storage::AntStorage,
+    camera_controller::CameraController, debug_overlay::DebugOverlay, sun_storage::SunStorage,
+    worker::MainMessage, worker_instance::WorkerInstance,
 };
 
 const WATCH_POINTS_SIZE: usize = 10;
@@ -90,6 +91,7 @@ struct NeonWarlord {
 
     // Worker
     worker: WorkerInstance,
+    ant_positions: [AntPosition; 1],
 }
 
 impl NeonWarlord {
@@ -184,6 +186,8 @@ impl NeonWarlord {
         // Worker
         let worker = WorkerInstance::new();
 
+        let ant_positions = [AntPosition::new(); 1];
+
         Self {
             _settings: settings,
             size,
@@ -211,6 +215,7 @@ impl NeonWarlord {
             particles,
             worker,
             ups: 0,
+            ant_positions,
         }
     }
 }
@@ -300,6 +305,8 @@ impl DefaultApplicationInterface for NeonWarlord {
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         dt: instant::Duration,
     ) {
+        let time_stamp = Instant::now();
+
         self.watch_fps.stop(WATCH_POINTS_SIZE - 1);
         self.watch_fps.update();
         let watch_fps_data = self.watch_fps.get_viewer_data();
@@ -337,9 +344,43 @@ impl DefaultApplicationInterface for NeonWarlord {
                         );
                     }
                     // ##########################################################
-                    worker::WorkerMessage::AntState(ant_pos) => {
-                        self.ants
-                            .set_position(ant_pos.index, ant_pos.pos, ant_pos.look_at);
+                    worker::WorkerMessage::Snapshot(snapshot) => {
+                        // transmitting the whole state ensures that a complete tick of the physics thread has been completed
+                        for elem in snapshot.ant_actions {
+                            let index = elem.index;
+                            match elem.action {
+                                // ##########################################################
+                                ant_controller::AntAction::UpdatePosition(snapshot) => {
+                                    self.ant_positions[index]
+                                        .pos
+                                        .add(snapshot.pos, snapshot.time_stamp);
+                                    self.ant_positions[index].look_at = snapshot.look_at;
+                                    self.ant_positions[index].is_final = false
+                                }
+                                // ##########################################################
+                                ant_controller::AntAction::FinalPosition(snapshot) => {
+                                    self.ant_positions[index]
+                                        .pos
+                                        .add(snapshot.pos, snapshot.time_stamp);
+                                    self.ant_positions[index].look_at = snapshot.look_at;
+                                    self.ant_positions[index].is_final = true
+                                }
+                                // ##########################################################
+                                ant_controller::AntAction::SetAnimation(ant_animation) => {
+                                    let animation_index = match ant_animation {
+                                        ant_controller::AntAnimation::Idle => 0,
+                                        ant_controller::AntAnimation::Walk => 1,
+                                        ant_controller::AntAnimation::_ChargeShot => 0,
+                                    };
+
+                                    self.ants.set_animation(index, animation_index);
+                                }
+                                // ##########################################################
+                                ant_controller::AntAction::SetAnimationSpeed(speed) => {
+                                    self.ants.set_animation_speed(index, speed);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -348,6 +389,21 @@ impl DefaultApplicationInterface for NeonWarlord {
         }
         let worker = self.worker.send();
         self.watch_fps.stop(watch_index);
+
+        // Calculate current Snapshot
+        for (i, elem) in self.ant_positions.iter().enumerate() {
+            let pos = if elem.is_final {
+                elem.pos.pos
+            } else {
+                elem.pos.lerp(time_stamp)
+            };
+            self.ants.set_position(i, pos, elem.look_at);
+        }
+
+        // let snapshot = self.last_snapshot.lerp(&self.snapshot, time_stamp);
+
+        // let ant = snapshot.ants[0];
+        // self.ants.set_position(0, ant.pos, ant.look_at);
 
         // Particles
         watch_index += 1;

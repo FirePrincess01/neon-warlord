@@ -1,5 +1,7 @@
 //! Definition of the game board
 
+use crate::ant_ai::WorldInterface;
+
 type Vec2 = cgmath::Vector2<f32>;
 
 #[derive(PartialEq, Clone, Copy)]
@@ -32,5 +34,11 @@ impl GameBoard {
         ];
 
         Self { agents }
+    }
+}
+
+impl WorldInterface for GameBoard {
+    fn world_get_agents(&self) -> &[self::Agent] {
+        &self.agents
     }
 }

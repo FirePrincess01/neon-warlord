@@ -8,6 +8,8 @@ pub struct Animation {
     max_key_frame_time: f32,
 
     current_key_frame_time: instant::Duration,
+
+    animations_speed: f32,
 }
 
 impl Animation {
@@ -15,6 +17,7 @@ impl Animation {
         Self {
             max_key_frame_time: 0.0,
             current_key_frame_time: instant::Duration::default(),
+            animations_speed: 1.0,
         }
     }
 
@@ -34,12 +37,17 @@ impl Animation {
             max_key_frame_time,
 
             current_key_frame_time: instant::Duration::ZERO,
+            animations_speed: 1.0,
         }
     }
 
     fn get_current_key_frame_time(&self) -> f32 {
-        let animation_speed = 1.0;
+        let animation_speed = self.animations_speed;
         self.current_key_frame_time.as_secs_f32() * animation_speed
+    }
+
+    pub fn set_animation_speed(&mut self, speed: f32) {
+        self.animations_speed = speed;
     }
 
     pub fn increment_time(&mut self, dt: &instant::Duration) {

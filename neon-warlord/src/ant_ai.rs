@@ -40,13 +40,13 @@ impl AntAi {
         }
     }
 
-    pub fn update(&mut self, interface: &mut dyn AntAiInterface) {
+    pub fn update(&mut self, interface: &mut dyn AntBodyInterface, world: &mut dyn WorldInterface) {
         match self.state {
             State::LookForEnemies => {
                 // #######################################################
                 // get closest enemy
                 let position = interface.get_position();
-                let agents = interface.world_get_agents();
+                let agents = world.world_get_agents();
                 let closest_enemy = self.get_closest_enemy(position, agents);
 
                 // state transition
@@ -57,7 +57,7 @@ impl AntAi {
 
                 self.state_data.target_agent = Some(Agent {
                     faction: Faction::Red,
-                    position: Vec2::new(0.0, 80.0),
+                    position: Vec2::new(80.0, 00.0),
                 })
             }
             State::MoveToTarget => {
@@ -159,4 +159,4 @@ pub trait WorldInterface {
     fn world_get_agents(&self) -> &[game_board::Agent];
 }
 
-pub trait AntAiInterface: AntBodyInterface + WorldInterface {}
+// pub trait AntAiInterface: AntBodyInterface + WorldInterface {}
