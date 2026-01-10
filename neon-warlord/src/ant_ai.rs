@@ -57,7 +57,7 @@ impl AntAi {
 
                 self.state_data.target_agent = Some(Agent {
                     faction: Faction::Red,
-                    position: Vec2::new(0.0, 80.0),
+                    position: Vec2::new(80.0, 00.0),
                 })
             }
             State::MoveToTarget => {

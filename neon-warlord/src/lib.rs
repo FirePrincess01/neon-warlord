@@ -30,14 +30,9 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_controller::AntPosition,
-    ant_generator::AntGenerator,
-    ant_storage::AntStorage,
-    camera_controller::CameraController,
-    debug_overlay::DebugOverlay,
-    sun_storage::SunStorage,
-    worker::MainMessage,
-    worker_instance::WorkerInstance,
+    ant_controller::AntPosition, ant_generator::AntGenerator, ant_storage::AntStorage,
+    camera_controller::CameraController, debug_overlay::DebugOverlay, sun_storage::SunStorage,
+    worker::MainMessage, worker_instance::WorkerInstance,
 };
 
 const WATCH_POINTS_SIZE: usize = 10;
@@ -383,6 +378,12 @@ impl DefaultApplicationInterface for NeonWarlord {
                                         .animated_object_storage
                                         .set_animation(index, animation_index);
                                 }
+                                // ##########################################################
+                                ant_controller::AntAction::SetAnimationSpeed(speed) => {
+                                    self.ants
+                                        .animated_object_storage
+                                        .set_animation_speed(index, speed * 60.0);
+                                },
                             }
                         }
                     }

@@ -51,6 +51,7 @@ pub enum AntAction {
     UpdatePosition(AntPositionSnapshot),
     FinalPosition(AntPositionSnapshot),
     SetAnimation(AntAnimation),
+    SetAnimationSpeed(f32),
 }
 
 #[derive(Clone, Copy)]
@@ -151,6 +152,8 @@ impl AntController {
             }
             // ##################################################
             State::Move => {
+                let speed = 0.04;
+
                 // Check if position has been reached
                 if self.position == self.target_position {
                     self.state = State::Idle;
@@ -160,19 +163,19 @@ impl AntController {
                 // Set animation
                 if self.animation != AntAnimation::Walk {
                     self.animation = AntAnimation::Walk;
-                    actions.push(AntActionStruct::from_animation(
-                        AntAnimation::Walk,
-                        self.index,
-                    ));
+                    actions.push(AntActionStruct{
+                        action: AntAction::SetAnimation(AntAnimation::Walk),
+                        index: self.index,
+                    });
+                    actions.push(AntActionStruct {
+                        action: AntAction::SetAnimationSpeed(speed),
+                        index: self.index,
+                    });
                 }
 
                 // set position
-                let speed = 0.1;
                 let new_position =
                     self.position + (self.target_position - self.position).normalize() * speed;
-                // println!("position{:?}", self.position);
-                // println!("target position{:?}", self.target_position);
-                // println!("new position {:?}", new_position);
 
                 // check if position has been reached
                 let finish_reached = (self.target_position - new_position).magnitude2()

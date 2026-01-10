@@ -232,6 +232,10 @@ impl AnimatedObjectStorage {
         self.instance_data[id].current_animation_index = animation;
         self.instance_data[id].current_animation = Animation::new(&self.animations[animation]);
     }
+    
+    pub fn set_animation_speed(&mut self, id: usize, speed: f32) {
+        self.instance_data[id].current_animation.set_animation_speed(speed);
+    }
 }
 
 impl std::fmt::Debug for AnimatedObjectStorage {
