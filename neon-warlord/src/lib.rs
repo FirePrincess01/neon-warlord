@@ -345,7 +345,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                     }
                     // ##########################################################
                     worker::WorkerMessage::Snapshot(snapshot) => {
-                        // transmiting the whole state ensures that a complete tick of the physics thread has been completed
+                        // transmitting the whole state ensures that a complete tick of the physics thread has been completed
                         for elem in snapshot.ant_actions {
                             let index = elem.index;
                             match elem.action {
