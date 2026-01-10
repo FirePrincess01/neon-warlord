@@ -2,7 +2,7 @@
 //!
 
 use crate::animation_shader::AnimationShaderDraw;
-use crate::particle_shader::ParticleShaderDraw;
+use crate::particle_shader::{ParticleKind, ParticleShaderDraw};
 use crate::{animation_shader, particle_shader};
 // use crate::animated_object_storage::AnimatedObjectStorage;
 // use crate::deferred_color_shader::entity_buffer::MousePosition;
@@ -59,6 +59,7 @@ pub struct ForwardRenderer {
     pipeline_lod_heightmap: lod_heightmap_shader::Pipeline,
 
     pipeline_particle: particle_shader::PipelineParticle,
+    pipeline_plasma: particle_shader::PipelineParticle,
 
     // post_processing_bind_group_layout: fxaa_shader::PostProcessingTextureBindGroupLayout,
     // post_processing_texture: fxaa_shader::PostProcessingTexture,
@@ -191,6 +192,14 @@ impl ForwardRenderer {
             wgpu_renderer.device(),
             &camera_bind_group_layout,
             surface_format,
+            ParticleKind::FloatToTheMiddle,
+        );
+
+        let pipeline_plasma = particle_shader::PipelineParticle::new(
+            wgpu_renderer.device(),
+            &camera_bind_group_layout,
+            surface_format,
+            ParticleKind::Plasma,
         );
 
         // // pipeline fxaa
@@ -266,6 +275,7 @@ impl ForwardRenderer {
             pipeline_lod_heightmap,
 
             pipeline_particle,
+            pipeline_plasma,
 
             // post_processing_bind_group_layout,
             // post_processing_texture,
@@ -406,6 +416,7 @@ impl ForwardRenderer {
         gui_elements: &[&dyn DrawGui],
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
         particles: &[&dyn ParticleShaderDraw],
+        plasmas: &[&dyn ParticleShaderDraw],
         // performance_monitors: &[&mut PerformanceMonitor<{ super::WATCH_POINTS_SIZE }>],
     ) {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -464,6 +475,11 @@ impl ForwardRenderer {
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
         }
 
+        for elem in plasmas {
+            self.pipeline_plasma
+                .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
+        }
+
         // gui lines
         for elem in gui_elements {
             self.pipeline_lines.draw_lines(
@@ -501,6 +517,7 @@ impl ForwardRenderer {
         gui_elements: &[&dyn DrawGui],
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
         particles: &[&dyn ParticleShaderDraw],
+        plasmas: &[&dyn ParticleShaderDraw],
         watch_fps: &mut watch::Watch<10>,
     ) -> Result<(), wgpu::SurfaceError> {
         let output = renderer_interface.get_current_texture()?;
@@ -536,6 +553,7 @@ impl ForwardRenderer {
             gui_elements,
             vertex_color_objects,
             particles,
+            plasmas,
         );
 
         watch_index += 1;

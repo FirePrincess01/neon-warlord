@@ -8,25 +8,24 @@ use wgpu_renderer::{
 
 use crate::{geometry, particle_shader};
 
-pub struct ParticleStorage {
+pub struct PlasmaOrbStorage {
     mesh: particle_shader::Mesh,
     instances: Vec<particle_shader::Instance>,
 
     _max_instances: usize,
 }
 
-impl ParticleStorage {
+impl PlasmaOrbStorage {
     pub fn new(renderer: &mut dyn WgpuRendererInterface, max_instances: usize) -> Self {
-        let nr_particles = 25;
 
-        let sphere = UVSphere::new(1.0, 6);
-        let sphere_triangles = sphere.triangles(); // 96 positions
+        let sphere = UVSphere::new(1.0, 10);
+        let sphere_triangles = sphere.triangles();
         println!("vertices: {}", sphere_triangles.positions.len());
 
         // let quad = geometry::Quad::new(1.0); // 4 positions
 
         let mut mesh_host = geometry::Mesh::new();
-        for _i in 0..nr_particles {
+        for _i in 0..max_instances {
             // mesh_host.add(&quad);
             mesh_host.add_triangles(sphere_triangles);
         }
@@ -34,8 +33,8 @@ impl ParticleStorage {
         let mut instances = Vec::with_capacity(max_instances);
         for i in 0..max_instances {
             instances.push(particle_shader::Instance {
-                position: [-4.0 + i as f32 * (-4.0), 7.0, 4.0],
-                color: [0.01, 0.01, 0.01],
+                position: [4.0 + i as f32 * (4.0), 7.0, 4.0],
+                color: [0.1, 0.1, 0.1],
                 time: 0.0,
             });
         }
@@ -61,7 +60,7 @@ impl ParticleStorage {
     }
 }
 
-impl particle_shader::ParticleShaderDraw for ParticleStorage {
+impl particle_shader::ParticleShaderDraw for PlasmaOrbStorage {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         // mesh data
         let mesh = &self.mesh;

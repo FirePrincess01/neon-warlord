@@ -5,6 +5,7 @@ mod ant_controller;
 mod ant_generator;
 mod ant_state;
 mod ant_storage;
+mod orb_storage;
 mod camera_controller;
 mod debug_overlay;
 mod game_board;
@@ -16,7 +17,7 @@ mod worker_instance;
 
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
-    particle_storage::ParticleStorage,
+    particle_storage::ParticleStorage, plasma_orb_storage::PlasmaOrbStorage,
 };
 use instant::Instant;
 #[cfg(target_arch = "wasm32")]
@@ -88,6 +89,10 @@ struct NeonWarlord {
 
     // Particles
     particles: ParticleStorage,
+    plasma_orbs: PlasmaOrbStorage,
+
+    // Orbs
+    // orbs: OrbStorage,
 
     // Worker
     worker: WorkerInstance,
@@ -181,7 +186,8 @@ impl NeonWarlord {
         let sun = SunStorage::new(renderer_interface);
 
         // Particles
-        let particles = ParticleStorage::new(renderer_interface);
+        let particles = ParticleStorage::new(renderer_interface, 2);
+        let plasma_orbs = PlasmaOrbStorage::new(renderer_interface, 10);
 
         // Worker
         let worker = WorkerInstance::new();
@@ -213,6 +219,7 @@ impl NeonWarlord {
             id: String::new(),
             sun,
             particles,
+            plasma_orbs,
             worker,
             ups: 0,
             ant_positions,
@@ -410,6 +417,7 @@ impl DefaultApplicationInterface for NeonWarlord {
         self.watch_fps.start(watch_index, "Update Particles");
         {
             self.particles.update(renderer_interface, dt);
+            self.plasma_orbs.update(renderer_interface, dt);
         }
         self.watch_fps.stop(watch_index);
 
@@ -596,6 +604,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                 ],
                 &[&self.sun],
                 &[&self.particles],
+                &[&self.plasma_orbs],
                 &mut self.watch_fps,
             )
         }

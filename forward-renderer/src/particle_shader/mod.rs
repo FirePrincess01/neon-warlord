@@ -11,6 +11,7 @@ pub use instance::Instance;
 pub use mesh::Mesh;
 pub use particle_shader_draw::ParticleShaderDraw;
 pub use pipeline_particle::PipelineParticle;
+pub use pipeline_particle::ParticleKind;
 
 pub use wgpu_renderer::vertex_color_shader::Vertex;
 // pub use wgpu_renderer::vertex_color_shader::Instance;
