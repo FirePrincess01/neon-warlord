@@ -43,8 +43,6 @@ impl InterpolatedPosition {
         let amount = (time_stamp - self.last_time_stamp).as_nanos() as f32
             / (self.time_stamp - self.last_time_stamp).as_nanos() as f32;
 
-        
-
         self.last_pos.lerp(self.pos, amount)
     }
 

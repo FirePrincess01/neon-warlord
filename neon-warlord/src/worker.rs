@@ -40,7 +40,7 @@ pub struct Snapshot {
 //     pub fn new() -> Self {
 //         Self { ant_actions: Vec::new() }
 //     }
-    
+
 //     // pub fn lerp(&self, next: &Snapshot, time_stamp: Instant) -> Snapshot {
 //     //     let mut ants = [AnimationPosition::zero(); 16];
 
@@ -190,7 +190,7 @@ impl Worker {
             // ants[0].pos = ant_pos.pos;
             // ants[0].look_at = ant_pos.look_at;
 
-            let _ = main.send(WorkerMessage::Snapshot(Snapshot{
+            let _ = main.send(WorkerMessage::Snapshot(Snapshot {
                 ant_actions: actions,
             }));
         }

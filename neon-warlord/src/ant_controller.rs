@@ -2,10 +2,7 @@
 
 use cgmath::{InnerSpace, Zero};
 
-use crate::{
-    ant_ai::AntBodyInterface,
-    worker::interpolated_position::InterpolatedPosition,
-};
+use crate::{ant_ai::AntBodyInterface, worker::interpolated_position::InterpolatedPosition};
 
 type Vec2 = cgmath::Vector2<f32>;
 
@@ -161,7 +158,7 @@ impl AntController {
                 // Set animation
                 if self.animation != AntAnimation::Walk {
                     self.animation = AntAnimation::Walk;
-                    actions.push(AntActionStruct{
+                    actions.push(AntActionStruct {
                         action: AntAction::SetAnimation(AntAnimation::Walk),
                         index: self.index,
                     });
