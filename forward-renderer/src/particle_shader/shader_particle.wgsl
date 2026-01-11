@@ -22,6 +22,7 @@ struct InstanceInput {
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) color: vec4<f32>,
+    @location(1) uv_coords: vec2<f32>,
 };
 
 @vertex 
@@ -32,7 +33,7 @@ fn vs_main(
 ) -> VertexOutput {
     // constants
     const pi2 = radians(90.0);
-    const nr_vertices_per_object = 100; // must match the used objects
+    const nr_vertices_per_object = 4; // must match the used objects
     const distance = 4.0;
 
     // start time
@@ -46,26 +47,39 @@ fn vs_main(
     let rand2 = 1.0 -2 * random(object_index + 2 + u32(time));
     let position_offset = vec3(rand0, rand1, rand2) * distance;
 
-    let position = model.position + position_offset ;
-
-    // time and movement function
+    // Percentage of progress to center
     let time_fn = time % 1.0;
-    let move_fn = 1.0 - cos(pi2 * time_fn);
+    // Relative distance from the center
+    let distance_fn = cos(pi2 * time_fn);
 
-    // linear interpolate
-    let current_position = move_fn * instance.position + (1.0 - move_fn) * (instance.position + position);
+    let billboard_center_position = distance_fn * position_offset + instance.position;
+    // Rotation matrix to face billboard to camera
+    let look_to = normalize(camera.view_pos.xyz - billboard_center_position);
+    let sideways = normalize(cross(vec3(0.,0.,1.), look_to));
+    let new_up = cross(look_to, sideways);
+    
+    let rotated_model_pos = mat3x3<f32>(sideways, new_up, look_to) * model.position;
+    let global_position = instance.position + distance_fn * (rotated_model_pos + position_offset);
 
     // final result
     var out: VertexOutput;
     out.color = vec4(instance.color, time_fn);
-    out.clip_position = camera.view_proj * vec4<f32>(current_position, 1.0);
+    out.clip_position = camera.view_proj * vec4<f32>(global_position, 1.0);
+    // billboards are [-0.5, 0.5]^2, uv-coords are [0, 1]^2
+    out.uv_coords = model.position.xy + 0.5;
     return out;
 }
 
 // Fragment shader
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return in.color;
+    const pi = radians(180.);
+    let centered_uv = in.uv_coords - 0.5;
+    let radius = min(2 * length(centered_uv), 1.);
+    // this function is flat at 0 and 1
+    let alpha = 0.5 + 0.5 * cos(radius * pi);
+
+    return vec4(in.color.xyz, in.color.w * alpha);
 }
 
 
