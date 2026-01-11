@@ -17,18 +17,11 @@ pub struct PlasmaOrbStorage {
 
 impl PlasmaOrbStorage {
     pub fn new(renderer: &mut dyn WgpuRendererInterface, max_instances: usize) -> Self {
-
-        let sphere = UVSphere::new(1.0, 10);
+        let sphere = UVSphere::new(1.0, 8);
         let sphere_triangles = sphere.triangles();
-        println!("vertices: {}", sphere_triangles.positions.len());
-
-        // let quad = geometry::Quad::new(1.0); // 4 positions
 
         let mut mesh_host = geometry::Mesh::new();
-        for _i in 0..max_instances {
-            // mesh_host.add(&quad);
-            mesh_host.add_triangles(sphere_triangles);
-        }
+        mesh_host.add_triangles(sphere_triangles);
 
         let mut instances = Vec::with_capacity(max_instances);
         for i in 0..max_instances {
@@ -49,7 +42,7 @@ impl PlasmaOrbStorage {
     }
 
     pub fn update(&mut self, renderer: &mut dyn WgpuRendererInterface, dt: instant::Duration) {
-        let dt = dt.as_secs_f32() / 2.0;
+        let dt = dt.as_secs_f32();
 
         for elem in &mut self.instances {
             elem.time = elem.time + dt;

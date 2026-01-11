@@ -22,6 +22,9 @@ struct InstanceInput {
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) color: vec4<f32>,
+    @location(1) time: f32,
+    @location(2) model_position: vec3<f32>,
+
 };
 
 @vertex 
@@ -30,42 +33,89 @@ fn vs_main(
     model: VertexInput,
     instance: InstanceInput,
 ) -> VertexOutput {
-    // constants
-    const pi2 = radians(90.0);
-    const nr_vertices_per_object = 100; // must match the used objects
-    const distance = 4.0;
-
-    // start time
-    let object_index= vertex_index/nr_vertices_per_object;
-    let rand_time = random2(object_index);
-    let time =  instance.time + rand_time;
-
-    // position rands
-    let rand0 = 1.0 -2 * random(object_index + 0 + u32(time));
-    let rand1 = 1.0 -2 * random(object_index + 1 + u32(time));
-    let rand2 = 1.0 -2 * random(object_index + 2 + u32(time));
-    let position_offset = vec3(rand0, rand1, rand2) * distance;
-
-    let position = model.position + position_offset ;
-
-    // time and movement function
-    let time_fn = time % 1.0;
-    let move_fn = 1.0 - cos(pi2 * time_fn);
-
-    // linear interpolate
-    let current_position = move_fn * instance.position + (1.0 - move_fn) * (instance.position + position);
+   
+    let position = model.position + instance.position;
 
     // final result
     var out: VertexOutput;
-    out.color = vec4(instance.color, time_fn);
-    out.clip_position = camera.view_proj * vec4<f32>(current_position, 1.0);
+    out.color = vec4(instance.color, 1.0);
+    out.time = instance.time;
+    out.model_position = model.position;
+    out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
     return out;
 }
 
 // Fragment shader
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return in.color;
+
+    let v_pos = in.model_position.xyz;
+    let u_time = in.time;
+
+    let res = voronoi(v_pos * 2.0 , u_time);
+
+    let color0 = vec4( vec3(res.x), 1.0 );
+    let color1 =  vec3(pow(res.x, 1.5));
+
+    let r = color1.x * 0.4 + 0.6 * smoothstep(0.4,1.0,color1.x);
+    // let r = res.x;
+    let g = color1.y * 0.4 + 0.6 *  smoothstep(0.4,1.0,color1.y);
+    // let g = res.x;
+    let b = color1.z;
+
+    let color = vec4( vec3(r, g, b), 0.98 );
+
+    return color;
+}
+
+/// cellular noise function
+fn voronoi(x: vec3<f32>, time: f32) -> vec2<f32>
+{
+    // current cell coordinates
+    let n = floor(x);
+    // pixel coordinates in current cell
+    let f = fract(x);
+
+    // initialize m with a large number
+    // (which will be get replaced very soon with smaller distances below)
+    var m = vec4(8.0);
+
+    // in 2D voronoi, we only have 2 dimensions to loop over
+    // in 3D, we would naturally have one more dimension to loop over
+    for (var k: i32 = -1; k <= 1; k = k + 1) {
+        for (var j: i32 = -1; j <= 1; j = j + 1) {
+            for (var i: i32 = -1; i <= 1; i = i + 1) {
+
+                // coordinates for the relative cell  within the 3x3x3 3D grid
+                let g = vec3(f32(i), f32(j), f32(k));
+                // calculate a random point within the cell relative to 'n'(current cell coordinates)
+                let o = hash3d( n + g );
+                // calculate the distance vector between the current pixel and the moving random point 'o'
+                let r = g + (0.5+0.5*sin(vec3(time)+6.2831*o)) - f;
+                // calculate the scalar distance of r
+                let d = dot(r,r);
+
+                // find the minimum distance
+                // it is most important to save the minimum distance into the result 'm'
+                // saving other information into 'm' is optional and up to your liking
+                // e.g. displaying different colors according to various cell coordinates
+                if( d<m.x )
+                {
+                    m = vec4( d, o );
+                }
+            }
+        }
+    }
+
+    return vec2(m.x, m.y+m.z+m.w);
+}
+
+// hash function from https://github.com/MaxBittker/glsl-voronoi-noise
+fn hash3d(p: vec3<f32>) -> vec3<f32> {
+  return fract(
+      sin(vec3(dot(p, vec3(1.0, 57.0, 113.0)), dot(p, vec3(57.0, 113.0, 1.0)),
+               dot(p, vec3(113.0, 1.0, 57.0)))) *
+      43758.5453);
 }
 
 
