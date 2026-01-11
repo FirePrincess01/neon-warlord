@@ -17,6 +17,7 @@ struct InstanceInput {
     @location(5) position: vec3<f32>,
     @location(6) color: vec3<f32>, 
     @location(7) time: f32, 
+    @location(8) size: f32, 
 }
 
 struct VertexOutput {
@@ -24,7 +25,7 @@ struct VertexOutput {
     @location(0) color: vec4<f32>,
     @location(1) time: f32,
     @location(2) model_position: vec3<f32>,
-
+    @location(3) size: f32, 
 };
 
 @vertex 
@@ -33,14 +34,18 @@ fn vs_main(
     model: VertexInput,
     instance: InstanceInput,
 ) -> VertexOutput {
-   
-    let position = model.position + instance.position;
+    // let size = 0.001 * instance.time;
+    let size = instance.size;
+
+    let model_position = model.position * size;
+    let position = model_position + instance.position;
 
     // final result
     var out: VertexOutput;
     out.color = vec4(instance.color, 1.0);
     out.time = instance.time;
-    out.model_position = model.position;
+    out.model_position = model_position;
+    out.size = size;
     out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
     return out;
 }
@@ -49,10 +54,13 @@ fn vs_main(
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
+    // growth function
+    let size = 1.0 - 1.0/(in.size +1.0);
+
     let v_pos = in.model_position.xyz;
     let u_time = in.time;
 
-    let res = voronoi(v_pos * 2.0 , u_time);
+    let res = voronoi(v_pos / size * 2 , u_time);
 
     let color0 = vec4( vec3(res.x), 1.0 );
     let color1 =  vec3(pow(res.x, 1.5));

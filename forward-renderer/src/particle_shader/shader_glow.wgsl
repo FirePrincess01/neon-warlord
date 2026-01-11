@@ -17,6 +17,7 @@ struct InstanceInput {
     @location(5) position: vec3<f32>,
     @location(6) color: vec3<f32>, 
     @location(7) time: f32, 
+    @location(8) size: f32, 
 }
 
 struct VertexOutput {
@@ -25,6 +26,7 @@ struct VertexOutput {
     @location(1) time: f32,
     @location(2) model_position: vec3<f32>,
     @location(3) cam_dir: vec3<f32>,
+    @location(4) size: f32,
 
 };
 
@@ -34,15 +36,19 @@ fn vs_main(
     model: VertexInput,
     instance: InstanceInput,
 ) -> VertexOutput {
-   
-    let position = model.position + instance.position;
+    // let size = 0.1 + 0.1 * instance.time;
+    let size = instance.size;
+
+    let model_position = model.position * size;
+    let position = model_position + instance.position;
 
     // final result
     var out: VertexOutput;
     out.color = vec4(instance.color, 1.0);
     out.time = instance.time;
-    out.model_position = model.position;
+    out.model_position = model_position;
     out.cam_dir =  camera.view_pos.xyz - instance.position;
+    out.size = size;
     out.clip_position = camera.view_proj * vec4<f32>(position, 1.0);
     return out;
 }
@@ -50,8 +56,8 @@ fn vs_main(
 // Fragment shader
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    let strength =  cross(in.model_position, normalize(in.cam_dir));
-    let strength1 = 1.5 - dot(strength, normalize(strength));
+    let strength =  cross(in.model_position / in.size, normalize(in.cam_dir));
+    let strength1 = (1.5 - dot(strength, normalize(strength)));
 
     let strength2 =  min(0.2, pow(strength1, 3.0));
 

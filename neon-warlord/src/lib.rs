@@ -186,9 +186,9 @@ impl NeonWarlord {
         let sun = SunStorage::new(renderer_interface);
 
         // Particles
-        let particles = ParticleStorage::new(renderer_interface, 2);
+        let particles = ParticleStorage::new(renderer_interface, 1);
         let plasma_orbs = PlasmaOrbStorage::new(renderer_interface, 1);
-        let glows = GlowStorage::new(renderer_interface, 5);
+        let glows = GlowStorage::new(renderer_interface, 1);
 
         // Worker
         let worker = WorkerInstance::new();

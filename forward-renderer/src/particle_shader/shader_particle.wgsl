@@ -17,6 +17,7 @@ struct InstanceInput {
     @location(5) position: vec3<f32>,
     @location(6) color: vec3<f32>, 
     @location(7) time: f32, 
+    @location(8) size: f32, 
 }
 
 struct VertexOutput {
@@ -32,6 +33,11 @@ fn vs_main(
     model: VertexInput,
     instance: InstanceInput,
 ) -> VertexOutput {
+    // let size = 0.1 + 0.1 * instance.time;
+    let size = instance.size;
+
+    let model_position = model.position;
+
     // constants
     const pi2 = radians(90.0);
     const nr_vertices_per_object = 100; // must match the used objects
@@ -48,7 +54,7 @@ fn vs_main(
     let rand2 = 1.0 -2 * random(object_index + 2 + u32(time));
     let position_offset = vec3(rand0, rand1, rand2) * distance;
 
-    let position = model.position + position_offset ;
+    let position = (model_position + position_offset) * size;
 
     // time and movement function
     let time_fn = time % 1.0;
@@ -60,7 +66,7 @@ fn vs_main(
     // final result
     var out: VertexOutput;
     out.color = vec4(instance.color, time_fn);
-    out.model_position = model.position;
+    out.model_position = model_position;
     out.cam_dir =  camera.view_pos.xyz - instance.position;
     out.clip_position = camera.view_proj * vec4<f32>(current_position, 1.0);
     return out;

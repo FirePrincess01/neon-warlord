@@ -29,6 +29,7 @@ impl GlowStorage {
                 position: [4.0 + i as f32 * (4.0), 7.0, 4.0],
                 color: [0.2, 0.2, 0.4],
                 time: 0.0,
+                size: 0.1,
             });
         }
 
@@ -39,6 +40,16 @@ impl GlowStorage {
             instances,
             _max_instances: max_instances,
         }
+    }
+
+    pub fn set_position(&mut self, index: usize, pos: cgmath::Vector3<f32>)
+    {
+        self.instances[index].position = pos.into();
+    }
+
+    pub fn set_size(&mut self, index: usize, size: f32)
+    {
+        self.instances[index].size = size;
     }
 
     pub fn update(&mut self, renderer: &mut dyn WgpuRendererInterface, dt: instant::Duration) {
