@@ -18,16 +18,11 @@ impl ParticleStorage {
     pub fn new(renderer: &mut dyn WgpuRendererInterface) -> Self {
         let nr_particles = 25;
 
-        let sphere = UVSphere::new(1.0, 6);
-        let sphere_triangles = sphere.triangles(); // 96 positions
-        println!("vertices: {}", sphere_triangles.positions.len());
-
-        // let quad = geometry::Quad::new(1.0); // 4 positions
+        let quad = geometry::Quad::new(1.0); // 4 positions
 
         let mut mesh_host = geometry::Mesh::new();
         for _i in 0..nr_particles {
-            // mesh_host.add(&quad);
-            mesh_host.add_triangles(sphere_triangles);
+            mesh_host.add(&quad);
         }
 
         let instances = [particle_shader::Instance {
