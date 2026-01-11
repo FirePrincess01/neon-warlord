@@ -173,13 +173,12 @@ impl AntController {
                     self.position + (self.target_position - self.position).normalize() * speed;
 
                 // check if position has been reached
-                let finish_reached = (self.target_position - new_position).magnitude2()
-                    < (self.target_position - self.position).magnitude2();
+                let finish_reached = (self.target_position - self.position).magnitude2() <= speed * speed;
 
                 if finish_reached {
-                    self.position = new_position;
-                } else {
                     self.position = self.target_position;
+                } else {
+                    self.position = new_position;
                 }
 
                 let pos = cgmath::Vector3 {
@@ -191,9 +190,9 @@ impl AntController {
                     cgmath::Vector3::new(self.target_position.x, self.target_position.y, 0.0);
 
                 actions.push(if finish_reached {
-                    AntActionStruct::update_position(pos, target, *time_stamp, self.index)
-                } else {
                     AntActionStruct::final_position(pos, target, *time_stamp, self.index)
+                } else {
+                    AntActionStruct::update_position(pos, target, *time_stamp, self.index)
                 });
             }
             // ##################################################

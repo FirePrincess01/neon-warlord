@@ -5,18 +5,21 @@ mod ant_controller;
 mod ant_generator;
 mod ant_state;
 mod ant_storage;
-mod orb_storage;
 mod camera_controller;
 mod debug_overlay;
 mod game_board;
 mod heightmap_generator;
+mod orb_controller;
+mod orb_storage;
 mod settings;
 mod sun_storage;
 mod worker;
 mod worker_instance;
 
 use forward_renderer::{
-    AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage, glow_storage::GlowStorage, particle_storage::ParticleStorage, plasma_orb_storage::PlasmaOrbStorage
+    AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
+    glow_storage::GlowStorage, particle_storage::ParticleStorage,
+    plasma_orb_storage::PlasmaOrbStorage,
 };
 use instant::Instant;
 #[cfg(target_arch = "wasm32")]
