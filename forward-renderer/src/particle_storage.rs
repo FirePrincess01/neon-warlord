@@ -1,10 +1,7 @@
 //! Manages the data on the gpu of the particles
 //!
 
-use wgpu_renderer::{
-    shape::{MeshDataInterface, UVSphere},
-    wgpu_renderer::WgpuRendererInterface,
-};
+use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 
 use crate::{geometry, particle_shader};
 
