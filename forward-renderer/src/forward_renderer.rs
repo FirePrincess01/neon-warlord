@@ -60,6 +60,7 @@ pub struct ForwardRenderer {
 
     pipeline_particle: particle_shader::PipelineParticle,
     pipeline_plasma: particle_shader::PipelineParticle,
+    pipeline_glow: particle_shader::PipelineParticle,
 
     // post_processing_bind_group_layout: fxaa_shader::PostProcessingTextureBindGroupLayout,
     // post_processing_texture: fxaa_shader::PostProcessingTexture,
@@ -202,6 +203,13 @@ impl ForwardRenderer {
             ParticleKind::Plasma,
         );
 
+        let pipeline_glow = particle_shader::PipelineParticle::new(
+            wgpu_renderer.device(),
+            &camera_bind_group_layout,
+            surface_format,
+            ParticleKind::Glow,
+        );
+
         // // pipeline fxaa
         // let post_processing_bind_group_layout =
         //     fxaa_shader::PostProcessingTextureBindGroupLayout::new(wgpu_renderer.device());
@@ -276,6 +284,7 @@ impl ForwardRenderer {
 
             pipeline_particle,
             pipeline_plasma,
+            pipeline_glow,
 
             // post_processing_bind_group_layout,
             // post_processing_texture,
@@ -417,6 +426,7 @@ impl ForwardRenderer {
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
         particles: &[&dyn ParticleShaderDraw],
         plasmas: &[&dyn ParticleShaderDraw],
+        glow: &[&dyn ParticleShaderDraw],
         // performance_monitors: &[&mut PerformanceMonitor<{ super::WATCH_POINTS_SIZE }>],
     ) {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -470,13 +480,18 @@ impl ForwardRenderer {
         }
 
         // particle shader
+
+        for elem in plasmas {
+            self.pipeline_plasma
+                .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
+        }
+        
         for elem in particles {
             self.pipeline_particle
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
         }
-
-        for elem in plasmas {
-            self.pipeline_plasma
+        for elem in glow {
+            self.pipeline_glow
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
         }
 
@@ -518,12 +533,14 @@ impl ForwardRenderer {
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
         particles: &[&dyn ParticleShaderDraw],
         plasmas: &[&dyn ParticleShaderDraw],
+        glow: &[&dyn ParticleShaderDraw],
         watch_fps: &mut watch::Watch<10>,
     ) -> Result<(), wgpu::SurfaceError> {
-        let output = renderer_interface.get_current_texture()?;
 
         let mut watch_index = 5;
         watch_fps.start(watch_index, "Get frame");
+
+        let output = renderer_interface.get_current_texture()?;
 
         let view: wgpu::TextureView = output
             .texture
@@ -554,7 +571,10 @@ impl ForwardRenderer {
             vertex_color_objects,
             particles,
             plasmas,
+            glow,
         );
+
+        watch_fps.stop(watch_index);
 
         watch_index += 1;
         watch_fps.start(watch_index, "Submit");

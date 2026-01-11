@@ -17,7 +17,7 @@ pub struct ParticleStorage {
 
 impl ParticleStorage {
     pub fn new(renderer: &mut dyn WgpuRendererInterface, max_instances: usize) -> Self {
-        let nr_particles = 25;
+        let nr_particles = 100;
 
         let sphere = UVSphere::new(1.0, 6);
         let sphere_triangles = sphere.triangles(); // 96 positions
@@ -34,7 +34,7 @@ impl ParticleStorage {
         let mut instances = Vec::with_capacity(max_instances);
         for i in 0..max_instances {
             instances.push(particle_shader::Instance {
-                position: [-4.0 + i as f32 * (-4.0), 7.0, 4.0],
+                position: [4.0 + i as f32 * (4.0), 7.0, 4.0],
                 color: [0.01, 0.01, 0.01],
                 time: 0.0,
             });

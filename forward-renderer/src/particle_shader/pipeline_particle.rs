@@ -18,8 +18,9 @@ pub struct PipelineParticle {
 }
 
 pub enum ParticleKind {
-    Plasma,
     FloatToTheMiddle,
+    Plasma,
+    Glow,
 }
 
 impl PipelineParticle {
@@ -37,6 +38,7 @@ impl PipelineParticle {
             source: wgpu::ShaderSource::Wgsl(match particle_kind {
                 ParticleKind::Plasma => include_str!("shader_plasma.wgsl").into(),
                 ParticleKind::FloatToTheMiddle => include_str!("shader_particle.wgsl").into(),
+                ParticleKind::Glow => include_str!("shader_glow.wgsl").into(),
             }),
         });
 
@@ -81,7 +83,11 @@ impl PipelineParticle {
             },
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: DepthTexture::DEPTH_FORMAT,
-                depth_write_enabled: false,
+                depth_write_enabled: match particle_kind {
+                    ParticleKind::FloatToTheMiddle => false,
+                    ParticleKind::Plasma => true,
+                    ParticleKind::Glow => false,
+                },
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),

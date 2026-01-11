@@ -8,16 +8,16 @@ use wgpu_renderer::{
 
 use crate::{geometry, particle_shader};
 
-pub struct PlasmaOrbStorage {
+pub struct GlowStorage {
     mesh: particle_shader::Mesh,
     instances: Vec<particle_shader::Instance>,
 
     _max_instances: usize,
 }
 
-impl PlasmaOrbStorage {
+impl GlowStorage {
     pub fn new(renderer: &mut dyn WgpuRendererInterface, max_instances: usize) -> Self {
-        let sphere = UVSphere::new(1.0, 10);
+        let sphere = UVSphere::new(2.0, 8);
         let sphere_triangles = sphere.triangles();
 
         let mut mesh_host = geometry::Mesh::new();
@@ -27,7 +27,7 @@ impl PlasmaOrbStorage {
         for i in 0..max_instances {
             instances.push(particle_shader::Instance {
                 position: [4.0 + i as f32 * (4.0), 7.0, 4.0],
-                color: [0.1, 0.1, 0.1],
+                color: [0.2, 0.2, 0.4],
                 time: 0.0,
             });
         }
@@ -53,7 +53,7 @@ impl PlasmaOrbStorage {
     }
 }
 
-impl particle_shader::ParticleShaderDraw for PlasmaOrbStorage {
+impl particle_shader::ParticleShaderDraw for GlowStorage {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         // mesh data
         let mesh = &self.mesh;
