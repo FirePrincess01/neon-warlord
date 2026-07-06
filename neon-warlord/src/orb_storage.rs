@@ -32,21 +32,13 @@ impl OrbStorage {
         }
     }
 
-    pub fn set_position(
-        &mut self,
-        index: usize,
-        pos: cgmath::Vector3<f32>,
-    ) {
+    pub fn set_position(&mut self, index: usize, pos: cgmath::Vector3<f32>) {
         self.particle_storage.set_position(index, pos);
         self.glow_storage.set_position(index, pos);
         self.plasma_orb_storage.set_position(index, pos);
     }
 
-    pub fn set_size(
-        &mut self,
-        index: usize,
-        size: f32,
-    ) {
+    pub fn set_size(&mut self, index: usize, size: f32) {
         // self.particle_storage.set_size(index, size);
         self.glow_storage.set_size(index, size);
         self.plasma_orb_storage.set_size(index, size);

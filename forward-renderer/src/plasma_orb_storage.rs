@@ -42,13 +42,11 @@ impl PlasmaOrbStorage {
         }
     }
 
-    pub fn set_position(&mut self, index: usize, pos: cgmath::Vector3<f32>)
-    {
+    pub fn set_position(&mut self, index: usize, pos: cgmath::Vector3<f32>) {
         self.instances[index].position = pos.into();
     }
 
-    pub fn set_size(&mut self, index: usize, size: f32)
-    {
+    pub fn set_size(&mut self, index: usize, size: f32) {
         self.instances[index].size = size;
     }
 

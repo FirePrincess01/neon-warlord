@@ -485,7 +485,7 @@ impl ForwardRenderer {
             self.pipeline_plasma
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
         }
-        
+
         for elem in particles {
             self.pipeline_particle
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
@@ -536,7 +536,6 @@ impl ForwardRenderer {
         glow: &[&dyn ParticleShaderDraw],
         watch_fps: &mut watch::Watch<10>,
     ) -> Result<(), wgpu::SurfaceError> {
-
         let mut watch_index = 5;
         watch_fps.start(watch_index, "Get frame");
 

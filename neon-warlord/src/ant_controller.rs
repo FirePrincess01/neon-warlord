@@ -173,7 +173,8 @@ impl AntController {
                     self.position + (self.target_position - self.position).normalize() * speed;
 
                 // check if position has been reached
-                let finish_reached = (self.target_position - self.position).magnitude2() <= speed * speed;
+                let finish_reached =
+                    (self.target_position - self.position).magnitude2() <= speed * speed;
 
                 if finish_reached {
                     self.position = self.target_position;

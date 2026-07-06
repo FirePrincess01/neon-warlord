@@ -41,7 +41,6 @@ pub struct OrbController {
     // State::Charge
     start_charge_time: Instant,
     charge: f32,
-
 }
 
 #[allow(unused)]
@@ -69,7 +68,7 @@ impl OrbController {
             // ##################################################
             State::Idle => {
                 // wait for user action
-            },
+            }
             // ##################################################
             State::StartCharge => {
                 actions.push(OrbAction::SetPosition(self.position));
@@ -78,7 +77,7 @@ impl OrbController {
 
                 self.start_charge_time = *time_stamp;
                 self.state = State::Charge;
-            },
+            }
             // ##################################################
             State::Charge => {
                 let duration = *time_stamp - self.start_charge_time;
@@ -91,34 +90,36 @@ impl OrbController {
                 if t >= CHARGE_DURATION {
                     actions.push(OrbAction::EnableCharge(false));
                     self.state = State::ChargingDone;
-                }                
-            },
+                }
+            }
             // ##################################################
             State::ChargingDone => {
                 // wait for user action
-            },
+            }
             // ##################################################
             State::StartMove => {
                 self.state = State::Move;
-            },
+            }
             // ##################################################
             State::Move => {
                 // has the position been reached
-                let finish_reached = (self.target_position - self.position).magnitude2() <= SPEED * SPEED;
-                
+                let finish_reached =
+                    (self.target_position - self.position).magnitude2() <= SPEED * SPEED;
+
                 // calculate next step
-                self.position = self.position + (self.target_position - self.position).normalize() * SPEED;
-                
+                self.position =
+                    self.position + (self.target_position - self.position).normalize() * SPEED;
+
                 if finish_reached {
                     self.position = self.target_position;
                     self.state = State::Explode;
                 }
-            },
+            }
             // ##################################################
             State::Explode => {
                 self.charge = 0.0;
                 self.state = State::Idle;
-            },
+            }
         }
     }
 }
