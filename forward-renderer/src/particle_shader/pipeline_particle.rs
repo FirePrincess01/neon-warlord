@@ -17,18 +17,29 @@ pub struct PipelineParticle {
     render_pipeline: wgpu::RenderPipeline,
 }
 
+pub enum ParticleKind {
+    FloatToTheMiddle,
+    Plasma,
+    Glow,
+}
+
 impl PipelineParticle {
     pub fn new(
         device: &wgpu::Device,
         camera_bind_group_layout: &camera_bind_group_layout::CameraBindGroupLayout,
         surface_format: wgpu::TextureFormat,
+        particle_kind: ParticleKind,
     ) -> Self {
         let topology = wgpu::PrimitiveTopology::TriangleList;
 
         // Shader
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader_particle.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(match particle_kind {
+                ParticleKind::Plasma => include_str!("shader_plasma.wgsl").into(),
+                ParticleKind::FloatToTheMiddle => include_str!("shader_particle.wgsl").into(),
+                ParticleKind::Glow => include_str!("shader_glow.wgsl").into(),
+            }),
         });
 
         // PipelineParticle
@@ -72,7 +83,11 @@ impl PipelineParticle {
             },
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: DepthTexture::DEPTH_FORMAT,
-                depth_write_enabled: false,
+                depth_write_enabled: match particle_kind {
+                    ParticleKind::FloatToTheMiddle => false,
+                    ParticleKind::Plasma => true,
+                    ParticleKind::Glow => false,
+                },
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),

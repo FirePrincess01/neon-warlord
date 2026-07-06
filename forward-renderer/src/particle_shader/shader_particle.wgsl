@@ -17,6 +17,7 @@ struct InstanceInput {
     @location(5) position: vec3<f32>,
     @location(6) color: vec3<f32>, 
     @location(7) time: f32, 
+    @location(8) size: f32, 
 }
 
 struct VertexOutput {
@@ -31,6 +32,11 @@ fn vs_main(
     model: VertexInput,
     instance: InstanceInput,
 ) -> VertexOutput {
+    // let size = 0.1 + 0.1 * instance.time;
+    let size = instance.size;
+
+    let model_position = model.position;
+
     // constants
     const pi2 = radians(90.0);
     const nr_vertices_per_object = 4; // must match the used objects

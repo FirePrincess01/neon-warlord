@@ -7,6 +7,7 @@ pub struct Instance {
     pub position: [f32; 3],
     pub color: [f32; 3],
     pub time: f32,
+    pub size: f32,
 }
 
 #[allow(unused)]
@@ -20,8 +21,9 @@ impl Instance {
     pub fn new() -> Self {
         Self {
             position: [0.0, 0.0, 0.0],
-            color: [0.0, 0.0, 0.0],
+            color: [1.0, 1.0, 1.0],
             time: 0.0,
+            size: 1.0,
         }
     }
 
@@ -49,6 +51,11 @@ impl Instance {
                 wgpu::VertexAttribute {
                     offset: mem::size_of::<[f32; 6]>() as wgpu::BufferAddress,
                     shader_location: 7,
+                    format: wgpu::VertexFormat::Float32,
+                },
+                wgpu::VertexAttribute {
+                    offset: mem::size_of::<[f32; 7]>() as wgpu::BufferAddress,
+                    shader_location: 8,
                     format: wgpu::VertexFormat::Float32,
                 },
             ],

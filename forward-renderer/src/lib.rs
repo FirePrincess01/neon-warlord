@@ -5,10 +5,12 @@ pub mod animation_shader;
 mod draw_gui;
 mod forward_renderer;
 pub mod geometry;
+pub mod glow_storage;
 pub mod lod_heightmap_shader;
 pub mod particle_shader;
 pub mod particle_storage;
 mod performance_monitor;
+pub mod plasma_orb_storage;
 mod terrain_storage;
 
 pub use animated_object::animated_object_storage::AnimatedObjectStorage;

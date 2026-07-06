@@ -1,33 +1,33 @@
 //! Manages the data on the gpu of the particles
 //!
 
-use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
+use wgpu_renderer::{
+    shape::{MeshDataInterface, UVSphere},
+    wgpu_renderer::WgpuRendererInterface,
+};
 
 use crate::{geometry, particle_shader};
 
-pub struct ParticleStorage {
+pub struct PlasmaOrbStorage {
     mesh: particle_shader::Mesh,
     instances: Vec<particle_shader::Instance>,
 
     _max_instances: usize,
 }
 
-impl ParticleStorage {
+impl PlasmaOrbStorage {
     pub fn new(renderer: &mut dyn WgpuRendererInterface, max_instances: usize) -> Self {
-        let nr_particles = 100;
-
-        let quad = geometry::Quad::new(1.0); // 4 positions
+        let sphere = UVSphere::new(1.0, 10);
+        let sphere_triangles = sphere.triangles();
 
         let mut mesh_host = geometry::Mesh::new();
-        for _i in 0..nr_particles {
-            mesh_host.add(&quad);
-        }
+        mesh_host.add_triangles(sphere_triangles);
 
         let mut instances = Vec::with_capacity(max_instances);
         for i in 0..max_instances {
             instances.push(particle_shader::Instance {
                 position: [4.0 + i as f32 * (4.0), 7.0, 4.0],
-                color: [0.01, 0.01, 0.01],
+                color: [0.1, 0.1, 0.1],
                 time: 0.0,
                 size: 0.1,
             });
@@ -51,7 +51,7 @@ impl ParticleStorage {
     }
 
     pub fn update(&mut self, renderer: &mut dyn WgpuRendererInterface, dt: instant::Duration) {
-        let dt = dt.as_secs_f32() / 2.0;
+        let dt = dt.as_secs_f32();
 
         for elem in &mut self.instances {
             elem.time += dt;
@@ -62,7 +62,7 @@ impl ParticleStorage {
     }
 }
 
-impl particle_shader::ParticleShaderDraw for ParticleStorage {
+impl particle_shader::ParticleShaderDraw for PlasmaOrbStorage {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         // mesh data
         let mesh = &self.mesh;
