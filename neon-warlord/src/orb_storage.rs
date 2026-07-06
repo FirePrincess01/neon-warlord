@@ -5,6 +5,7 @@ use forward_renderer::{
     plasma_orb_storage::PlasmaOrbStorage,
 };
 
+#[allow(unused)]
 pub struct OrbStorage {
     particle_storage: ParticleStorage,
     glow_storage: GlowStorage,
@@ -13,6 +14,7 @@ pub struct OrbStorage {
     max_instances: usize,
 }
 
+#[allow(unused)]
 impl OrbStorage {
     pub fn new(
         wgpu_renderer: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,

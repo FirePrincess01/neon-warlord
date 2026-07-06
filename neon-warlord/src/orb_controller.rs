@@ -4,10 +4,12 @@ use std::time::Instant;
 
 use cgmath::InnerSpace;
 
-
+#[allow(unused)]
 type Vec2 = cgmath::Vector2<f32>;
+#[allow(unused)]
 type Vec3 = cgmath::Vector3<f32>;
 
+#[allow(unused)]
 #[derive(Clone, Copy)]
 pub enum OrbAction {
     SetPosition(Vec3),
@@ -15,6 +17,7 @@ pub enum OrbAction {
     SetScale(f32),
 }
 
+#[allow(unused)]
 #[derive(PartialEq)]
 enum State {
     Idle,
@@ -26,6 +29,7 @@ enum State {
     Explode,
 }
 
+#[allow(unused)]
 pub struct OrbController {
     position: Vec3,
     target_position: Vec3,
@@ -40,6 +44,7 @@ pub struct OrbController {
 
 }
 
+#[allow(unused)]
 impl OrbController {
     pub fn new(position: Vec3, index: usize) -> Self {
         let target_position = position;
@@ -118,6 +123,7 @@ impl OrbController {
     }
 }
 
+#[allow(unused)]
 trait OrbInterface {
     fn set_position(&mut self, pos: Vec3);
     fn start_charge(&mut self);
