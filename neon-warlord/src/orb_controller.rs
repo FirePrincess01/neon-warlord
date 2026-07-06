@@ -143,7 +143,7 @@ impl OrbInterface for OrbController {
     }
 
     fn get_charge(&self) -> f32 {
-        return self.charge;
+        self.charge
     }
 
     fn move_to(&mut self, target_position: Vec3) {
