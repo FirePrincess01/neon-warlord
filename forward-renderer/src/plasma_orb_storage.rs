@@ -56,7 +56,7 @@ impl PlasmaOrbStorage {
         let dt = dt.as_secs_f32();
 
         for elem in &mut self.instances {
-            elem.time = elem.time + dt;
+            elem.time += dt;
         }
 
         self.mesh
