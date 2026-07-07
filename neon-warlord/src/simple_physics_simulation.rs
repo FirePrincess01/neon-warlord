@@ -57,7 +57,7 @@ impl SimplePhysicsSimulation {
 
         let mut instances = Vec::new();
         instances.reserve(nr_objects);
-        for i in 0..nr_objects {
+        for _i in 0..nr_objects {
             instances.push(instance);
         }
 
