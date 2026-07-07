@@ -311,7 +311,8 @@ impl ForwardRenderer {
     }
 
     fn side_view_point(camera: &mut Camera) {
-        let position = cgmath::Point3::new(0.0, 5.0, 2.0);
+        // let position = cgmath::Point3::new(0.0, 5.0, 2.0);
+        let position = cgmath::Point3::new(0.0, -15.0, 10.0);
         let yaw = cgmath::Deg(-90.0).into();
         let pitch = cgmath::Deg(80.0).into();
 

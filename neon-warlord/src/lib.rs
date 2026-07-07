@@ -12,7 +12,9 @@ mod heightmap_generator;
 mod orb_controller;
 mod orb_storage;
 mod settings;
+mod simple_physics_simulation;
 mod sun_storage;
+mod verlet_physics;
 mod worker;
 mod worker_instance;
 
@@ -33,7 +35,8 @@ use winit::event::{ElementState, WindowEvent};
 
 use crate::{
     ant_controller::AntPosition, ant_generator::AntGenerator, ant_storage::AntStorage,
-    camera_controller::CameraController, debug_overlay::DebugOverlay, sun_storage::SunStorage,
+    camera_controller::CameraController, debug_overlay::DebugOverlay,
+    simple_physics_simulation::SimplePhysicsSimulation, sun_storage::SunStorage,
     worker::MainMessage, worker_instance::WorkerInstance,
 };
 
@@ -96,6 +99,9 @@ struct NeonWarlord {
 
     // Orbs
     // orbs: OrbStorage,
+
+    // Simple physics simulation
+    simple_physics_simulation: SimplePhysicsSimulation,
 
     // Worker
     worker: WorkerInstance,
@@ -193,6 +199,9 @@ impl NeonWarlord {
         let plasma_orbs = PlasmaOrbStorage::new(renderer_interface, 1);
         let glows = GlowStorage::new(renderer_interface, 1);
 
+        // Simple physics simulation
+        let simple_physics_simulation = SimplePhysicsSimulation::new(renderer_interface);
+
         // Worker
         let worker = WorkerInstance::new();
 
@@ -228,6 +237,7 @@ impl NeonWarlord {
             worker,
             ups: 0,
             ant_positions,
+            simple_physics_simulation,
         }
     }
 }
@@ -421,9 +431,11 @@ impl DefaultApplicationInterface for NeonWarlord {
         watch_index += 1;
         self.watch_fps.start(watch_index, "Update Particles");
         {
-            self.particles.update(renderer_interface, dt);
-            self.plasma_orbs.update(renderer_interface, dt);
-            self.glows.update(renderer_interface, dt);
+            // self.particles.update(renderer_interface, dt);
+            // self.plasma_orbs.update(renderer_interface, dt);
+            // self.glows.update(renderer_interface, dt);
+
+            self.simple_physics_simulation.update(renderer_interface);
         }
         self.watch_fps.stop(watch_index);
 
@@ -608,7 +620,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                     &self.performance_monitor_ups,
                     &self.debug_overlay,
                 ],
-                &[&self.sun],
+                &[&self.sun, &self.simple_physics_simulation],
                 &[&self.particles],
                 &[&self.plasma_orbs],
                 &[&self.glows],
