@@ -17,7 +17,7 @@ pub struct VerletObject {
 
 impl VerletObject {
     pub fn new(position_current: Vec2, radius: f32) -> Self {
-        let position_old = position_current.clone();
+        let position_old = position_current;
         let acceleration = Vec2::zero();
 
         Self { position_current, position_old, acceleration, radius }

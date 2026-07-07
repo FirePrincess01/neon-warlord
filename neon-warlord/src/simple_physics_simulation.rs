@@ -28,12 +28,10 @@ impl SimplePhysicsSimulation {
         let nr_objects = 1000;
         let radius = 0.1;
 
-        let mut verlet_objects = Vec::new();
-        verlet_objects.reserve(nr_objects);
+        let mut verlet_objects = Vec::with_capacity(nr_objects);
 
-
-        let mut links = Vec::new();
         let nr_links = 40;
+        let mut links = Vec::with_capacity(nr_links);
         for i in 0..nr_links {
             verlet_objects.push(VerletObject::new(Vector2::new(i as f32 *0.2  - 5.0,   15.0 - i as f32 *0.2 ), radius));
 
@@ -43,10 +41,10 @@ impl SimplePhysicsSimulation {
             }
         }
 
-        let mut fixed = Vec::new();
-        fixed.push(verlet_physics::fixed::Fixed::new(0, 
-            Vector2::new(- 5.0,   15.0 )
-        ));
+        let fixed = vec![
+            verlet_physics::fixed::Fixed::new(0, 
+                Vector2::new(- 5.0,   15.0 )
+        )];
 
         let circle = geometry::Circle::new_color_fade(radius, 32, [0.0, 0.4, 0.4], [0.4, 0.0, 0.4]);
 
@@ -55,8 +53,7 @@ impl SimplePhysicsSimulation {
                 rotation: cgmath::Quaternion::from_angle_x(cgmath::Deg(90.0)),
             };
 
-        let mut instances = Vec::new();
-        instances.reserve(nr_objects);
+        let mut instances = Vec::with_capacity(nr_objects);
         for _i in 0..nr_objects {
             instances.push(instance);
         }
@@ -87,12 +84,11 @@ impl SimplePhysicsSimulation {
         let dt = 1.0 / 60.0;
         self.ticks += 1;
 
-        if self.verlet_objects.len() < self.instances.len() {
-            if self.ticks % 8 == 0 {
+        if self.verlet_objects.len() < self.instances.len()
+            && self.ticks.is_multiple_of(8) {
                 self.verlet_objects.push(VerletObject::new(
                         Vector2::new(0.0,  15.0), self.radius));
                 }
-            }
         
         self.solver.update(&mut self.verlet_objects, &self.links, &self.fixed, dt);
 
