@@ -1,8 +1,8 @@
 //! Solves collision for verlet physics
 
-use cgmath::{InnerSpace, MetricSpace};
+use cgmath::InnerSpace;
 
-use crate::verlet_physics::VerletObject;
+use crate::verlet_physics::{self, VerletObject};
 
 type Vec2 = cgmath::Vector2<f32>;
 
@@ -15,11 +15,27 @@ impl Solver {
         Self {  }
     }
     
-    pub fn update(&mut self, verlet_objects: &mut [VerletObject], dt: f32) {
-        Self::apply_gravity(verlet_objects);
-        Self::apply_constraint(verlet_objects);
-        Self::solve_collisions(verlet_objects);
-        Self::update_positions(verlet_objects, dt);
+    pub fn update(&mut self, 
+        verlet_objects: &mut [VerletObject], 
+        links: &[verlet_physics::link::Link], 
+        fixed: &[verlet_physics::fixed::Fixed],
+        dt: f32) {
+
+        let sub_steps = 3;
+        let sub_dt = dt / sub_steps as f32;
+
+        for i in 0.. sub_steps {
+            Self::apply_gravity(verlet_objects);
+            Self::apply_constraint(verlet_objects);
+            for elem in fixed {
+                elem.apply(verlet_objects);
+            }
+            for link in links {
+                link.apply(verlet_objects);
+            }
+            Self::solve_collisions(verlet_objects);
+            Self::update_positions(verlet_objects, sub_dt);
+        }
     }
 
     fn update_positions(verlet_objects: &mut [VerletObject], dt: f32) {
@@ -42,21 +58,11 @@ impl Solver {
 
         for elem in verlet_objects {
             let to_obj = elem.position() - POSITION;
-            // let dist = elem.position().distance(POSITION);
-            let dist = POSITION.distance(elem.position());
+            let dist = to_obj.magnitude();
 
-            // println!("dist {dist}");
-
-            if dist > RADIUS - 0.5 {
+            if dist > RADIUS - elem.radius(){
                 let n = to_obj / dist;
-                let new_pos = POSITION + n * (RADIUS - 0.5);
-                // println!("POSITION {} {}",POSITION.x, POSITION.y);
-                // println!("elem.position {} {}",elem.position().x, elem.position().y);
-                // println!("n {} {}",n.x, n.y);
-                // println!("n {} {}",n.x, n.y);
-                // println!("dist {dist}");
-                // println!("dist {dist}");
-                // println!("new_pos {} {}",new_pos.x, new_pos.y);
+                let new_pos = POSITION + n * (RADIUS - elem.radius());
 
                 elem.set_position(new_pos);
 
@@ -77,9 +83,10 @@ impl Solver {
 
                 let collision_axis = object_1.position() - object_2.position();
                 let dist = collision_axis.magnitude();
-                if dist < 1.0 {
+                let min_dist =  object_1.radius + object_2.radius;
+                if dist < min_dist {
                     let n = collision_axis / dist;
-                    let delta = 1.0 - dist;
+                    let delta = min_dist - dist;
                     object_1.set_position(object_1.position() + 0.5 * delta * n);
                     object_2.set_position(object_2.position() - 0.5 * delta * n);
                 }
