@@ -1,8 +1,8 @@
 //! Physics simulation using verlet
 
-pub mod solver;
-pub mod link;
 pub mod fixed;
+pub mod link;
+pub mod solver;
 
 use cgmath::Zero;
 
@@ -20,7 +20,12 @@ impl VerletObject {
         let position_old = position_current;
         let acceleration = Vec2::zero();
 
-        Self { position_current, position_old, acceleration, radius }
+        Self {
+            position_current,
+            position_old,
+            acceleration,
+            radius,
+        }
     }
 
     pub fn update_position(&mut self, dt: f32) {

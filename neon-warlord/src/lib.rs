@@ -12,11 +12,11 @@ mod heightmap_generator;
 mod orb_controller;
 mod orb_storage;
 mod settings;
+mod simple_physics_simulation;
 mod sun_storage;
+mod verlet_physics;
 mod worker;
 mod worker_instance;
-mod verlet_physics;
-mod simple_physics_simulation;
 
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,
@@ -34,7 +34,10 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_controller::AntPosition, ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController, debug_overlay::DebugOverlay, simple_physics_simulation::SimplePhysicsSimulation, sun_storage::SunStorage, worker::MainMessage, worker_instance::WorkerInstance,
+    ant_controller::AntPosition, ant_generator::AntGenerator, ant_storage::AntStorage,
+    camera_controller::CameraController, debug_overlay::DebugOverlay,
+    simple_physics_simulation::SimplePhysicsSimulation, sun_storage::SunStorage,
+    worker::MainMessage, worker_instance::WorkerInstance,
 };
 
 const WATCH_POINTS_SIZE: usize = 10;
@@ -234,7 +237,7 @@ impl NeonWarlord {
             worker,
             ups: 0,
             ant_positions,
-            simple_physics_simulation
+            simple_physics_simulation,
         }
     }
 }
@@ -431,7 +434,7 @@ impl DefaultApplicationInterface for NeonWarlord {
             // self.particles.update(renderer_interface, dt);
             // self.plasma_orbs.update(renderer_interface, dt);
             // self.glows.update(renderer_interface, dt);
-        
+
             self.simple_physics_simulation.update(renderer_interface);
         }
         self.watch_fps.stop(watch_index);

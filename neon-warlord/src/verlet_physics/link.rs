@@ -12,7 +12,11 @@ pub struct Link {
 
 impl Link {
     pub fn new(node_id_1: usize, node_id_2: usize, target_distance: f32) -> Self {
-        Self { node_id_1, node_id_2, target_distance }
+        Self {
+            node_id_1,
+            node_id_2,
+            target_distance,
+        }
     }
 
     pub fn apply(&self, verlet_objects: &mut [VerletObject]) {

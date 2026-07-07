@@ -6,25 +6,24 @@ use crate::verlet_physics::{self, VerletObject};
 
 type Vec2 = cgmath::Vector2<f32>;
 
-pub struct Solver {
-    
-}
+pub struct Solver {}
 
 impl Solver {
     pub fn new() -> Self {
-        Self {  }
+        Self {}
     }
-    
-    pub fn update(&mut self, 
-        verlet_objects: &mut [VerletObject], 
-        links: &[verlet_physics::link::Link], 
-        fixed: &[verlet_physics::fixed::Fixed],
-        dt: f32) {
 
+    pub fn update(
+        &mut self,
+        verlet_objects: &mut [VerletObject],
+        links: &[verlet_physics::link::Link],
+        fixed: &[verlet_physics::fixed::Fixed],
+        dt: f32,
+    ) {
         let sub_steps = 3;
         let sub_dt = dt / sub_steps as f32;
 
-        for _i in 0.. sub_steps {
+        for _i in 0..sub_steps {
             Self::apply_gravity(verlet_objects);
             Self::apply_constraint(verlet_objects);
             for elem in fixed {
@@ -60,12 +59,11 @@ impl Solver {
             let to_obj = elem.position() - POSITION;
             let dist = to_obj.magnitude();
 
-            if dist > RADIUS - elem.radius(){
+            if dist > RADIUS - elem.radius() {
                 let n = to_obj / dist;
                 let new_pos = POSITION + n * (RADIUS - elem.radius());
 
                 elem.set_position(new_pos);
-
             }
         }
     }
@@ -74,16 +72,15 @@ impl Solver {
         let object_count = verlet_objects.len();
 
         for i in 0..object_count {
-            for k in i+1..object_count {
+            for k in i + 1..object_count {
                 let (left, right) = verlet_objects.split_at_mut(k);
 
                 let object_1 = &mut left[i];
                 let object_2 = &mut right[0];
 
-
                 let collision_axis = object_1.position() - object_2.position();
                 let dist = collision_axis.magnitude();
-                let min_dist =  object_1.radius + object_2.radius;
+                let min_dist = object_1.radius + object_2.radius;
                 if dist < min_dist {
                     let n = collision_axis / dist;
                     let delta = min_dist - dist;
