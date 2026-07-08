@@ -17,6 +17,7 @@ impl Solver {
         &mut self,
         verlet_objects: &mut [VerletObject],
         links: &[verlet_physics::link::Link],
+        fixed_links: &[verlet_physics::fixed_link::FixedLink],
         fixed: &[verlet_physics::fixed::Fixed],
         dt: f32,
     ) {
@@ -30,6 +31,9 @@ impl Solver {
                 elem.apply(verlet_objects);
             }
             for link in links {
+                link.apply(verlet_objects);
+            }
+            for link in fixed_links {
                 link.apply(verlet_objects);
             }
             Self::solve_collisions(verlet_objects);

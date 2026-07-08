@@ -12,6 +12,7 @@ use crate::verlet_physics::{self, VerletObject};
 pub struct SimplePhysicsSimulation {
     verlet_objects: Vec<VerletObject>,
     links: Vec<verlet_physics::link::Link>,
+    fixed_links: Vec<verlet_physics::fixed_link::FixedLink>,
     fixed: Vec<verlet_physics::fixed::Fixed>,
     solver: verlet_physics::solver::Solver,
 
@@ -43,10 +44,26 @@ impl SimplePhysicsSimulation {
             }
         }
 
-        let fixed = vec![verlet_physics::fixed::Fixed::new(
-            0,
-            Vector2::new(-5.0, 15.0),
-        )];
+        let nr_fixed_links = 8;
+        let mut fixed_links = Vec::with_capacity(nr_fixed_links);
+        for i in 0..nr_fixed_links {
+            verlet_objects.push(VerletObject::new(
+                Vector2::new(i as f32 * 0.2 - 6.0, 15.0 - i as f32 * 0.2),
+                radius,
+            ));
+
+            if i < nr_fixed_links - 1 {
+                fixed_links.push(verlet_physics::fixed_link::FixedLink::new(
+                    nr_links + i, 
+                    nr_links + i + 1, 
+                    Vector2::new(0.3, 0.3 - i as f32 * 0.1)));
+            }
+        }
+
+        let fixed = vec![
+            verlet_physics::fixed::Fixed::new(0, Vector2::new(-5.0, 15.0)),
+            verlet_physics::fixed::Fixed::new(nr_links, Vector2::new(-6.0, 15.0))
+        ];
 
         let circle = geometry::Circle::new_color_fade(radius, 32, [0.0, 0.4, 0.4], [0.4, 0.0, 0.4]);
 
@@ -73,6 +90,7 @@ impl SimplePhysicsSimulation {
         Self {
             verlet_objects,
             links,
+            fixed_links,
             fixed,
             solver,
             mesh,
@@ -92,7 +110,7 @@ impl SimplePhysicsSimulation {
         }
 
         self.solver
-            .update(&mut self.verlet_objects, &self.links, &self.fixed, dt);
+            .update(&mut self.verlet_objects, &self.links, &self.fixed_links, &self.fixed, dt);
 
         for i in 0..self.verlet_objects.len() {
             let instance = &mut self.instances[i];

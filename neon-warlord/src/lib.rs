@@ -15,6 +15,7 @@ mod settings;
 mod simple_physics_simulation;
 mod sun_storage;
 mod verlet_physics;
+// mod procedural_tree;
 mod worker;
 mod worker_instance;
 
