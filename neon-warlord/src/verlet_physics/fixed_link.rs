@@ -1,15 +1,15 @@
 //! A link between two objects with fixed angle
 
-use crate::verlet_physics::{Vec2, VerletObject};
+use crate::verlet_physics::{Vec3, VerletObject};
 
 pub struct FixedLink {
     node_id_1: usize,
     node_id_2: usize,
-    target_position: Vec2,
+    target_position: Vec3,
 }
 
 impl FixedLink {
-    pub fn new(node_id_1: usize, node_id_2: usize, target_position: Vec2) -> Self {
+    pub fn new(node_id_2: usize, node_id_1: usize, target_position: Vec3) -> Self {
         Self {
             node_id_1,
             node_id_2,
@@ -35,7 +35,7 @@ impl FixedLink {
 
         let axis = self.target_position - (object_1.position() - object_2.position());
 
-        let elasticity = 0.01;
+        let elasticity = 0.9;
 
         object_1.set_position(object_1.position() + 0.5 * axis * elasticity);
         object_2.set_position(object_2.position() - 0.5 * axis * elasticity);

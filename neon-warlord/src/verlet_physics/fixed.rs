@@ -1,14 +1,14 @@
 //! A link between two objects
 
-use crate::verlet_physics::{Vec2, VerletObject};
+use crate::verlet_physics::{Vec3, VerletObject};
 
 pub struct Fixed {
     node_id_1: usize,
-    position: Vec2,
+    position: Vec3,
 }
 
 impl Fixed {
-    pub fn new(node_id_1: usize, position: Vec2) -> Self {
+    pub fn new(node_id_1: usize, position: Vec3) -> Self {
         Self {
             node_id_1,
             position,

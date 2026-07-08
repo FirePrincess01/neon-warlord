@@ -2,9 +2,7 @@
 
 use cgmath::InnerSpace;
 
-use crate::verlet_physics::{self, VerletObject};
-
-type Vec2 = cgmath::Vector2<f32>;
+use crate::verlet_physics::{self, Vec3, VerletObject};
 
 pub struct Solver {}
 
@@ -36,7 +34,7 @@ impl Solver {
             for link in fixed_links {
                 link.apply(verlet_objects);
             }
-            Self::solve_collisions(verlet_objects);
+            // Self::solve_collisions(verlet_objects);
             Self::update_positions(verlet_objects, sub_dt);
         }
     }
@@ -48,7 +46,7 @@ impl Solver {
     }
 
     fn apply_gravity(verlet_objects: &mut [VerletObject]) {
-        const GRAVITY: Vec2 = Vec2::new(0.0, -10.0);
+        const GRAVITY: Vec3 = Vec3::new(0.0, 0.0, -10.0);
 
         for elem in verlet_objects {
             elem.accelerate(GRAVITY);
@@ -56,7 +54,7 @@ impl Solver {
     }
 
     fn apply_constraint(verlet_objects: &mut [VerletObject]) {
-        const POSITION: Vec2 = Vec2::new(-3.0, 10.0);
+        const POSITION: Vec3 = Vec3::new(-3.0, 0.0, 10.0);
         const RADIUS: f32 = 10.0;
 
         for elem in verlet_objects {

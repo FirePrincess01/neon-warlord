@@ -33,6 +33,7 @@ fastrand = "2.0"
 gltf = "1.4.1"
 noise = "0.9.0"
 colorous = "1.0.16"
+rand = "0.10.2"
 
 [dependencies.image]
 version = "0.25"

@@ -1,9 +1,24 @@
 //! A node from a tree
 
-type Vec3 = cgmath::Vector3<f32>;
+use crate::procedural_tree::Vec3;
 
-struct Node {
+pub struct Node {
     
-    children: [Vec3; 8],
-    nr_children: usize
+    pub children_base_index: usize,
+    pub nr_children: usize,
+    pub position: Vec3,
+}
+
+impl Node {
+    pub fn new(position: Vec3) -> Self {
+        let children_base_index = 0;
+        let nr_children = 0;
+        // let position = Vec3::new(0.0, 0.0, 0.0);
+    
+        Self{
+            children_base_index,
+            nr_children,
+            position,
+        }
+    }
 }
