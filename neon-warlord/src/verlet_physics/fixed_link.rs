@@ -35,7 +35,9 @@ impl FixedLink {
 
         let axis = self.target_position - (object_1.position() - object_2.position());
 
-        let elasticity = 0.9;
+        let elasticity = 0.7;
+        // let elasticity = 1.0;
+        // let elasticity = 0.1;
 
         object_1.set_position(object_1.position() + 0.5 * axis * elasticity);
         object_2.set_position(object_2.position() - 0.5 * axis * elasticity);

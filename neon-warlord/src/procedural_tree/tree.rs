@@ -1,8 +1,11 @@
 //! A tree with nodes and leaves
 
+use std::ops::Add;
+
 use crate::procedural_tree::node::Node;
 use cgmath::{InnerSpace, Vector3};
 use rand::{RngExt, SeedableRng, rngs::StdRng};
+use cgmath::{Quaternion, Rotation, Rotation3};
 
 type Vec3 = cgmath::Vector3<f32>;
 
@@ -11,6 +14,9 @@ pub struct Tree {
 
     root: usize,
     depth: usize,
+
+    nr_nodes: usize,
+    nr_leaves: usize,
 }
 
 impl Tree {
@@ -20,57 +26,126 @@ impl Tree {
 
         let mut rng = StdRng::seed_from_u64(seed);
         
-
-        let root_node = Node::new(Vec3::new(-2.0, 0.0, 3.0));
+        let pos = Vec3::new(-2.0, 0.0, 3.0);
+        let root_node = Node::new(pos);
         nodes.push(root_node);
 
-        Self::add_children(root, &mut nodes, depth-1, depth, &mut rng);
+        let tree_details = Self::add_children(
+            root, 
+            pos,
+            &mut nodes, 
+            depth-1, 
+            depth, 
+            &mut rng
+        );
     
         Self {
             nodes,
             root,
             depth,
+
+            nr_nodes: tree_details.nr_nodes,
+            nr_leaves: tree_details.nr_leaves,
         }
     }
 
-    fn add_children(node: usize, nodes: &mut Vec<Node>, depth: usize, max_depth: usize, rng: &mut StdRng) {
+    fn add_children(
+        node_index: usize, 
+        absolute_position: Vec3,
+        nodes: &mut Vec<Node>, 
+        depth: usize, 
+        max_depth: usize, 
+        rng: &mut StdRng
+    ) -> TreeDetails {
+
+        let mut res = if depth == 0 {
+            TreeDetails {
+                nr_nodes: 0,
+                nr_leaves: 1,
+            }
+        }
+        else {
+            TreeDetails {
+                nr_nodes: 1,
+                nr_leaves: 0,
+            }
+        };
+
+        if depth == 0 {
+            return res;
+        }
 
         let nr_children: usize = if depth == 1 {
             rng.random_range(3..=5)
+            // rng.random_range(1..=1)
         }
         else {
             rng.random_range(1..=(max_depth - depth).clamp(1, 3))
+            // rng.random_range(1..=1)
+
         };
         
         let index = nodes.len();
-        let node = &mut nodes[node];
+        let node = &mut nodes[node_index];
+        let node_position = node.position;
         node.children_base_index = index;
         node.nr_children = nr_children;
 
         for i in 0..nr_children {
             let x = rng.random_range(-1.0..=1.0);
             let y = rng.random_range(-1.0..=1.0);
-            let z = rng.random_range(0.5..=1.0);
 
-            let pos = Vec3::new(x, y, z).normalize();
+            let height = (depth-1) as f32  * 0.3;
+            // let z = height;
+            let z = rng.random_range(0.2..=1.0);
 
-            nodes.push(Node::new(Vec3::new(pos.x, pos.y, pos.z)));
+            let pos = (Vec3::new(x, y, z));
+
+            let from = Vector3::new(0.0, 0.0, 1.0);
+            let to = node_position.normalize();
+            let rotation = Quaternion::between_vectors(from, to);
+            let rotated = rotation.rotate_vector(pos);
+
+            let mut pos2 = rotated;
+            pos2.z += height;
+
+            // let pos = (Vec3::new(x, y, z)).normalize();
+
+            nodes.push(Node::new(Vec3::new(pos2.x, pos2.y, pos2.z)));
         }
 
         for i in index..index+nr_children {
-            if depth > 0 {
-                Self::add_children(i, nodes, depth-1, max_depth, rng);
-            }
+            let pos = nodes[i].position;
+            let res_child = Self::add_children(
+                i, 
+                absolute_position + pos,
+                nodes, 
+                depth-1, 
+                max_depth, 
+                rng
+            );
+            res = res + res_child
         }
+
+        res
     }
 
     pub fn traverse_tree(&self, tree_interface: &mut dyn TreeInterface) {
         let node = &self.nodes[self.root];
-        tree_interface.create_node(self.root, None, &node.position, node.nr_children == 0);
-        Self::traverse(&self, self.root, tree_interface);
+        tree_interface.create_node(
+            self.root, 
+            None, 
+            &node.position, 
+            &node.position, 
+            node.nr_children == 0
+        );
+        Self::traverse(&self, 
+            self.root, 
+            node.position,
+            tree_interface);
     }
 
-    fn traverse(&self, node_index: usize, tree_interface: &mut dyn TreeInterface) {
+    fn traverse(&self, node_index: usize, absolute_position: Vec3, tree_interface: &mut dyn TreeInterface) {
         let node = &self.nodes[node_index];
         let pos_0 = &node.position;
         let index = node.children_base_index;
@@ -79,11 +154,24 @@ impl Tree {
         for i in index..index+nr_children {
             let node = &self.nodes[i];
             let pos_1 = node.position;
-            tree_interface.create_node(i, Some(node_index), &pos_1, node.nr_children == 0);
+            tree_interface.create_node(
+                i, 
+                Some(node_index),
+                &absolute_position,
+                &pos_1,
+                node.nr_children == 0
+            );
         }
 
         for i in index..index+nr_children {
-            Self::traverse(&self, i, tree_interface);
+            let node = &self.nodes[i];
+            let pos_1 = node.position;
+
+            Self::traverse(&self, 
+                i,
+                absolute_position + pos_1,
+                tree_interface
+            );
         }
     }
 
@@ -91,9 +179,39 @@ impl Tree {
         self.nodes.len()
     }
 
+    pub fn nr_leaves(&self) -> usize {
+        self.nr_leaves
+    }
+
+    pub fn nr_nodes(&self) -> usize {
+        self.nr_nodes
+    }
+
 }
 
 
 pub trait TreeInterface {
-    fn create_node(&mut self, node_index: usize, parent_index: Option<usize>,  pos: &Vec3, is_leave: bool);
+    fn create_node(&mut self, 
+        node_index: usize, 
+        parent_index: Option<usize>,  
+        absolute_position: &Vec3, 
+        relative_position: &Vec3, 
+        is_leave: bool
+    );
+}
+
+struct TreeDetails {
+    nr_nodes: usize,
+    nr_leaves: usize,
+}
+
+impl Add for TreeDetails {
+    type Output = TreeDetails;
+
+    fn add(self, other: TreeDetails) -> TreeDetails {
+        TreeDetails {
+            nr_nodes: self.nr_nodes + other.nr_nodes,
+            nr_leaves: self.nr_leaves + other.nr_leaves,
+        }
+    }
 }
