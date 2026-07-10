@@ -148,7 +148,7 @@ impl SimplePhysicsSimulation {
 
 impl VertexColorShaderDraw for SimplePhysicsSimulation {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
-        self.mesh.draw(render_pass);
+        // self.mesh.draw(render_pass);
         self.procedural_tree.draw(render_pass);
     }
 }

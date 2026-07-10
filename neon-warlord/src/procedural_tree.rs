@@ -252,8 +252,13 @@ impl<'a> TreeInterface for CreateLinks<'a> {
             let parent_index = self.index + parent_index;
             self.links_indices.push((parent_index, node_index));
 
-            let stiffness =  1.0 - 0.5 / depth as f32; 
-            let damping = 0.88 + 0.1 / depth as f32;
+            let mut stiffness =  1.0 - 0.5 / depth as f32; 
+            let mut damping = 0.88 + 0.1 / depth as f32;
+
+            if is_leave {
+                stiffness = 0.2;
+                damping = 0.90;
+            }
 
             self.fixed_links.push(FixedLink::new(
                 parent_index, 
@@ -262,12 +267,12 @@ impl<'a> TreeInterface for CreateLinks<'a> {
                 .stiffness(stiffness)
                 .damping(damping)
             );
+        }
 
-            if is_leave {
-                self.leaves_indices.push(node_index);
-            } else {
-                self.nodes_indices.push(node_index);
-            }
+        if is_leave {
+            self.leaves_indices.push(node_index);
+        } else {
+            self.nodes_indices.push(node_index);
         }
 
     }
