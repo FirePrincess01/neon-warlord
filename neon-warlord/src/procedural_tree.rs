@@ -6,10 +6,8 @@ pub mod leaf;
 
 use crate::{procedural_tree::tree::{Tree, TreeInterface}, verlet_physics::{self, VerletObject, fixed_link::FixedLink}};
 use forward_renderer::geometry;
-use rand::rng;
 use wgpu_renderer::{
-    vertex_color_shader::{self, VertexColorShaderDraw},
-    wgpu_renderer::WgpuRendererInterface,
+    vertex_color_shader::{self, VertexColorShaderDraw, vertex_color_shader_draw::VertexColorShaderDrawLines}, wgpu_renderer::WgpuRendererInterface,
 };
 use cgmath::{Rotation3, Zero};
 
@@ -27,14 +25,20 @@ pub struct ProceduralTree {
 
     nodes_instances: Vec<vertex_color_shader::Instance>,
     nodes_mesh: vertex_color_shader::Mesh,
-    leaves_mesh: vertex_color_shader::Mesh,
+
     leaves_instances: Vec<vertex_color_shader::Instance>,
+    leaves_mesh: vertex_color_shader::Mesh,
+
+    links_instances: Vec<vertex_color_shader::Instance>,
+    links_lines: geometry::Lines,
+    links_mesh: vertex_color_shader::Mesh,
 
     index: usize,
     size: usize,
 
     nodes_indices: Vec<usize>,
     leaves_indices: Vec<usize>,
+    links_indices: Vec<(usize, usize)>,
 }
 
 impl ProceduralTree {
@@ -49,14 +53,18 @@ impl ProceduralTree {
         let leaves_color_1 = to_rgb("#0a340c");
         let nodes_color_0 = to_rgb("#836e37");
         let nodes_color_1 = to_rgb("#2b1f03");
+        let links_color_0 = to_rgb("#98ae99");
+        let links_color_1 = to_rgb("#2d2e27");
 
-        let tree = Tree::new(7, rand::random());
+        let tree = Tree::new(7,  fastrand::u64(..));
         let nr_nodes = tree.nr_nodes();
         let nr_leaves = tree.nr_leaves();
+        let nr_links = tree.nr_links();
 
         let radius = 0.1;
         let nodes_circle = geometry::Circle::new_color_fade(radius, 32, nodes_color_0, nodes_color_1);
         let leaves_circle = geometry::Circle::new_color_fade(radius, 32, leaves_color_0, leaves_color_1);
+        let links_lines = geometry::Lines::new_color_fade(nr_links, links_color_0, links_color_1);
 
         let instance = vertex_color_shader::Instance {
             position: cgmath::Vector3::new(0.0, 0.0, 0.0),
@@ -72,6 +80,9 @@ impl ProceduralTree {
         for _i in 0..nr_nodes {
             nodes_instances.push(instance);
         }
+
+        let mut links_instances = Vec::with_capacity(1);
+        links_instances.push(vertex_color_shader::Instance::zero());
 
         let nodes_mesh = vertex_color_shader::Mesh::new(
             wgpu_renderer.device(),
@@ -89,6 +100,14 @@ impl ProceduralTree {
             &leaves_instances,
         );
 
+            let links_mesh = vertex_color_shader::Mesh::new(
+            wgpu_renderer.device(),
+            &links_lines.vertices,
+            &links_lines.colors,
+            &links_lines.indices,
+            &links_instances,
+        );
+
         // create verlet objects
         let size = tree.size();
         let index = verlet_objects.len();
@@ -98,12 +117,14 @@ impl ProceduralTree {
 
         let mut nodes_indices = Vec::new();
         let mut leaves_indices = Vec::new();
+        let mut links_indices = Vec::new();
         let mut create_links = CreateLinks {
             verlet_objects,
             fixed_links,
             index,
             nodes_indices: &mut nodes_indices,
             leaves_indices: &mut leaves_indices,
+            links_indices: &mut links_indices,
         };
         tree.traverse_tree(&mut create_links);
 
@@ -118,6 +139,10 @@ impl ProceduralTree {
 
             nodes_indices,
             leaves_indices,
+            links_lines,
+            links_mesh,
+            links_indices,
+            links_instances,
         }
     }
 
@@ -134,9 +159,7 @@ impl ProceduralTree {
             let instance = &mut self.nodes_instances[i];
             let verlet_object = &verlet_objects[*index];
 
-            instance.position.x = verlet_object.position().x;
-            instance.position.y = verlet_object.position().y;
-            instance.position.z = verlet_object.position().z;
+            instance.position = verlet_object.position();
         }
 
         // update leaves
@@ -144,9 +167,19 @@ impl ProceduralTree {
             let instance = &mut self.leaves_instances[i];
             let verlet_object = &verlet_objects[*index];
 
-            instance.position.x = verlet_object.position().x;
-            instance.position.y = verlet_object.position().y;
-            instance.position.z = verlet_object.position().z;
+            instance.position = verlet_object.position();
+        }
+
+        // update links
+        for (i, (index_0, index_1)) in self.links_indices.iter().enumerate() {
+            let verlet_object_0 = &verlet_objects[*index_0];
+            let verlet_object_1 = &verlet_objects[*index_1];
+
+            self.links_lines.set_line_position(
+                i, 
+                verlet_object_0.position(), 
+                verlet_object_1.position()
+            );
         }
 
         // copy data to device
@@ -155,6 +188,11 @@ impl ProceduralTree {
 
         self.leaves_mesh
             .update_instance_buffer(wgpu_renderer.queue(), &self.leaves_instances);
+
+        self.links_mesh
+            .update_vertex_buffer(wgpu_renderer.queue(), &self.links_lines.vertices);
+        self.links_mesh
+            .update_instance_buffer(wgpu_renderer.queue(), &self.links_instances);
     }
 }
 
@@ -162,6 +200,12 @@ impl VertexColorShaderDraw for ProceduralTree {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         self.nodes_mesh.draw(render_pass);
         self.leaves_mesh.draw(render_pass);
+    }
+}
+
+impl VertexColorShaderDrawLines for ProceduralTree {
+    fn draw_lines<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
+        self.links_mesh.draw(render_pass);
     }
 }
 
@@ -187,6 +231,7 @@ struct CreateLinks<'a> {
 
     pub nodes_indices: &'a mut Vec<usize>,
     pub leaves_indices: &'a mut Vec<usize>,
+    pub links_indices: &'a mut Vec<(usize, usize)>,
 }
 
 impl<'a> TreeInterface for CreateLinks<'a> {
@@ -195,7 +240,8 @@ impl<'a> TreeInterface for CreateLinks<'a> {
         parent_index: Option<usize>,  
         absolute_position: &Vec3, 
         relative_position: &Vec3, 
-        is_leave: bool
+        depth: usize,
+        is_leave: bool,
     ) {
         let node_index = self.index + node_index;
         // println!("node_index {node_index}, is_leave {is_leave}");
@@ -204,7 +250,18 @@ impl<'a> TreeInterface for CreateLinks<'a> {
 
         if let Some(parent_index) = parent_index {
             let parent_index = self.index + parent_index;
-            self.fixed_links.push(FixedLink::new(parent_index, node_index, *relative_position));
+            self.links_indices.push((parent_index, node_index));
+
+            let stiffness =  1.0 - 0.5 / depth as f32; 
+            let damping = 0.88 + 0.1 / depth as f32;
+
+            self.fixed_links.push(FixedLink::new(
+                parent_index, 
+                node_index, 
+                *relative_position)
+                .stiffness(stiffness)
+                .damping(damping)
+            );
 
             if is_leave {
                 self.leaves_indices.push(node_index);

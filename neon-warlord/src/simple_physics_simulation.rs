@@ -3,8 +3,7 @@
 use cgmath::{Rotation3, Vector2};
 use forward_renderer::geometry;
 use wgpu_renderer::{
-    vertex_color_shader::{self, VertexColorShaderDraw},
-    wgpu_renderer::WgpuRendererInterface,
+    vertex_color_shader::{self, VertexColorShaderDraw, vertex_color_shader_draw::VertexColorShaderDrawLines}, wgpu_renderer::WgpuRendererInterface,
 };
 
 use crate::{procedural_tree::{self, ProceduralTree}, verlet_physics::{self, VerletObject}};
@@ -151,5 +150,11 @@ impl VertexColorShaderDraw for SimplePhysicsSimulation {
     fn draw<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
         self.mesh.draw(render_pass);
         self.procedural_tree.draw(render_pass);
+    }
+}
+
+impl VertexColorShaderDrawLines for SimplePhysicsSimulation {
+    fn draw_lines<'a>(&'a self, render_pass: &mut wgpu::RenderPass<'a>) {
+        self.procedural_tree.draw_lines(render_pass);
     }
 }

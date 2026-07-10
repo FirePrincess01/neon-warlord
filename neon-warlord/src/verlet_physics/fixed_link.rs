@@ -5,15 +5,39 @@ use crate::verlet_physics::{Vec3, VerletObject};
 pub struct FixedLink {
     node_id_1: usize,
     node_id_2: usize,
-    target_position: Vec3,
+    target_vector: Vec3,
+    stiffness: f32,
+    damping: f32,
 }
 
 impl FixedLink {
-    pub fn new(node_id_2: usize, node_id_1: usize, target_position: Vec3) -> Self {
+    pub fn new(node_id_2: usize, node_id_1: usize, target_vector: Vec3) -> Self {
         Self {
             node_id_1,
             node_id_2,
-            target_position,
+            target_vector,
+            stiffness: 1.0,
+            damping: 1.0,
+        }
+    }
+
+    pub fn stiffness(self, val: f32) -> Self {
+        Self {
+            node_id_1: self.node_id_1,
+            node_id_2: self.node_id_2,
+            target_vector: self.target_vector,
+            stiffness: val,
+            damping: self.damping,
+        }
+    }
+
+    pub fn damping(self, val: f32) -> Self {
+        Self {
+            node_id_1: self.node_id_1,
+            node_id_2: self.node_id_2,
+            target_vector: self.target_vector,
+            stiffness: self.stiffness,
+            damping: val,
         }
     }
 
@@ -33,13 +57,15 @@ impl FixedLink {
             (&mut right[0], &mut left[self.node_id_2])
         };
 
-        let axis = self.target_position - (object_1.position() - object_2.position());
+        let axis = self.target_vector - (object_1.position() - object_2.position());
 
-        let elasticity = 0.7;
-        // let elasticity = 1.0;
-        // let elasticity = 0.1;
+        let stiffness = 2500.0 * self.stiffness;
+        let damping = self.damping;
+        
+        object_1.accelerate(0.5 * axis * stiffness);
+        object_2.accelerate( - 0.5 * axis * stiffness);    
 
-        object_1.set_position(object_1.position() + 0.5 * axis * elasticity);
-        object_2.set_position(object_2.position() - 0.5 * axis * elasticity);
+        object_1.damp(damping);
+        object_2.damp(damping);
     }
 }

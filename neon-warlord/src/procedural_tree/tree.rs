@@ -4,7 +4,7 @@ use std::ops::Add;
 
 use crate::procedural_tree::node::Node;
 use cgmath::{InnerSpace, Vector3};
-use rand::{RngExt, SeedableRng, rngs::StdRng};
+use fastrand::Rng;
 use cgmath::{Quaternion, Rotation, Rotation3};
 
 type Vec3 = cgmath::Vector3<f32>;
@@ -24,7 +24,7 @@ impl Tree {
         let mut nodes = Vec::new();
         let root = 0;
 
-        let mut rng = StdRng::seed_from_u64(seed);
+        let mut rng = Rng::with_seed(seed);
         
         let pos = Vec3::new(-2.0, 0.0, 3.0);
         let root_node = Node::new(pos);
@@ -55,7 +55,7 @@ impl Tree {
         nodes: &mut Vec<Node>, 
         depth: usize, 
         max_depth: usize, 
-        rng: &mut StdRng
+        rng: &mut Rng
     ) -> TreeDetails {
 
         let mut res = if depth == 0 {
@@ -76,11 +76,11 @@ impl Tree {
         }
 
         let nr_children: usize = if depth == 1 {
-            rng.random_range(3..=5)
+            rng.usize(3..=5)
             // rng.random_range(1..=1)
         }
         else {
-            rng.random_range(1..=(max_depth - depth).clamp(1, 3))
+            rng.usize(1..=(max_depth - depth).clamp(1, 3))
             // rng.random_range(1..=1)
 
         };
@@ -92,12 +92,12 @@ impl Tree {
         node.nr_children = nr_children;
 
         for i in 0..nr_children {
-            let x = rng.random_range(-1.0..=1.0);
-            let y = rng.random_range(-1.0..=1.0);
+            let x = rng.f32() * 2.0 - 1.0;
+            let y = rng.f32() * 2.0 - 1.0;
+            let z = rng.f32() * 0.8 + 0.2;
 
             let height = (depth-1) as f32  * 0.3;
             // let z = height;
-            let z = rng.random_range(0.2..=1.0);
 
             let pos = (Vec3::new(x, y, z));
 
@@ -107,7 +107,10 @@ impl Tree {
             let rotated = rotation.rotate_vector(pos);
 
             let mut pos2 = rotated;
-            pos2.z += height;
+            pos2.z += height* height;
+            // pos2.z += height;
+
+            pos2 = pos2 / 1.8;
 
             // let pos = (Vec3::new(x, y, z)).normalize();
 
@@ -137,15 +140,22 @@ impl Tree {
             None, 
             &node.position, 
             &node.position, 
+            self.depth,
             node.nr_children == 0
         );
         Self::traverse(&self, 
             self.root, 
             node.position,
+            self.depth,
             tree_interface);
     }
 
-    fn traverse(&self, node_index: usize, absolute_position: Vec3, tree_interface: &mut dyn TreeInterface) {
+    fn traverse(&self, 
+        node_index: usize, 
+        absolute_position: Vec3, 
+        depth: usize,
+        tree_interface: &mut dyn TreeInterface
+    ) {
         let node = &self.nodes[node_index];
         let pos_0 = &node.position;
         let index = node.children_base_index;
@@ -159,6 +169,7 @@ impl Tree {
                 Some(node_index),
                 &absolute_position,
                 &pos_1,
+                depth -1,
                 node.nr_children == 0
             );
         }
@@ -170,6 +181,7 @@ impl Tree {
             Self::traverse(&self, 
                 i,
                 absolute_position + pos_1,
+                depth - 1,
                 tree_interface
             );
         }
@@ -187,6 +199,10 @@ impl Tree {
         self.nr_nodes
     }
 
+    pub fn nr_links(&self) -> usize {
+        self.nr_nodes - 1 + self.nr_leaves
+    }
+
 }
 
 
@@ -196,6 +212,7 @@ pub trait TreeInterface {
         parent_index: Option<usize>,  
         absolute_position: &Vec3, 
         relative_position: &Vec3, 
+        depth: usize,
         is_leave: bool
     );
 }

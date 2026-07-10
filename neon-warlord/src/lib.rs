@@ -622,6 +622,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                     &self.debug_overlay,
                 ],
                 &[&self.sun, &self.simple_physics_simulation],
+                &[&self.simple_physics_simulation],
                 &[&self.particles],
                 &[&self.plasma_orbs],
                 &[&self.glows],

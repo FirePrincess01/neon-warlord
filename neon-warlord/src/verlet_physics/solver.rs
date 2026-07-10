@@ -19,12 +19,12 @@ impl Solver {
         fixed: &[verlet_physics::fixed::Fixed],
         dt: f32,
     ) {
-        let sub_steps = 3;
+        let sub_steps = 1;
         let sub_dt = dt / sub_steps as f32;
 
         for _i in 0..sub_steps {
             Self::apply_gravity(verlet_objects);
-            Self::apply_constraint(verlet_objects);
+            // Self::apply_constraint(verlet_objects);
             for elem in fixed {
                 elem.apply(verlet_objects);
             }

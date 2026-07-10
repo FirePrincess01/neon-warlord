@@ -14,6 +14,8 @@ pub struct VerletObject {
     position_old: Vec3,
     acceleration: Vec3,
     radius: f32,
+
+    // position_delta: Vec3,
 }
 
 impl VerletObject {
@@ -26,6 +28,8 @@ impl VerletObject {
             position_old,
             acceleration,
             radius,
+
+            // position_delta: Vec3::zero(),
         }
     }
 
@@ -35,6 +39,9 @@ impl VerletObject {
     }
 
     pub fn update_position(&mut self, dt: f32) {
+        // self.position_current += self.position_delta;
+        // self.position_delta = Vec3::zero();
+
         let velocity = self.position_current - self.position_old;
         // Save current position
         self.position_old = self.position_current;
@@ -59,4 +66,14 @@ impl VerletObject {
     pub fn radius(&self) -> f32 {
         self.radius
     }
+
+    pub fn damp(&mut self, val: f32) {
+        let velocity = self.position_current - self.position_old;
+        let velocity = velocity * val;
+        self.position_old = self.position_current - velocity;
+    }
+
+    // pub fn add_position_delta(&mut self, position_delta: Vec3) {
+    //     self.position_delta += position_delta;
+    // }
 }
