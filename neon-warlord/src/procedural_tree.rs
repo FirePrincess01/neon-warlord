@@ -74,8 +74,9 @@ impl ProceduralTree {
             nodes_instances.push(instance);
         }
 
-        let mut links_instances = Vec::with_capacity(1);
-        links_instances.push(vertex_color_shader::Instance::zero());
+        let links_instances = vec![
+            vertex_color_shader::Instance::zero()
+        ];
 
         let nodes_mesh = vertex_color_shader::Mesh::new(
             wgpu_renderer.device(),

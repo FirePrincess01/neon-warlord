@@ -110,7 +110,7 @@ impl Tree {
             pos2.z += height* height;
             // pos2.z += height;
 
-            pos2 = pos2 / 1.8;
+            pos2 /= 1.8;
 
             // let pos = (Vec3::new(x, y, z)).normalize();
 
@@ -143,7 +143,7 @@ impl Tree {
             self.depth,
             node.nr_children == 0
         );
-        Self::traverse(&self, 
+        Self::traverse(self, 
             self.root, 
             node.position,
             self.depth,
@@ -178,7 +178,7 @@ impl Tree {
             let node = &self.nodes[i];
             let pos_1 = node.position;
 
-            Self::traverse(&self, 
+            Self::traverse(self, 
                 i,
                 absolute_position + pos_1,
                 depth - 1,
