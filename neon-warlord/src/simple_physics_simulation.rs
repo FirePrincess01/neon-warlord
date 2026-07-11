@@ -3,12 +3,17 @@
 use cgmath::Rotation3;
 use forward_renderer::geometry;
 use wgpu_renderer::{
-    vertex_color_shader::{self, VertexColorShaderDraw, vertex_color_shader_draw::VertexColorShaderDrawLines}, wgpu_renderer::WgpuRendererInterface,
+    vertex_color_shader::{
+        self, VertexColorShaderDraw, vertex_color_shader_draw::VertexColorShaderDrawLines,
+    },
+    wgpu_renderer::WgpuRendererInterface,
 };
 
-use crate::{procedural_tree::ProceduralTree, verlet_physics::{self, VerletObject}};
+use crate::{
+    procedural_tree::ProceduralTree,
+    verlet_physics::{self, VerletObject},
+};
 type Vec3 = cgmath::Vector3<f32>;
-
 
 pub struct SimplePhysicsSimulation {
     verlet_objects: Vec<VerletObject>,
@@ -59,9 +64,10 @@ impl SimplePhysicsSimulation {
 
             if i < nr_fixed_links - 1 {
                 fixed_links.push(verlet_physics::fixed_link::FixedLink::new(
-                    nr_links + i, 
-                    nr_links + i + 1, 
-                    Vec3::new(0.3, 0.0, 0.3 - i as f32 * 0.1)));
+                    nr_links + i,
+                    nr_links + i + 1,
+                    Vec3::new(0.3, 0.0, 0.3 - i as f32 * 0.1),
+                ));
             }
         }
 
@@ -69,16 +75,13 @@ impl SimplePhysicsSimulation {
 
         // tree
         let tree_root_index = verlet_objects.len();
-        let procedural_tree = ProceduralTree::new(
-            wgpu_renderer, 
-            &mut verlet_objects, 
-            &mut fixed_links
-        );
+        let procedural_tree =
+            ProceduralTree::new(wgpu_renderer, &mut verlet_objects, &mut fixed_links);
 
         let fixed = vec![
             verlet_physics::fixed::Fixed::new(0, Vec3::new(-5.0, 0.0, 15.0)),
-            verlet_physics::fixed::Fixed::new(nr_links, Vec3::new(-6.0, 0.0, 15.0,)),
-            verlet_physics::fixed::Fixed::new(tree_root_index, Vec3::new(-2.0, 0.0, 3.0,)),
+            verlet_physics::fixed::Fixed::new(nr_links, Vec3::new(-6.0, 0.0, 15.0)),
+            verlet_physics::fixed::Fixed::new(tree_root_index, Vec3::new(-2.0, 0.0, 3.0)),
         ];
 
         let circle = geometry::Circle::new_color_fade(radius, 32, [0.0, 0.4, 0.4], [0.4, 0.0, 0.4]);
@@ -127,8 +130,13 @@ impl SimplePhysicsSimulation {
                 .push(VerletObject::new(Vec3::new(0.0, 0.0001, 15.0), self.radius));
         }
 
-        self.solver
-            .update(&mut self.verlet_objects, &self.links, &self.fixed_links, &self.fixed, dt);
+        self.solver.update(
+            &mut self.verlet_objects,
+            &self.links,
+            &self.fixed_links,
+            &self.fixed,
+            dt,
+        );
 
         for i in 0..self.instances.len() {
             let instance = &mut self.instances[i];
@@ -142,7 +150,8 @@ impl SimplePhysicsSimulation {
         self.mesh
             .update_instance_buffer(wgpu_renderer.queue(), &self.instances);
 
-        self.procedural_tree.update(wgpu_renderer, &self.verlet_objects);
+        self.procedural_tree
+            .update(wgpu_renderer, &self.verlet_objects);
     }
 }
 

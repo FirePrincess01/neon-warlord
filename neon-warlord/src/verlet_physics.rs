@@ -1,8 +1,8 @@
 //! Physics simulation using verlet
 
 pub mod fixed;
-pub mod link;
 pub mod fixed_link;
+pub mod link;
 pub mod solver;
 
 use cgmath::Zero;

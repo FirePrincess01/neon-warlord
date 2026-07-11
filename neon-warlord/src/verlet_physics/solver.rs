@@ -14,10 +14,7 @@ impl Solver {
     pub fn new() -> Self {
         let perlin: noise::Perlin = noise::Perlin::new(1);
 
-        Self { 
-            perlin,
-            ticks: 0,
-         }
+        Self { perlin, ticks: 0 }
     }
 
     pub fn update(
@@ -27,9 +24,7 @@ impl Solver {
         fixed_links: &[verlet_physics::fixed_link::FixedLink],
         fixed: &[verlet_physics::fixed::Fixed],
         dt: f32,
-        
     ) {
-        
         let sub_steps = 1;
         let sub_dt = dt / sub_steps as f32;
 
@@ -76,19 +71,17 @@ impl Solver {
         let seed_sin = seed.sin() * 1000.0;
 
         for elem in verlet_objects {
-
             let x = elem.position().x as f64 / 2.0 + seed_cos;
             let y = elem.position().y as f64 / 2.0 + seed_sin;
 
             let force = Vec3::new(
                 self.perlin.get([x, y]) as f32,
                 self.perlin.get([x + 1000.0, y + 1000.0]) as f32,
-                0.0
+                0.0,
             );
 
             elem.accelerate(force * 40.0);
-        }   
-
+        }
     }
 
     fn _apply_constraint(verlet_objects: &mut [VerletObject]) {

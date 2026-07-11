@@ -11,11 +11,11 @@ mod game_board;
 mod heightmap_generator;
 mod orb_controller;
 mod orb_storage;
+mod procedural_tree;
 mod settings;
 mod simple_physics_simulation;
 mod sun_storage;
 mod verlet_physics;
-mod procedural_tree;
 mod worker;
 mod worker_instance;
 

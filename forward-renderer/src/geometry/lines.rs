@@ -1,7 +1,6 @@
 //! Creates vertex data to draw a circle
 //!
 
-
 use wgpu_renderer::vertex_color_shader::Color;
 use wgpu_renderer::vertex_color_shader::Vertex;
 
@@ -26,12 +25,12 @@ impl Lines {
         let color0 = cgmath::Vector3::from(color0);
         let color1 = cgmath::Vector3::from(color1);
 
-        for i in 0..n*2 {
+        for i in 0..n * 2 {
             let x = 0.0;
             let _y = 0.0;
             let z = 0.0;
 
-            let dist_y = 1.0 / (n*2) as f32 * i as f32;
+            let dist_y = 1.0 / (n * 2) as f32 * i as f32;
             let y = i as f32;
 
             let color = color0 * dist_y + color1 * (1.0 - dist_y);
@@ -59,7 +58,7 @@ impl Lines {
             return;
         }
 
-        self.vertices[index*2].position = pos_0.into();
-        self.vertices[index*2+1].position = pos_1.into();
+        self.vertices[index * 2].position = pos_0.into();
+        self.vertices[index * 2 + 1].position = pos_1.into();
     }
 }

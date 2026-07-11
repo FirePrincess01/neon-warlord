@@ -2,14 +2,14 @@
 
 pub mod circle;
 mod frame;
+pub mod lines;
 mod mesh;
 pub mod quad;
 pub mod rectangle;
-pub mod lines;
 
 pub use circle::Circle;
 pub use frame::Frame;
+pub use lines::Lines;
 pub use mesh::Mesh;
 pub use mesh::MeshInterface;
 pub use quad::Quad;
-pub use lines::Lines;
