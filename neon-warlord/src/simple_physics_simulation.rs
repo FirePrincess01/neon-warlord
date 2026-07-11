@@ -1,12 +1,12 @@
 //! Draws some objects using verlet physics
 
-use cgmath::{Rotation3, Vector2};
+use cgmath::Rotation3;
 use forward_renderer::geometry;
 use wgpu_renderer::{
     vertex_color_shader::{self, VertexColorShaderDraw, vertex_color_shader_draw::VertexColorShaderDrawLines}, wgpu_renderer::WgpuRendererInterface,
 };
 
-use crate::{procedural_tree::{self, ProceduralTree}, verlet_physics::{self, VerletObject}};
+use crate::{procedural_tree::ProceduralTree, verlet_physics::{self, VerletObject}};
 type Vec3 = cgmath::Vector3<f32>;
 
 
@@ -29,7 +29,7 @@ pub struct SimplePhysicsSimulation {
 
 impl SimplePhysicsSimulation {
     pub fn new(wgpu_renderer: &mut dyn WgpuRendererInterface) -> Self {
-        let nr_objects = 100;
+        let _nr_objects = 100;
         let radius = 0.1;
 
         let mut verlet_objects = Vec::with_capacity(1);

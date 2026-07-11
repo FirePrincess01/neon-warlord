@@ -104,7 +104,7 @@ impl ProceduralTree {
         // create verlet objects
         let size = tree.size();
         let index = verlet_objects.len();
-        for i in 0..size {
+        for _i in 0..size {
             verlet_objects.push(VerletObject::new(Vec3::zero(), radius));
         }
 
@@ -140,7 +140,7 @@ impl ProceduralTree {
     }
 
     pub fn update(&mut self, wgpu_renderer: &mut dyn WgpuRendererInterface, verlet_objects: &[VerletObject]) {
-        let dt = 1.0 / 60.0;
+        let _dt = 1.0 / 60.0;
 
         // update nodes
         for (i, index) in self.nodes_indices.iter().enumerate() {

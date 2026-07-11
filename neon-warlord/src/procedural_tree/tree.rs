@@ -5,7 +5,7 @@ use std::ops::Add;
 use crate::procedural_tree::node::Node;
 use cgmath::{InnerSpace, Vector3};
 use fastrand::Rng;
-use cgmath::{Quaternion, Rotation, Rotation3};
+use cgmath::{Quaternion, Rotation};
 
 type Vec3 = cgmath::Vector3<f32>;
 
@@ -91,7 +91,7 @@ impl Tree {
         node.children_base_index = index;
         node.nr_children = nr_children;
 
-        for i in 0..nr_children {
+        for _i in 0..nr_children {
             let x = rng.f32() * 2.0 - 1.0;
             let y = rng.f32() * 2.0 - 1.0;
             let z = rng.f32() * 0.8 + 0.2;
@@ -99,7 +99,7 @@ impl Tree {
             let height = (depth-1) as f32  * 0.3;
             // let z = height;
 
-            let pos = (Vec3::new(x, y, z));
+            let pos = Vec3::new(x, y, z);
 
             let from = Vector3::new(0.0, 0.0, 1.0);
             let to = node_position.normalize();
@@ -157,7 +157,7 @@ impl Tree {
         tree_interface: &mut dyn TreeInterface
     ) {
         let node = &self.nodes[node_index];
-        let pos_0 = &node.position;
+        let _pos_0 = &node.position;
         let index = node.children_base_index;
         let nr_children = node.nr_children;
 
