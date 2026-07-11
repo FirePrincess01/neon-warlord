@@ -46,7 +46,7 @@ impl PipelineParticle {
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render PipelineParticle Layout"),
-                bind_group_layouts: &[camera_bind_group_layout.get()],
+                bind_group_layouts: &[Some(camera_bind_group_layout.get())],
                 immediate_size: 0,
             });
 
@@ -56,7 +56,7 @@ impl PipelineParticle {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
-                buffers: &[Vertex::desc(), Instance::desc()],
+                buffers: &[Some(Vertex::desc()), Some(Instance::desc())],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -84,11 +84,11 @@ impl PipelineParticle {
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: DepthTexture::DEPTH_FORMAT,
                 depth_write_enabled: match particle_kind {
-                    ParticleKind::FloatToTheMiddle => false,
-                    ParticleKind::Plasma => true,
-                    ParticleKind::Glow => false,
+                    ParticleKind::FloatToTheMiddle => Some(false),
+                    ParticleKind::Plasma => Some(true),
+                    ParticleKind::Glow => Some(false),
                 },
-                depth_compare: wgpu::CompareFunction::Less,
+                depth_compare: Some(wgpu::CompareFunction::Less),
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),

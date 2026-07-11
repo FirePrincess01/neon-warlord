@@ -545,13 +545,67 @@ impl ForwardRenderer {
         plasmas: &[&dyn ParticleShaderDraw],
         glow: &[&dyn ParticleShaderDraw],
         watch_fps: &mut watch::Watch<10>,
-    ) -> Result<(), wgpu::SurfaceError> {
+    ) -> Result<(), ()> {
         let mut watch_index = 5;
         watch_fps.start(watch_index, "Get frame");
 
-        let output = renderer_interface.get_current_texture()?;
+        let output = renderer_interface.get_current_texture();
+        let surface_texture_;
+        match output {
+            wgpu::CurrentSurfaceTexture::Success(surface_texture) => {
+                // Successfully acquired a surface texture with no issues.
+                surface_texture_ = surface_texture;
+            },
+            wgpu::CurrentSurfaceTexture::Suboptimal(surface_texture) => {
+                // Successfully acquired a surface texture, but texture no longer matches the properties of the underlying surface.
+                // It's highly recommended to call [`Surface::configure`] again for optimal performance.
+                log::warn!("wgpu::CurrentSurfaceTexture::Suboptimal");
+                surface_texture_ = surface_texture;
+            },
+            wgpu::CurrentSurfaceTexture::Timeout => {
+                // A timeout was encountered while trying to acquire the next frame.
+                //
+                // Applications should skip the current frame and try again later.
+                 log::warn!("wgpu::CurrentSurfaceTexture::Timeout");
+                return Ok(());
+            },
+            wgpu::CurrentSurfaceTexture::Occluded => {
+                // The window is occluded (e.g. minimized or behind another window).
+                //
+                // Applications should skip the current frame and try again once the window
+                // is no longer occluded.
+                 log::warn!("wgpu::CurrentSurfaceTexture::Occluded");
+                return Err(());
+            },
+            wgpu::CurrentSurfaceTexture::Outdated => {
+                // The underlying surface has changed, and therefore the surface configuration is outdated.
+                //
+                // Call [`Surface::configure()`] and try again.
+                 log::warn!("wgpu::CurrentSurfaceTexture::Outdated");
+                return Err(());
+            },
+            wgpu::CurrentSurfaceTexture::Lost => {
+                // The surface has been lost and needs to be recreated.
+                //
+                // If the device as a whole is lost (see [`set_device_lost_callback()`][crate::Device::set_device_lost_callback]), then
+                // you need to recreate the device and all resources.
+                // Otherwise, call [`Instance::create_surface()`] to recreate the surface,
+                // then [`Surface::configure()`], and try again.
+                 log::warn!("wgpu::CurrentSurfaceTexture::Lost");
+                return Err(());
+            },
+            wgpu::CurrentSurfaceTexture::Validation => {
+                // A validation error inside [`Surface::get_current_texture()`] was raised
+                // and caught by an [error scope](crate::Device::push_error_scope) or
+                // [`on_uncaptured_error()`][crate::Device::on_uncaptured_error].
+                //
+                // Applications should attend to the validation error and try again.
+                 log::warn!("wgpu::CurrentSurfaceTexture::Validation");
+                return Err(());
+            },
+        }
 
-        let view: wgpu::TextureView = output
+        let view: wgpu::TextureView = surface_texture_
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
@@ -591,7 +645,7 @@ impl ForwardRenderer {
         renderer_interface
             .queue()
             .submit(std::iter::once(encoder.finish()));
-        output.present();
+        // drop(surface_texture_);
         watch_fps.stop(watch_index);
 
         watch_index += 1;

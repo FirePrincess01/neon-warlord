@@ -28,9 +28,7 @@ use instant::Instant;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use wgpu_renderer::{
-    default_application::{DefaultApplication, DefaultApplicationInterface},
-    performance_monitor::{Fps, watch::Watch},
-    wgpu_renderer::WgpuRendererInterface,
+    default_application::{self, default_application_interface::{DefaultApplicationInterface, DefaultApplicationInterfaceCreate, DefaultApplicationInterfaceRuntime}}, performance_monitor::{Fps, watch::Watch}, wgpu_renderer::WgpuRendererInterface,
 };
 use winit::event::{ElementState, WindowEvent};
 
@@ -262,7 +260,7 @@ fn apply_scale_factor(
     }
 }
 
-impl DefaultApplicationInterface for NeonWarlord {
+impl DefaultApplicationInterfaceCreate for NeonWarlord {
     fn create(
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
         size: winit::dpi::PhysicalSize<u32>,
@@ -270,7 +268,9 @@ impl DefaultApplicationInterface for NeonWarlord {
     ) -> Self {
         Self::new(renderer_interface, size, scale_factor)
     }
+}
 
+impl DefaultApplicationInterfaceRuntime for NeonWarlord {
     fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
         self.size
     }
@@ -608,7 +608,7 @@ impl DefaultApplicationInterface for NeonWarlord {
     fn render(
         &mut self,
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
-    ) -> Result<(), wgpu::SurfaceError> {
+    ) -> Result<(), ()> {
         // render current frame
         let res;
         {
@@ -636,10 +636,12 @@ impl DefaultApplicationInterface for NeonWarlord {
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-pub fn run() {
-    let event_loop = winit::event_loop::EventLoop::with_user_event()
-        .build()
-        .expect("Creating the event loop failed");
-    let mut application: DefaultApplication<NeonWarlord> = DefaultApplication::new(&event_loop);
-    event_loop.run_app(&mut application).unwrap();
+pub fn run() {   
+    default_application::init_env_logger();
+    let event_loop = default_application::create_event_loop();
+
+    default_application::run_app::<NeonWarlord>(event_loop);
+
+    // let mut application: DefaultApplication<NeonWarlord> = default_application::DefaultApplication::new();
+    // event_loop.run_app(&mut application).unwrap();
 }

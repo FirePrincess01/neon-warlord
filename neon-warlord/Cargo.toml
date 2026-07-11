@@ -21,13 +21,13 @@ wgpu_renderer = { path = "../wgpu_renderer" }
 # dependencies of wgpu 
 cfg-if = "1"
 winit = "0.30"
-wgpu = "28.0"
+wgpu = "30.0"
 instant = "0.1"
 cgmath = "0.18"
 
 # other  
 log = "0.4"
-bytemuck = { version = "1.12", features = [ "derive" ] }
+bytemuck = { version = "1.25", features = [ "derive" ] }
 rusttype = "0.9"
 fastrand = "2.4"
 gltf = "1.4.1"
