@@ -2,7 +2,6 @@
 
 pub mod node;
 pub mod tree;
-pub mod leaf;
 
 use crate::{procedural_tree::tree::{Tree, TreeInterface}, verlet_physics::{self, VerletObject, fixed_link::FixedLink}};
 use forward_renderer::geometry;
@@ -15,12 +14,6 @@ type Vec3 = cgmath::Vector3<f32>;
 
 
 pub struct ProceduralTree {
-    // verlet_objects: Vec<VerletObject>,
-    // links: Vec<verlet_physics::link::Link>,
-    // fixed_links: Vec<verlet_physics::fixed_link::FixedLink>,
-    // fixed: Vec<verlet_physics::fixed::Fixed>,
-    // solver: verlet_physics::solver::Solver,
-
     tree: Tree,
 
     nodes_instances: Vec<vertex_color_shader::Instance>,
@@ -145,11 +138,6 @@ impl ProceduralTree {
             links_instances,
         }
     }
-
-    // fn generate_tree(nr_nodes: usize) -> (Vec<Vec3>) {
-
-    // }
-
 
     pub fn update(&mut self, wgpu_renderer: &mut dyn WgpuRendererInterface, verlet_objects: &[VerletObject]) {
         let dt = 1.0 / 60.0;
