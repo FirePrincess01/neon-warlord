@@ -11,6 +11,7 @@ mod game_board;
 mod heightmap_generator;
 mod orb_controller;
 mod orb_storage;
+mod procedural_tree;
 mod settings;
 mod simple_physics_simulation;
 mod sun_storage;
@@ -621,6 +622,7 @@ impl DefaultApplicationInterface for NeonWarlord {
                     &self.debug_overlay,
                 ],
                 &[&self.sun, &self.simple_physics_simulation],
+                &[&self.simple_physics_simulation],
                 &[&self.particles],
                 &[&self.plasma_orbs],
                 &[&self.glows],

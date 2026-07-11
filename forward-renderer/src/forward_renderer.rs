@@ -15,6 +15,7 @@ use crate::{animation_shader, particle_shader};
 use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
 use crate::{DrawGui, lod_heightmap_shader};
 use wgpu_renderer::performance_monitor::watch;
+use wgpu_renderer::vertex_color_shader::vertex_color_shader_draw::VertexColorShaderDrawLines;
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 use wgpu_renderer::vertex_texture_shader;
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
@@ -425,6 +426,7 @@ impl ForwardRenderer {
         // textured_meshes: &impl VertexTextureShaderDraw,
         gui_elements: &[&dyn DrawGui],
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
+        vertex_color_objects_lines: &[&dyn VertexColorShaderDrawLines],
         particles: &[&dyn ParticleShaderDraw],
         plasmas: &[&dyn ParticleShaderDraw],
         glow: &[&dyn ParticleShaderDraw],
@@ -480,6 +482,12 @@ impl ForwardRenderer {
                 .draw(&mut render_pass, &self.camera_uniform_buffer, *elem);
         }
 
+        // vertex color shader lines
+        for elem in vertex_color_objects_lines {
+            self.pipeline_lines
+                .draw_lines(&mut render_pass, &self.camera_uniform_buffer, *elem);
+        }
+
         // particle shader
 
         for elem in plasmas {
@@ -532,6 +540,7 @@ impl ForwardRenderer {
         animations: &[&dyn AnimationShaderDraw],
         gui_elements: &[&dyn DrawGui],
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
+        vertex_color_objects_lines: &[&dyn VertexColorShaderDrawLines],
         particles: &[&dyn ParticleShaderDraw],
         plasmas: &[&dyn ParticleShaderDraw],
         glow: &[&dyn ParticleShaderDraw],
@@ -569,6 +578,7 @@ impl ForwardRenderer {
             animations,
             gui_elements,
             vertex_color_objects,
+            vertex_color_objects_lines,
             particles,
             plasmas,
             glow,
