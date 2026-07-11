@@ -13,7 +13,6 @@ impl Node {
     pub fn new(position: Vec3) -> Self {
         let children_base_index = 0;
         let nr_children = 0;
-        // let position = Vec3::new(0.0, 0.0, 0.0);
     
         Self{
             children_base_index,

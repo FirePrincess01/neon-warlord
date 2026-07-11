@@ -27,8 +27,6 @@ impl Lines {
         let color0 = cgmath::Vector3::from(color0);
         let color1 = cgmath::Vector3::from(color1);
 
-        // let mut deferred_vertices = Vec::<deferred_color_shader::Vertex>::new();
-
         for i in 0..n*2 {
             let x = 0.0;
             let y = 0.0;
