@@ -1,4 +1,4 @@
-//! Generates a tree with nodes an leafs
+//! Generates a tree with nodes an leaves
 
 pub mod node;
 pub mod tree;
