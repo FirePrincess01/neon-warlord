@@ -1,7 +1,6 @@
 //! Creates vertex data to draw a circle
 //!
 
-use std::f32::consts::PI;
 
 use wgpu_renderer::vertex_color_shader::Color;
 use wgpu_renderer::vertex_color_shader::Vertex;
@@ -29,7 +28,7 @@ impl Lines {
 
         for i in 0..n*2 {
             let x = 0.0;
-            let y = 0.0;
+            let _y = 0.0;
             let z = 0.0;
 
             let dist_y = 1.0 / (n*2) as f32 * i as f32;
