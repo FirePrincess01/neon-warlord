@@ -14,7 +14,7 @@ type Vec3 = cgmath::Vector3<f32>;
 
 
 pub struct ProceduralTree {
-    tree: Tree,
+    _tree: Tree,
 
     nodes_instances: Vec<vertex_color_shader::Instance>,
     nodes_mesh: vertex_color_shader::Mesh,
@@ -26,8 +26,8 @@ pub struct ProceduralTree {
     links_lines: geometry::Lines,
     links_mesh: vertex_color_shader::Mesh,
 
-    index: usize,
-    size: usize,
+    _index: usize,
+    _size: usize,
 
     nodes_indices: Vec<usize>,
     leaves_indices: Vec<usize>,
@@ -49,10 +49,10 @@ impl ProceduralTree {
         let links_color_0 = to_rgb("#98ae99");
         let links_color_1 = to_rgb("#2d2e27");
 
-        let tree = Tree::new(7,  fastrand::u64(..));
-        let nr_nodes = tree.nr_nodes();
-        let nr_leaves = tree.nr_leaves();
-        let nr_links = tree.nr_links();
+        let _tree = Tree::new(7,  fastrand::u64(..));
+        let nr_nodes = _tree.nr_nodes();
+        let nr_leaves = _tree.nr_leaves();
+        let nr_links = _tree.nr_links();
 
         let radius = 0.1;
         let nodes_circle = geometry::Circle::new_color_fade(radius, 32, nodes_color_0, nodes_color_1);
@@ -102,9 +102,9 @@ impl ProceduralTree {
         );
 
         // create verlet objects
-        let size = tree.size();
-        let index = verlet_objects.len();
-        for _i in 0..size {
+        let _size = _tree.size();
+        let _index = verlet_objects.len();
+        for _i in 0.._size {
             verlet_objects.push(VerletObject::new(Vec3::zero(), radius));
         }
 
@@ -114,21 +114,21 @@ impl ProceduralTree {
         let mut create_links = CreateLinks {
             verlet_objects,
             fixed_links,
-            index,
+            index: _index,
             nodes_indices: &mut nodes_indices,
             leaves_indices: &mut leaves_indices,
             links_indices: &mut links_indices,
         };
-        tree.traverse_tree(&mut create_links);
+        _tree.traverse_tree(&mut create_links);
 
         Self{
-            tree,
+            _tree,
             nodes_instances,
             nodes_mesh,
             leaves_instances,
             leaves_mesh,
-            index,
-            size,
+            _index,
+            _size,
 
             nodes_indices,
             leaves_indices,

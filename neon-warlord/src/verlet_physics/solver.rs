@@ -91,7 +91,7 @@ impl Solver {
 
     }
 
-    fn apply_constraint(verlet_objects: &mut [VerletObject]) {
+    fn _apply_constraint(verlet_objects: &mut [VerletObject]) {
         const POSITION: Vec3 = Vec3::new(-3.0, 0.0, 10.0);
         const RADIUS: f32 = 10.0;
 
@@ -99,16 +99,16 @@ impl Solver {
             let to_obj = elem.position() - POSITION;
             let dist = to_obj.magnitude();
 
-            if dist > RADIUS - elem.radius() {
+            if dist > RADIUS - elem._radius() {
                 let n = to_obj / dist;
-                let new_pos = POSITION + n * (RADIUS - elem.radius());
+                let new_pos = POSITION + n * (RADIUS - elem._radius());
 
                 elem.set_position(new_pos);
             }
         }
     }
 
-    fn solve_collisions(verlet_objects: &mut [VerletObject]) {
+    fn _solve_collisions(verlet_objects: &mut [VerletObject]) {
         let object_count = verlet_objects.len();
 
         for i in 0..object_count {
@@ -120,7 +120,7 @@ impl Solver {
 
                 let collision_axis = object_1.position() - object_2.position();
                 let dist = collision_axis.magnitude();
-                let min_dist = object_1.radius + object_2.radius;
+                let min_dist = object_1._radius + object_2._radius;
                 if dist < min_dist {
                     let n = collision_axis / dist;
                     let delta = min_dist - dist;
