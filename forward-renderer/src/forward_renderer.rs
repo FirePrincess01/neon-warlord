@@ -608,12 +608,12 @@ impl ForwardRenderer {
         let format = renderer_interface.surface_format().add_srgb_suffix();
         let view: wgpu::TextureView = surface_texture
             .texture
-            .create_view(&&wgpu::TextureViewDescriptor {
+            .create_view((&wgpu::TextureViewDescriptor {
                 // Without add_srgb_suffix() the image we will be working with
                 // might not be "gamma correct".
                 format: Some(format),
                 ..Default::default()
-            });
+            }));
 
         let mut encoder: wgpu::CommandEncoder =
             renderer_interface
