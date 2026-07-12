@@ -28,7 +28,7 @@ use instant::Instant;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use wgpu_renderer::{
-    default_application::{self, default_application_interface::{DefaultApplicationInterfaceCreate, DefaultApplicationInterfaceRuntime}}, performance_monitor::{Fps, watch::Watch}, wgpu_renderer::WgpuRendererInterface,
+    default_application::{self, default_application_interface::{DefaultApplicationInterfaceCreate, DefaultApplicationInterfaceRuntime, RenderError}}, performance_monitor::{Fps, watch::Watch}, wgpu_renderer::WgpuRendererInterface,
 };
 use winit::event::{ElementState, WindowEvent};
 
@@ -608,7 +608,7 @@ impl DefaultApplicationInterfaceRuntime for NeonWarlord {
     fn render(
         &mut self,
         renderer_interface: &mut dyn wgpu_renderer::wgpu_renderer::WgpuRendererInterface,
-    ) -> Result<(), ()> {
+    ) -> Result<(), RenderError> {
         // render current frame
         let res;
         {

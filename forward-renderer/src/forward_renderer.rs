@@ -14,6 +14,7 @@ use crate::{animation_shader, particle_shader};
 // use crate::terrain_storage::TerrainStorage;
 use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
 use crate::{DrawGui, lod_heightmap_shader};
+use wgpu_renderer::default_application::default_application_interface::RenderError;
 use wgpu_renderer::performance_monitor::watch;
 use wgpu_renderer::vertex_color_shader::vertex_color_shader_draw::VertexColorShaderDrawLines;
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
@@ -545,7 +546,7 @@ impl ForwardRenderer {
         plasmas: &[&dyn ParticleShaderDraw],
         glow: &[&dyn ParticleShaderDraw],
         watch_fps: &mut watch::Watch<10>,
-    ) -> Result<(), ()> {
+    ) -> Result<(), RenderError> {
         let mut watch_index = 5;
         watch_fps.start(watch_index, "Get frame");
 
@@ -575,14 +576,14 @@ impl ForwardRenderer {
                 // Applications should skip the current frame and try again once the window
                 // is no longer occluded.
                  log::warn!("wgpu::CurrentSurfaceTexture::Occluded");
-                return Err(());
+                return Err(RenderError::SurfaceOccluded);
             },
             wgpu::CurrentSurfaceTexture::Outdated => {
                 // The underlying surface has changed, and therefore the surface configuration is outdated.
                 //
                 // Call [`Surface::configure()`] and try again.
                  log::warn!("wgpu::CurrentSurfaceTexture::Outdated");
-                return Err(());
+                return Err(RenderError::SurfaceOutdated);
             },
             wgpu::CurrentSurfaceTexture::Lost => {
                 // The surface has been lost and needs to be recreated.
@@ -592,7 +593,7 @@ impl ForwardRenderer {
                 // Otherwise, call [`Instance::create_surface()`] to recreate the surface,
                 // then [`Surface::configure()`], and try again.
                  log::warn!("wgpu::CurrentSurfaceTexture::Lost");
-                return Err(());
+                return Err(RenderError::SurfaceLost);
             },
             wgpu::CurrentSurfaceTexture::Validation => {
                 // A validation error inside [`Surface::get_current_texture()`] was raised
@@ -601,7 +602,7 @@ impl ForwardRenderer {
                 //
                 // Applications should attend to the validation error and try again.
                  log::warn!("wgpu::CurrentSurfaceTexture::Validation");
-                return Err(());
+                return Err(RenderError::SurfaceValidation);
             },
         };
 
