@@ -28,7 +28,7 @@ use instant::Instant;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use wgpu_renderer::{
-    default_application::{self, default_application_interface::{DefaultApplicationInterface, DefaultApplicationInterfaceCreate, DefaultApplicationInterfaceRuntime}}, performance_monitor::{Fps, watch::Watch}, wgpu_renderer::WgpuRendererInterface,
+    default_application::{self, default_application_interface::{DefaultApplicationInterfaceCreate, DefaultApplicationInterfaceRuntime}}, performance_monitor::{Fps, watch::Watch}, wgpu_renderer::WgpuRendererInterface,
 };
 use winit::event::{ElementState, WindowEvent};
 
