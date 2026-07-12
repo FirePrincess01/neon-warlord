@@ -550,17 +550,17 @@ impl ForwardRenderer {
         watch_fps.start(watch_index, "Get frame");
 
         let output = renderer_interface.get_current_texture();
-        let surface_texture_;
+        let surface_texture =
         match output {
             wgpu::CurrentSurfaceTexture::Success(surface_texture) => {
                 // Successfully acquired a surface texture with no issues.
-                surface_texture_ = surface_texture;
+                surface_texture
             },
             wgpu::CurrentSurfaceTexture::Suboptimal(surface_texture) => {
                 // Successfully acquired a surface texture, but texture no longer matches the properties of the underlying surface.
                 // It's highly recommended to call [`Surface::configure`] again for optimal performance.
                 log::warn!("wgpu::CurrentSurfaceTexture::Suboptimal");
-                surface_texture_ = surface_texture;
+                surface_texture
             },
             wgpu::CurrentSurfaceTexture::Timeout => {
                 // A timeout was encountered while trying to acquire the next frame.
@@ -603,11 +603,17 @@ impl ForwardRenderer {
                  log::warn!("wgpu::CurrentSurfaceTexture::Validation");
                 return Err(());
             },
-        }
+        };
 
-        let view: wgpu::TextureView = surface_texture_
+        let format = renderer_interface.surface_format().add_srgb_suffix();
+        let view: wgpu::TextureView = surface_texture
             .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
+            .create_view(&&wgpu::TextureViewDescriptor {
+                // Without add_srgb_suffix() the image we will be working with
+                // might not be "gamma correct".
+                format: Some(format),
+                ..Default::default()
+            });
 
         let mut encoder: wgpu::CommandEncoder =
             renderer_interface
@@ -645,7 +651,8 @@ impl ForwardRenderer {
         renderer_interface
             .queue()
             .submit(std::iter::once(encoder.finish()));
-        // drop(surface_texture_);
+        renderer_interface.pre_present_notify();
+        renderer_interface.queue().present(surface_texture);
         watch_fps.stop(watch_index);
 
         watch_index += 1;
