@@ -647,7 +647,7 @@ impl ForwardRenderer {
         watch_fps.stop(watch_index);
 
         watch_index += 1;
-        watch_fps.start(watch_index, "Submit");
+        watch_fps.start(watch_index, "Present Surface");
         renderer_interface
             .queue()
             .submit(std::iter::once(encoder.finish()));
@@ -656,7 +656,7 @@ impl ForwardRenderer {
         watch_fps.stop(watch_index);
 
         watch_index += 1;
-        watch_fps.start(watch_index, "Wait Finish");
+        watch_fps.start(watch_index, "Wait Render Loop Finish");
 
         // wait to see how high the gpu load is
         if self.settings.wait_for_render_loop_to_finish {

@@ -629,7 +629,7 @@ impl DefaultApplicationInterfaceRuntime for NeonWarlord {
                 &mut self.watch_fps,
             )
         }
-        self.watch_fps.start(WATCH_POINTS_SIZE - 1, "Wait");
+        self.watch_fps.start(WATCH_POINTS_SIZE - 1, "Wait for Window Event");
 
         res
     }
@@ -641,7 +641,4 @@ pub fn run() {
     let event_loop = default_application::create_event_loop();
 
     default_application::run_app::<NeonWarlord>(event_loop);
-
-    // let mut application: DefaultApplication<NeonWarlord> = default_application::DefaultApplication::new();
-    // event_loop.run_app(&mut application).unwrap();
 }
