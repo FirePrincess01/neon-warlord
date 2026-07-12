@@ -75,8 +75,8 @@ impl Pipeline {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Animation Render Pipeline Layout"),
                 bind_group_layouts: &[
-                    camera_bind_group_layout.get(),
-                    animation_bind_group_layout.get(),
+                    Some(camera_bind_group_layout.get()),
+                    Some(animation_bind_group_layout.get()),
                 ],
                 immediate_size: 0,
             });
@@ -90,7 +90,7 @@ impl Pipeline {
                     LightingModel::None => Some("vs_main"),
                     LightingModel::Gouraud => Some("vs_main_gouraud"),
                 },
-                buffers: &[Vertex::desc(), Instance::desc()],
+                buffers: &[Some(Vertex::desc()), Some(Instance::desc())],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -118,8 +118,8 @@ impl Pipeline {
             },
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: depth_texture::DepthTexture::DEPTH_FORMAT,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
+                depth_write_enabled: Some(true),
+                depth_compare: Some(wgpu::CompareFunction::Less),
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),

@@ -14,6 +14,7 @@ use crate::{animation_shader, particle_shader};
 // use crate::terrain_storage::TerrainStorage;
 use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
 use crate::{DrawGui, lod_heightmap_shader};
+use wgpu_renderer::default_application::default_application_interface::RenderError;
 use wgpu_renderer::performance_monitor::watch;
 use wgpu_renderer::vertex_color_shader::vertex_color_shader_draw::VertexColorShaderDrawLines;
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
@@ -545,15 +546,75 @@ impl ForwardRenderer {
         plasmas: &[&dyn ParticleShaderDraw],
         glow: &[&dyn ParticleShaderDraw],
         watch_fps: &mut watch::Watch<10>,
-    ) -> Result<(), wgpu::SurfaceError> {
+    ) -> Result<(), RenderError> {
         let mut watch_index = 5;
         watch_fps.start(watch_index, "Get frame");
 
-        let output = renderer_interface.get_current_texture()?;
+        let output = renderer_interface.get_current_texture();
+        let surface_texture = match output {
+            wgpu::CurrentSurfaceTexture::Success(surface_texture) => {
+                // Successfully acquired a surface texture with no issues.
+                surface_texture
+            }
+            wgpu::CurrentSurfaceTexture::Suboptimal(surface_texture) => {
+                // Successfully acquired a surface texture, but texture no longer matches the properties of the underlying surface.
+                // It's highly recommended to call [`Surface::configure`] again for optimal performance.
+                log::warn!("wgpu::CurrentSurfaceTexture::Suboptimal");
+                surface_texture
+            }
+            wgpu::CurrentSurfaceTexture::Timeout => {
+                // A timeout was encountered while trying to acquire the next frame.
+                //
+                // Applications should skip the current frame and try again later.
+                log::warn!("wgpu::CurrentSurfaceTexture::Timeout");
+                return Ok(());
+            }
+            wgpu::CurrentSurfaceTexture::Occluded => {
+                // The window is occluded (e.g. minimized or behind another window).
+                //
+                // Applications should skip the current frame and try again once the window
+                // is no longer occluded.
+                log::warn!("wgpu::CurrentSurfaceTexture::Occluded");
+                return Err(RenderError::SurfaceOccluded);
+            }
+            wgpu::CurrentSurfaceTexture::Outdated => {
+                // The underlying surface has changed, and therefore the surface configuration is outdated.
+                //
+                // Call [`Surface::configure()`] and try again.
+                log::warn!("wgpu::CurrentSurfaceTexture::Outdated");
+                return Err(RenderError::SurfaceOutdated);
+            }
+            wgpu::CurrentSurfaceTexture::Lost => {
+                // The surface has been lost and needs to be recreated.
+                //
+                // If the device as a whole is lost (see [`set_device_lost_callback()`][crate::Device::set_device_lost_callback]), then
+                // you need to recreate the device and all resources.
+                // Otherwise, call [`Instance::create_surface()`] to recreate the surface,
+                // then [`Surface::configure()`], and try again.
+                log::warn!("wgpu::CurrentSurfaceTexture::Lost");
+                return Err(RenderError::SurfaceLost);
+            }
+            wgpu::CurrentSurfaceTexture::Validation => {
+                // A validation error inside [`Surface::get_current_texture()`] was raised
+                // and caught by an [error scope](crate::Device::push_error_scope) or
+                // [`on_uncaptured_error()`][crate::Device::on_uncaptured_error].
+                //
+                // Applications should attend to the validation error and try again.
+                log::warn!("wgpu::CurrentSurfaceTexture::Validation");
+                return Err(RenderError::SurfaceValidation);
+            }
+        };
 
-        let view: wgpu::TextureView = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
+        let format = renderer_interface.surface_format().add_srgb_suffix();
+        let view: wgpu::TextureView =
+            surface_texture
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor {
+                    // Without add_srgb_suffix() the image we will be working with
+                    // might not be "gamma correct".
+                    format: Some(format),
+                    ..Default::default()
+                });
 
         let mut encoder: wgpu::CommandEncoder =
             renderer_interface
@@ -587,15 +648,16 @@ impl ForwardRenderer {
         watch_fps.stop(watch_index);
 
         watch_index += 1;
-        watch_fps.start(watch_index, "Submit");
+        watch_fps.start(watch_index, "Present Surface");
         renderer_interface
             .queue()
             .submit(std::iter::once(encoder.finish()));
-        output.present();
+        renderer_interface.pre_present_notify();
+        renderer_interface.queue().present(surface_texture);
         watch_fps.stop(watch_index);
 
         watch_index += 1;
-        watch_fps.start(watch_index, "Wait Finish");
+        watch_fps.start(watch_index, "Wait Render Loop Finish");
 
         // wait to see how high the gpu load is
         if self.settings.wait_for_render_loop_to_finish {
