@@ -28,7 +28,14 @@ use instant::Instant;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use wgpu_renderer::{
-    default_application::{self, default_application_interface::{DefaultApplicationInterfaceCreate, DefaultApplicationInterfaceRuntime, RenderError}}, performance_monitor::{Fps, watch::Watch}, wgpu_renderer::WgpuRendererInterface,
+    default_application::{
+        self,
+        default_application_interface::{
+            DefaultApplicationInterfaceCreate, DefaultApplicationInterfaceRuntime, RenderError,
+        },
+    },
+    performance_monitor::{Fps, watch::Watch},
+    wgpu_renderer::WgpuRendererInterface,
 };
 use winit::event::{ElementState, WindowEvent};
 
@@ -629,14 +636,15 @@ impl DefaultApplicationInterfaceRuntime for NeonWarlord {
                 &mut self.watch_fps,
             )
         }
-        self.watch_fps.start(WATCH_POINTS_SIZE - 1, "Wait for Window Event");
+        self.watch_fps
+            .start(WATCH_POINTS_SIZE - 1, "Wait for Window Event");
 
         res
     }
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-pub fn run() {   
+pub fn run() {
     default_application::init_env_logger();
     let event_loop = default_application::create_event_loop();
 

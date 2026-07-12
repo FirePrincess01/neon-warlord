@@ -551,40 +551,39 @@ impl ForwardRenderer {
         watch_fps.start(watch_index, "Get frame");
 
         let output = renderer_interface.get_current_texture();
-        let surface_texture =
-        match output {
+        let surface_texture = match output {
             wgpu::CurrentSurfaceTexture::Success(surface_texture) => {
                 // Successfully acquired a surface texture with no issues.
                 surface_texture
-            },
+            }
             wgpu::CurrentSurfaceTexture::Suboptimal(surface_texture) => {
                 // Successfully acquired a surface texture, but texture no longer matches the properties of the underlying surface.
                 // It's highly recommended to call [`Surface::configure`] again for optimal performance.
                 log::warn!("wgpu::CurrentSurfaceTexture::Suboptimal");
                 surface_texture
-            },
+            }
             wgpu::CurrentSurfaceTexture::Timeout => {
                 // A timeout was encountered while trying to acquire the next frame.
                 //
                 // Applications should skip the current frame and try again later.
-                 log::warn!("wgpu::CurrentSurfaceTexture::Timeout");
+                log::warn!("wgpu::CurrentSurfaceTexture::Timeout");
                 return Ok(());
-            },
+            }
             wgpu::CurrentSurfaceTexture::Occluded => {
                 // The window is occluded (e.g. minimized or behind another window).
                 //
                 // Applications should skip the current frame and try again once the window
                 // is no longer occluded.
-                 log::warn!("wgpu::CurrentSurfaceTexture::Occluded");
+                log::warn!("wgpu::CurrentSurfaceTexture::Occluded");
                 return Err(RenderError::SurfaceOccluded);
-            },
+            }
             wgpu::CurrentSurfaceTexture::Outdated => {
                 // The underlying surface has changed, and therefore the surface configuration is outdated.
                 //
                 // Call [`Surface::configure()`] and try again.
-                 log::warn!("wgpu::CurrentSurfaceTexture::Outdated");
+                log::warn!("wgpu::CurrentSurfaceTexture::Outdated");
                 return Err(RenderError::SurfaceOutdated);
-            },
+            }
             wgpu::CurrentSurfaceTexture::Lost => {
                 // The surface has been lost and needs to be recreated.
                 //
@@ -592,29 +591,30 @@ impl ForwardRenderer {
                 // you need to recreate the device and all resources.
                 // Otherwise, call [`Instance::create_surface()`] to recreate the surface,
                 // then [`Surface::configure()`], and try again.
-                 log::warn!("wgpu::CurrentSurfaceTexture::Lost");
+                log::warn!("wgpu::CurrentSurfaceTexture::Lost");
                 return Err(RenderError::SurfaceLost);
-            },
+            }
             wgpu::CurrentSurfaceTexture::Validation => {
                 // A validation error inside [`Surface::get_current_texture()`] was raised
                 // and caught by an [error scope](crate::Device::push_error_scope) or
                 // [`on_uncaptured_error()`][crate::Device::on_uncaptured_error].
                 //
                 // Applications should attend to the validation error and try again.
-                 log::warn!("wgpu::CurrentSurfaceTexture::Validation");
+                log::warn!("wgpu::CurrentSurfaceTexture::Validation");
                 return Err(RenderError::SurfaceValidation);
-            },
+            }
         };
 
         let format = renderer_interface.surface_format().add_srgb_suffix();
-        let view: wgpu::TextureView = surface_texture
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor {
-                // Without add_srgb_suffix() the image we will be working with
-                // might not be "gamma correct".
-                format: Some(format),
-                ..Default::default()
-            });
+        let view: wgpu::TextureView =
+            surface_texture
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor {
+                    // Without add_srgb_suffix() the image we will be working with
+                    // might not be "gamma correct".
+                    format: Some(format),
+                    ..Default::default()
+                });
 
         let mut encoder: wgpu::CommandEncoder =
             renderer_interface
