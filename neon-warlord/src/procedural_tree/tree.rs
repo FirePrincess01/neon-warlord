@@ -26,7 +26,7 @@ impl Tree {
 
         let mut rng = Rng::with_seed(seed);
 
-        let pos = Vec3::new(-2.0, 0.0, 3.0);
+        let pos = Vec3::new(-2.0,15.0, 0.1);
         let root_node = Node::new(pos);
         nodes.push(root_node);
 

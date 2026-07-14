@@ -25,7 +25,7 @@ use wgpu_renderer::wgpu_renderer::depth_texture::DepthTexture;
 use wgpu_renderer::wgpu_renderer::depth_texture_bind_group_layout::DepthTextureBindGroupLayout;
 use wgpu_renderer::wgpu_renderer::{WgpuRendererInterface, depth_texture};
 use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
-
+use cgmath::prelude::*; // for Point3::from_vec
 // use crate::{
 //     deferred_animation_shader, deferred_heightmap_shader, deferred_light_shader,
 //     deferred_light_sphere_shader, fxaa_shader,
@@ -80,9 +80,15 @@ pub struct ForwardRenderer {
     pub camera: Camera,
     pub projection: Projection,
 
-    camera_uniform: vertex_color_shader::CameraUniform,
-    camera_uniform_buffer: vertex_color_shader::CameraUniformBuffer,
+    // global light projection
+    camera_light: Camera,
+    projection_light: Projection,
 
+    camera_uniform: vertex_color_shader::CameraUniform,
+    camera_light_uniform: vertex_color_shader::CameraUniform,
+    camera_uniform_buffer: vertex_color_shader::CameraUniformBuffer,
+    camera_uniform_shadow_map_buffer: vertex_color_shader::CameraUniformBuffer,
+    
     camera_uniform_orthographic: vertex_color_shader::CameraUniform,
     camera_uniform_orthographic_buffer: vertex_color_shader::CameraUniformBuffer,
 }
@@ -262,6 +268,13 @@ impl ForwardRenderer {
         // Self::top_view_point(&mut camera);
         Self::side_view_point(&mut camera);
 
+        // light camera
+        let position = cgmath::Vector3::new(0.0, 80.0, 20.0);
+        let look_at = cgmath::Vector3::new(0.0, 0.0, 0.0);
+        let mut camera_light = Camera::new(cgmath::Point3::from_vec(position), yaw, pitch);
+        camera_light.set_view_direction(look_at - position);
+        // Self::side_view_point(&mut camera_light);
+
         let width = wgpu_renderer.surface_width();
         let height = wgpu_renderer.surface_height();
         let fovy = cgmath::Deg(45.0);
@@ -269,7 +282,13 @@ impl ForwardRenderer {
         let zfar = 100.0;
         let projection = Projection::new(width, height, fovy, znear, zfar);
 
+        // let fovy = cgmath::Deg(175.0);
+        // let znear = 1.0;
+        // let zfar = 10.0;
+        let projection_light = Projection::new(width, height, fovy, znear, zfar);
+        
         let camera_uniform = vertex_color_shader::CameraUniform::new();
+        let camera_light_uniform = vertex_color_shader::CameraUniform::new();
 
         let camera_uniform_buffer = vertex_color_shader::CameraUniformBuffer::new(
             wgpu_renderer.device(),
@@ -284,7 +303,12 @@ impl ForwardRenderer {
         );
 
         camera_uniform_orthographic_buffer
-            .update(wgpu_renderer.queue(), camera_uniform_orthographic); // add uniform identity matrix
+            .update_camera(wgpu_renderer.queue(), camera_uniform_orthographic); // add uniform identity matrix
+
+        let camera_uniform_shadow_map_buffer = vertex_color_shader::CameraUniformBuffer::new(
+            wgpu_renderer.device(),
+            &camera_bind_group_layout,
+        );
 
         Self {
             settings,
@@ -323,11 +347,17 @@ impl ForwardRenderer {
             camera,
             projection,
 
+            camera_light,
+            projection_light,
+
             camera_uniform,
+            camera_light_uniform,
             camera_uniform_buffer,
 
             camera_uniform_orthographic,
             camera_uniform_orthographic_buffer,
+
+            camera_uniform_shadow_map_buffer,
         }
     }
 
@@ -342,8 +372,8 @@ impl ForwardRenderer {
     }
 
     fn side_view_point(camera: &mut Camera) {
-        // let position = cgmath::Point3::new(0.0, 5.0, 2.0);
-        let position = cgmath::Point3::new(0.0, -15.0, 10.0);
+        // let position = cgmath::Point3::new(0.0, -5.0, 2.0);
+        let position = cgmath::Point3::new(0.0, -8.0, 4.0);
         let yaw = cgmath::Deg(-90.0).into();
         let pitch = cgmath::Deg(80.0).into();
 
@@ -374,6 +404,7 @@ impl ForwardRenderer {
             );
 
         self.projection.resize(new_size.width, new_size.height);
+        self.projection_light.resize(new_size.width, new_size.height);
         // self.wgpu_renderer.resize(new_size);
         // self.g_buffer = GBuffer::new(
         //     renderer_interface,
@@ -401,7 +432,7 @@ impl ForwardRenderer {
         self.camera_uniform_orthographic
             .resize_orthographic(new_size.width, new_size.height);
         self.camera_uniform_orthographic_buffer
-            .update(renderer_interface.queue(), self.camera_uniform_orthographic);
+            .update_camera(renderer_interface.queue(), self.camera_uniform_orthographic);
     }
 
     pub fn update(
@@ -412,8 +443,17 @@ impl ForwardRenderer {
         // camera
         self.camera_uniform
             .update_view_proj(&self.camera, &self.projection);
-        self.camera_uniform_buffer
-            .update(renderer_interface.queue(), self.camera_uniform);
+
+        // camera light
+        self.camera_light_uniform
+        .update_view_proj(&self.camera_light, &self.projection);
+    
+        self.camera_uniform_buffer.update_camera(renderer_interface.queue(), self.camera_uniform);
+        self.camera_uniform_buffer.update_light(renderer_interface.queue(), self.camera_light_uniform);
+
+        self.camera_uniform_shadow_map_buffer.update_camera(renderer_interface.queue(), self.camera_light_uniform);
+        self.camera_uniform_shadow_map_buffer.update_light(renderer_interface.queue(), self.camera_light_uniform);
+
     }
 
     pub fn get_view_position(&self) -> cgmath::Vector3<f32> {
@@ -463,6 +503,9 @@ impl ForwardRenderer {
         view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
         lod_terrains: &mut dyn LodHeightMapShaderDraw,
+        animations: &[&dyn AnimationShaderDraw],
+        vertex_color_objects: &[&dyn VertexColorShaderDraw],
+        vertex_color_objects_lines: &[&dyn VertexColorShaderDrawLines],
     ) {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Forward Render Pass"),
@@ -495,13 +538,35 @@ impl ForwardRenderer {
             multiview_mask: None,
         });
 
+        let camera = &self.camera_uniform_shadow_map_buffer;
+        // let camera = &self.camera_uniform_buffer;
+
         // lod heightmap
         self.pipeline_lod_heightmap.draw(
             &mut render_pass,
-            &self.camera_uniform_buffer,
+            camera,
             &self.depth_texture,
             lod_terrains,
         );
+
+        // animations
+        for elem in animations {
+            self.pipeline_animated
+                .draw(&mut render_pass, camera, *elem);
+        }
+
+        // vertex color shader
+        for elem in vertex_color_objects {
+            self.pipeline_color
+                .draw(&mut render_pass, camera, *elem);
+        }
+
+        // vertex color shader lines
+        for elem in vertex_color_objects_lines {
+            self.pipeline_lines
+                .draw_lines(&mut render_pass, camera, *elem);
+        }
+
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -723,7 +788,10 @@ impl ForwardRenderer {
         self.render_shadow_map(
             &view, 
             &mut encoder, 
-            lod_terrains
+            lod_terrains,
+            animations,
+            vertex_color_objects,
+            vertex_color_objects_lines,
         );
 
         self.render_forward(

@@ -7,6 +7,9 @@ struct CameraUniform {
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
 
+@group(0) @binding(1)
+var<uniform> camera_light: CameraUniform;
+
 @group(2) @binding(0)
 var t_heightmap: texture_2d<f32>;
 
@@ -26,6 +29,7 @@ struct VertexOutput {
     @location(1) position: vec3<f32>,
     @location(2) normal: vec3<f32>,
     @location(3) tex_coords: vec2<f32>,
+    @location(4) position_light_space: vec4<f32>,
 };
 
 // Vertex shader without lighting
@@ -103,6 +107,7 @@ fn vs_main_gouraud(
     out.position = position;
     out.normal = normal;
     out.tex_coords = tex_coords;
+    out.position_light_space = camera_light.view_proj * vec4<f32>(position, 1.0);
 
     return out;
 }
@@ -126,33 +131,67 @@ struct FragmentOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> FragmentOutput {
 
-    // let color = textureSample(t_texture, s_texture, in.tex_coords);
-    // let color_out = vec4<f32>(in.color.xyz * color[3], color[3]);
+    var ndc = in.position_light_space.xyz / in.position_light_space.w;
+    ndc.y = -ndc.y;
+    let texSize = vec2<f32>(textureDimensions(shadow_map));
+    let pixel = vec2<i32>(
+        (ndc.xy * 0.5 + vec2(0.5)) * texSize
+    );
+
+
+    var proj_coords = in.clip_position.xyz;
+    let coord = vec2<i32>(proj_coords.xy);
+    let depth = textureLoad(shadow_map, pixel, 0);
+
+
+    let current_depth = ndc.z;
+
+    let bias = 0.00001;
+    let is_in_shadow = current_depth - bias > depth;
+    var shadow = 1.0;
+    if is_in_shadow {
+        shadow = 0.05;
+    } 
+ 
+    if (ndc.x < -1.0 || ndc.x > 1.0 ||
+        ndc.y < -1.0 || ndc.y > 1.0 ||
+        ndc.z < 0.0  || ndc.z > 1.0) {
+
+        // Outside the light frustum -> fully lit.
+        shadow = 1.0;
+    }
+
+
+    // var out: FragmentOutput;
+    // out.surface = vec4(vec3(color_out), 1.0);
+    // return out;
+
+
+
+
+
+    let color = textureSample(t_texture, s_texture, in.tex_coords);
+    let color_out = vec4<f32>(in.color.xyz * color[3], color[3]);
 
     // let val = textureSample(shadow_map, shadow_sampler, in.tex_coords) / 100.0;
     // let color_out = vec4(val, val, val, 1.0);
 
-    // var out: FragmentOutput;
-    // out.surface = color_out;
-
-    // return out;
-
-    let dims = textureDimensions(shadow_map);
-    let uv = in.clip_position.xy / vec2<f32>(dims);
-    let coord = vec2<i32>(uv * vec2<f32>(dims));
-
-    let depth = textureLoad(shadow_map, coord, 0);
-
-
-    let minDepth = 0.0;
-    let maxDepth = 1.0;
-
-    let d = (depth - minDepth) / (maxDepth - minDepth);
+    // let shadow = shadow_calculation(in.position_light_space);   
+    let lighting = shadow * color_out;    
+    
 
     var out: FragmentOutput;
-    out.surface = vec4(vec3(d), 1.0);
-    // out.surface = vec4(depth, depth, depth, 1.0);
+    out.surface = lighting;
+
     return out;
+
+    // var proj_coords = in.position_light_space.xyz / in.position_light_space.w;
+    // var proj_coords = in.position_light_space.xyz;
+    // proj_coords = proj_coords * 0.5 + 0.5;
+    
+    // let dims = textureDimensions(shadow_map);
+    // let uv = proj_coords.xy / vec2<f32>(dims);
+    // let coord = vec2<i32>(uv * vec2<f32>(dims));
 }
 
 // structure for getting the neighboring values of the height texture
@@ -226,4 +265,35 @@ fn get_vertex_info(vertex_index: u32,
         normal,
         tex_coords,
     );
+}
+
+fn shadow_calculation(position_light_space: vec4<f32>) -> f32 {
+
+    // perform perspective divide
+    var proj_coords = position_light_space.xyz / position_light_space.w;
+    proj_coords = proj_coords * 0.5 + 0.5;
+
+    let u: u32 = u32(i32(proj_coords.x));
+    let v: u32 = u32(i32(proj_coords.z));
+
+    let dims = textureDimensions(shadow_map);
+    let uv = position_light_space.xy / vec2<f32>(dims);
+    // let coord = vec2<i32>(uv * vec2<f32>(dims));
+
+    // let depth = textureLoad(shadow_map, coord, 0);
+
+
+    let closest_depth = textureLoad(shadow_map, vec2(u, v), 0); 
+
+    let current_depth = proj_coords.z;
+
+    // let shadow = current_depth > closest_depth;
+    // if shadow {
+    //     return 0.9;
+    // } 
+    // else {
+    //     return 0.0;
+    // }
+
+    return current_depth;
 }
