@@ -8,7 +8,11 @@ use super::LodHeightMapShaderDraw;
 use super::TextureBindGroupLayout;
 use super::Vertex;
 use wgpu_renderer::vertex_color_shader;
+use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 use wgpu_renderer::wgpu_renderer::depth_texture;
+use wgpu_renderer::wgpu_renderer::depth_texture::DepthTexture;
+use wgpu_renderer::wgpu_renderer::depth_texture_bind_group_layout;
+use wgpu_renderer::wgpu_renderer::depth_texture_bind_group_layout::DepthTextureBindGroupLayout;
 
 pub enum LightingModel {
     // no lighting
@@ -23,32 +27,34 @@ pub struct Pipeline {
 
 impl Pipeline {
     pub fn new(
-        device: &wgpu::Device,
+        wgpu_renderer: &mut dyn WgpuRendererInterface,
         camera_bind_group_layout: &CameraBindGroupLayout,
         texture_bind_group_layout: &TextureBindGroupLayout,
         heightmap_bind_group_layout: &HeightmapBindGroupLayout,
+        shadow_map_bind_group_layout: &DepthTextureBindGroupLayout,
         surface_format: wgpu::TextureFormat,
         lighting: &LightingModel,
     ) -> Self {
         // Shader
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let shader = wgpu_renderer.device().create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shader_heightmap.wgsl").into()),
         });
 
         // Pipeline
         let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            wgpu_renderer.device().create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Lod Heigtmap Pipeline Layout"),
                 bind_group_layouts: &[
                     Some(camera_bind_group_layout.get()),
                     Some(texture_bind_group_layout.get()),
                     Some(heightmap_bind_group_layout.get()),
+                    Some(shadow_map_bind_group_layout.get()),
                 ],
                 immediate_size: 0,
             });
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let render_pipeline = wgpu_renderer.device().create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Lod Heigtmap Pipeline"),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
@@ -106,10 +112,12 @@ impl Pipeline {
         &self,
         render_pass: &mut wgpu::RenderPass<'a>,
         camera: &'a vertex_color_shader::CameraUniformBuffer,
+        shadow_map: &'a DepthTexture,
         mesh: &'a mut dyn LodHeightMapShaderDraw,
     ) {
         render_pass.set_pipeline(&self.render_pipeline);
         camera.bind(render_pass);
+        shadow_map.bind(render_pass);
         mesh.draw(render_pass);
     }
 }

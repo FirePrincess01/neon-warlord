@@ -113,6 +113,12 @@ var t_texture: texture_2d<f32>;
 @group(1) @binding(1)
 var s_texture: sampler;
 
+@group(3) @binding(0)
+var shadow_map: texture_depth_2d;
+@group(3) @binding(1)
+// var shadow_sampler: sampler_comparison;
+var shadow_sampler: sampler;
+
 struct FragmentOutput {
     @location(0) surface: vec4<f32>,
 };
@@ -120,12 +126,32 @@ struct FragmentOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> FragmentOutput {
 
-    let color = textureSample(t_texture, s_texture, in.tex_coords);
-    let color_out = vec4<f32>(in.color.xyz * color[3], color[3]);
+    // let color = textureSample(t_texture, s_texture, in.tex_coords);
+    // let color_out = vec4<f32>(in.color.xyz * color[3], color[3]);
+
+    // let val = textureSample(shadow_map, shadow_sampler, in.tex_coords) / 100.0;
+    // let color_out = vec4(val, val, val, 1.0);
+
+    // var out: FragmentOutput;
+    // out.surface = color_out;
+
+    // return out;
+
+    let dims = textureDimensions(shadow_map);
+    let uv = in.clip_position.xy / vec2<f32>(dims);
+    let coord = vec2<i32>(uv * vec2<f32>(dims));
+
+    let depth = textureLoad(shadow_map, coord, 0);
+
+
+    let minDepth = 0.0;
+    let maxDepth = 1.0;
+
+    let d = (depth - minDepth) / (maxDepth - minDepth);
 
     var out: FragmentOutput;
-    out.surface = color_out;
-
+    out.surface = vec4(vec3(d), 1.0);
+    // out.surface = vec4(depth, depth, depth, 1.0);
     return out;
 }
 
