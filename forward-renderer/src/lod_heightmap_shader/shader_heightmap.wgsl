@@ -121,8 +121,7 @@ var s_texture: sampler;
 @group(3) @binding(0)
 var shadow_map: texture_depth_2d;
 @group(3) @binding(1)
-// var shadow_sampler: sampler_comparison;
-var shadow_sampler: sampler;
+var shadow_sampler: sampler_comparison;
 
 struct FragmentOutput {
     @location(0) surface: vec4<f32>,
@@ -139,27 +138,39 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
     );
 
 
-    var proj_coords = in.clip_position.xyz;
-    let coord = vec2<i32>(proj_coords.xy);
-    let depth = textureLoad(shadow_map, pixel, 0);
+    // var proj_coords = in.clip_position.xyz;
+    // let coord = vec2<i32>(proj_coords.xy);
+    // let depth = textureLoad(shadow_map, pixel, 0);
 
 
     let current_depth = ndc.z;
 
     let bias = 0.00001;
-    let is_in_shadow = current_depth - bias > depth;
-    var shadow = 1.0;
-    if is_in_shadow {
-        shadow = 0.05;
-    } 
- 
-    if (ndc.x < -1.0 || ndc.x > 1.0 ||
-        ndc.y < -1.0 || ndc.y > 1.0 ||
-        ndc.z < 0.0  || ndc.z > 1.0) {
 
-        // Outside the light frustum -> fully lit.
-        shadow = 1.0;
-    }
+    let uv = ndc.xy * 0.5 + vec2<f32>(0.5);
+    let visibility = textureSampleCompare(
+        shadow_map,
+        shadow_sampler,
+        uv,
+        current_depth - bias,
+    );
+
+
+    // let is_in_shadow = current_depth - bias > depth;
+    var shadow = 1.0;
+    // if is_in_shadow {
+    //     shadow = 0.05;
+    // } 
+ 
+    // if (ndc.x < -1.0 || ndc.x > 1.0 ||
+    //     ndc.y < -1.0 || ndc.y > 1.0 ||
+    //     ndc.z < 0.0  || ndc.z > 1.0) {
+
+    //     // Outside the light frustum -> fully lit.
+    //     shadow = 1.0;
+    // }
+
+    shadow = visibility;
 
 
     // var out: FragmentOutput;
