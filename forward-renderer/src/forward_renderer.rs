@@ -508,7 +508,8 @@ impl ForwardRenderer {
         vertex_color_objects_lines: &[&dyn VertexColorShaderDrawLines],
     ) {
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Forward Render Pass"),
+            label: Some("Shadow Map Render Pass"),
+            // color_attachments: &[], // no color target
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view,
                 resolve_target: None,
@@ -541,13 +542,13 @@ impl ForwardRenderer {
         let camera = &self.camera_uniform_shadow_map_buffer;
         // let camera = &self.camera_uniform_buffer;
 
-        // lod heightmap
-        self.pipeline_lod_heightmap.draw(
-            &mut render_pass,
-            camera,
-            &self.depth_texture,
-            lod_terrains,
-        );
+        // // lod heightmap
+        // self.pipeline_lod_heightmap.draw(
+        //     &mut render_pass,
+        //     camera,
+        //     &self.depth_texture,
+        //     lod_terrains,
+        // );
 
         // animations
         for elem in animations {
