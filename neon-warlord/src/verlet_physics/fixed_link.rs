@@ -62,8 +62,8 @@ impl FixedLink {
         let stiffness = 2500.0 * self.stiffness;
         let damping = self.damping;
 
-        object_1.accelerate(0.5 * axis * stiffness);
-        object_2.accelerate(-0.5 * axis * stiffness);
+        object_1.accelerate(0.60 * axis * stiffness);
+        object_2.accelerate(-0.40 * axis * stiffness);
 
         object_1.damp(damping);
         object_2.damp(damping);
