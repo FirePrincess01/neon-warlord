@@ -57,7 +57,24 @@
 			}
 		},
 		{
-			"label": "wasm-pack",
+			"label": "wasm-pack debug",
+			"type": "shell",
+			// "command": "RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target web",
+			"command": "~/.cargo/bin/wasm-pack build neon-warlord --target web --dev",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": true
+			}
+		},
+		{
+			"label": "wasm-pack release",
 			"type": "shell",
 			// "command": "RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build --target web",
 			"command": "~/.cargo/bin/wasm-pack build neon-warlord --target web",

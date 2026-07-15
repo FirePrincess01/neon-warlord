@@ -7,6 +7,9 @@ struct CameraUniform {
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
 
+@group(0) @binding(1)
+var<uniform> camera_light: CameraUniform;
+
 @group(2) @binding(0)
 var t_heightmap: texture_2d<f32>;
 
@@ -26,6 +29,7 @@ struct VertexOutput {
     @location(1) position: vec3<f32>,
     @location(2) normal: vec3<f32>,
     @location(3) tex_coords: vec2<f32>,
+    @location(4) position_light_space: vec4<f32>,
 };
 
 // Vertex shader without lighting
@@ -103,15 +107,24 @@ fn vs_main_gouraud(
     out.position = position;
     out.normal = normal;
     out.tex_coords = tex_coords;
+    out.position_light_space = camera_light.view_proj * vec4<f32>(position, 1.0);
 
     return out;
 }
 
 // Fragment shader
+
+// texture
 @group(1) @binding(0)
 var t_texture: texture_2d<f32>;
 @group(1) @binding(1)
 var s_texture: sampler;
+
+// shadow map
+@group(3) @binding(0)
+var shadow_map: texture_depth_2d;
+@group(3) @binding(1)
+var shadow_sampler: sampler_comparison;
 
 struct FragmentOutput {
     @location(0) surface: vec4<f32>,
@@ -120,11 +133,38 @@ struct FragmentOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> FragmentOutput {
 
+    // read shadow map
+    var ndc = in.position_light_space.xyz / in.position_light_space.w;
+    ndc.y = -ndc.y;
+    let texSize = vec2<f32>(textureDimensions(shadow_map));
+    let pixel = vec2<i32>(
+        (ndc.xy * 0.5 + vec2(0.5)) * texSize
+    );
+
+    let current_depth = ndc.z;
+
+    let bias = 0.00001;
+
+    let uv = ndc.xy * 0.5 + vec2<f32>(0.5);
+    let visibility = textureSampleCompare(
+        shadow_map,
+        shadow_sampler,
+        uv,
+        current_depth - bias,
+    );
+
+    var shadow = visibility;
+
+    // load texture
     let color = textureSample(t_texture, s_texture, in.tex_coords);
     let color_out = vec4<f32>(in.color.xyz * color[3], color[3]);
 
+    // apply shadow
+    let lighting = shadow * color_out;    
+    
+
     var out: FragmentOutput;
-    out.surface = color_out;
+    out.surface = lighting;
 
     return out;
 }
