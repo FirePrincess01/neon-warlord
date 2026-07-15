@@ -11,7 +11,6 @@ use wgpu_renderer::vertex_color_shader;
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 use wgpu_renderer::wgpu_renderer::depth_texture;
 use wgpu_renderer::wgpu_renderer::depth_texture::DepthTexture;
-use wgpu_renderer::wgpu_renderer::depth_texture_bind_group_layout;
 use wgpu_renderer::wgpu_renderer::depth_texture_bind_group_layout::DepthTextureBindGroupLayout;
 
 pub enum LightingModel {

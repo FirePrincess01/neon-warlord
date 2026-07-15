@@ -1,8 +1,6 @@
 //! Renders everything
 //!
 
-use std::char::decode_utf16;
-
 use crate::animation_shader::AnimationShaderDraw;
 use crate::particle_shader::{ParticleKind, ParticleShaderDraw};
 use crate::{animation_shader, particle_shader};
@@ -23,7 +21,7 @@ use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 use wgpu_renderer::vertex_texture_shader;
 use wgpu_renderer::wgpu_renderer::depth_texture::DepthTexture;
 use wgpu_renderer::wgpu_renderer::depth_texture_bind_group_layout::DepthTextureBindGroupLayout;
-use wgpu_renderer::wgpu_renderer::{WgpuRendererInterface, depth_texture};
+use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
 use cgmath::prelude::*; // for Point3::from_vec
 // use crate::{
@@ -118,7 +116,7 @@ impl ForwardRenderer {
             DepthTexture::create_depth_texture(
                 wgpu_renderer,
                 &depth_texture_bind_group_layout,
-                "shadow_map",
+                "shadow_map_texture",
             );
 
         // pipeline color
@@ -400,7 +398,7 @@ impl ForwardRenderer {
             DepthTexture::create_depth_texture(
                 renderer_interface,
                 &self.depth_texture_bind_group_layout,
-                "shadow_map",
+                "shadow_map_texture",
             );
 
         self.projection.resize(new_size.width, new_size.height);
@@ -502,7 +500,7 @@ impl ForwardRenderer {
     fn render_shadow_map(&self,
         view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
-        lod_terrains: &mut dyn LodHeightMapShaderDraw,
+        _lod_terrains: &mut dyn LodHeightMapShaderDraw,
         animations: &[&dyn AnimationShaderDraw],
         vertex_color_objects: &[&dyn VertexColorShaderDraw],
         vertex_color_objects_lines: &[&dyn VertexColorShaderDrawLines],
@@ -573,7 +571,7 @@ impl ForwardRenderer {
     #[allow(clippy::too_many_arguments)]
     fn render_forward(
         &self,
-        renderer_interface: &mut dyn WgpuRendererInterface,
+        _renderer_interface: &mut dyn WgpuRendererInterface,
         view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
         lod_terrains: &mut dyn LodHeightMapShaderDraw,
