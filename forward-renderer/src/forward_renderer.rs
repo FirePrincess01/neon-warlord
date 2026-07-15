@@ -104,7 +104,7 @@ impl ForwardRenderer {
         let surface_format: wgpu::TextureFormat = wgpu_renderer.surface_format();
 
        // dpeth texture and shadow map
-       let depth_texture_bind_group_layout = DepthTextureBindGroupLayout::new(&wgpu_renderer.device());
+       let depth_texture_bind_group_layout = DepthTextureBindGroupLayout::new(wgpu_renderer.device());
        let depth_texture =
             DepthTexture::create_depth_texture(
                 wgpu_renderer, 
