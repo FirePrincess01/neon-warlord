@@ -81,7 +81,7 @@ impl SimplePhysicsSimulation {
         let fixed = vec![
             verlet_physics::fixed::Fixed::new(0, Vec3::new(-5.0, 0.0, 15.0)),
             verlet_physics::fixed::Fixed::new(nr_links, Vec3::new(-6.0, 0.0, 15.0)),
-            verlet_physics::fixed::Fixed::new(tree_root_index, Vec3::new(-2.0,15.0, 0.1)),
+            verlet_physics::fixed::Fixed::new(tree_root_index, Vec3::new(-2.0, 15.0, 0.1)),
         ];
 
         let circle = geometry::Circle::new_color_fade(radius, 32, [0.0, 0.4, 0.4], [0.4, 0.0, 0.4]);

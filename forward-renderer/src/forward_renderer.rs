@@ -14,16 +14,16 @@ use crate::{animation_shader, particle_shader};
 // use crate::terrain_storage::TerrainStorage;
 use crate::lod_heightmap_shader::LodHeightMapShaderDraw;
 use crate::{DrawGui, lod_heightmap_shader};
+use cgmath::prelude::*;
 use wgpu_renderer::default_application::default_application_interface::RenderError;
 use wgpu_renderer::performance_monitor::watch;
 use wgpu_renderer::vertex_color_shader::vertex_color_shader_draw::VertexColorShaderDrawLines;
 use wgpu_renderer::vertex_color_shader::{self, VertexColorShaderDraw};
 use wgpu_renderer::vertex_texture_shader;
-use wgpu_renderer::wgpu_renderer::depth_texture::DepthTexture;
-use wgpu_renderer::wgpu_renderer::depth_texture_bind_group_layout::DepthTextureBindGroupLayout;
 use wgpu_renderer::wgpu_renderer::WgpuRendererInterface;
 use wgpu_renderer::wgpu_renderer::camera::{Camera, Projection};
-use cgmath::prelude::*; // for Point3::from_vec
+use wgpu_renderer::wgpu_renderer::depth_texture::DepthTexture;
+use wgpu_renderer::wgpu_renderer::depth_texture_bind_group_layout::DepthTextureBindGroupLayout; // for Point3::from_vec
 // use crate::{
 //     deferred_animation_shader, deferred_heightmap_shader, deferred_light_shader,
 //     deferred_light_sphere_shader, fxaa_shader,
@@ -86,7 +86,7 @@ pub struct ForwardRenderer {
     camera_light_uniform: vertex_color_shader::CameraUniform,
     camera_uniform_buffer: vertex_color_shader::CameraUniformBuffer,
     camera_uniform_shadow_map_buffer: vertex_color_shader::CameraUniformBuffer,
-    
+
     camera_uniform_orthographic: vertex_color_shader::CameraUniform,
     camera_uniform_orthographic_buffer: vertex_color_shader::CameraUniformBuffer,
 }
@@ -103,21 +103,20 @@ impl ForwardRenderer {
         let _surface_height = wgpu_renderer.surface_height();
         let surface_format: wgpu::TextureFormat = wgpu_renderer.surface_format();
 
-       // dpeth texture and shadow map
-       let depth_texture_bind_group_layout = DepthTextureBindGroupLayout::new(wgpu_renderer.device());
-       let depth_texture =
-            DepthTexture::create_depth_texture(
-                wgpu_renderer, 
-                &depth_texture_bind_group_layout,
-                "depth_texture",
-            );
+        // dpeth texture and shadow map
+        let depth_texture_bind_group_layout =
+            DepthTextureBindGroupLayout::new(wgpu_renderer.device());
+        let depth_texture = DepthTexture::create_depth_texture(
+            wgpu_renderer,
+            &depth_texture_bind_group_layout,
+            "depth_texture",
+        );
 
-       let shadow_map =
-            DepthTexture::create_depth_texture(
-                wgpu_renderer,
-                &depth_texture_bind_group_layout,
-                "shadow_map_texture",
-            );
+        let shadow_map = DepthTexture::create_depth_texture(
+            wgpu_renderer,
+            &depth_texture_bind_group_layout,
+            "shadow_map_texture",
+        );
 
         // pipeline color
         let camera_bind_group_layout =
@@ -284,7 +283,7 @@ impl ForwardRenderer {
         // let znear = 1.0;
         // let zfar = 10.0;
         let projection_light = Projection::new(width, height, fovy, znear, zfar);
-        
+
         let camera_uniform = vertex_color_shader::CameraUniform::new();
         let camera_light_uniform = vertex_color_shader::CameraUniform::new();
 
@@ -387,22 +386,21 @@ impl ForwardRenderer {
     ) {
         // self.size = new_size;
 
-       self.depth_texture =
-            DepthTexture::create_depth_texture(
-                renderer_interface, 
-                &self.depth_texture_bind_group_layout,
-                "depth_texture",
-            );
+        self.depth_texture = DepthTexture::create_depth_texture(
+            renderer_interface,
+            &self.depth_texture_bind_group_layout,
+            "depth_texture",
+        );
 
-       self.shadow_map =
-            DepthTexture::create_depth_texture(
-                renderer_interface,
-                &self.depth_texture_bind_group_layout,
-                "shadow_map_texture",
-            );
+        self.shadow_map = DepthTexture::create_depth_texture(
+            renderer_interface,
+            &self.depth_texture_bind_group_layout,
+            "shadow_map_texture",
+        );
 
         self.projection.resize(new_size.width, new_size.height);
-        self.projection_light.resize(new_size.width, new_size.height);
+        self.projection_light
+            .resize(new_size.width, new_size.height);
         // self.wgpu_renderer.resize(new_size);
         // self.g_buffer = GBuffer::new(
         //     renderer_interface,
@@ -444,14 +442,17 @@ impl ForwardRenderer {
 
         // camera light
         self.camera_light_uniform
-        .update_view_proj(&self.camera_light, &self.projection);
-    
-        self.camera_uniform_buffer.update_camera(renderer_interface.queue(), self.camera_uniform);
-        self.camera_uniform_buffer.update_light(renderer_interface.queue(), self.camera_light_uniform);
+            .update_view_proj(&self.camera_light, &self.projection);
 
-        self.camera_uniform_shadow_map_buffer.update_camera(renderer_interface.queue(), self.camera_light_uniform);
-        self.camera_uniform_shadow_map_buffer.update_light(renderer_interface.queue(), self.camera_light_uniform);
+        self.camera_uniform_buffer
+            .update_camera(renderer_interface.queue(), self.camera_uniform);
+        self.camera_uniform_buffer
+            .update_light(renderer_interface.queue(), self.camera_light_uniform);
 
+        self.camera_uniform_shadow_map_buffer
+            .update_camera(renderer_interface.queue(), self.camera_light_uniform);
+        self.camera_uniform_shadow_map_buffer
+            .update_light(renderer_interface.queue(), self.camera_light_uniform);
     }
 
     pub fn get_view_position(&self) -> cgmath::Vector3<f32> {
@@ -497,7 +498,8 @@ impl ForwardRenderer {
     //     );
     // }
 
-    fn render_shadow_map(&self,
+    fn render_shadow_map(
+        &self,
         view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
         _lod_terrains: &mut dyn LodHeightMapShaderDraw,
@@ -550,14 +552,12 @@ impl ForwardRenderer {
 
         // animations
         for elem in animations {
-            self.pipeline_animated
-                .draw(&mut render_pass, camera, *elem);
+            self.pipeline_animated.draw(&mut render_pass, camera, *elem);
         }
 
         // vertex color shader
         for elem in vertex_color_objects {
-            self.pipeline_color
-                .draw(&mut render_pass, camera, *elem);
+            self.pipeline_color.draw(&mut render_pass, camera, *elem);
         }
 
         // vertex color shader lines
@@ -565,7 +565,6 @@ impl ForwardRenderer {
             self.pipeline_lines
                 .draw_lines(&mut render_pass, camera, *elem);
         }
-
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -785,8 +784,8 @@ impl ForwardRenderer {
         watch_fps.start(watch_index, "Draw Calls");
 
         self.render_shadow_map(
-            &view, 
-            &mut encoder, 
+            &view,
+            &mut encoder,
             lod_terrains,
             animations,
             vertex_color_objects,
