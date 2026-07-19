@@ -1,6 +1,6 @@
 //! Instantiates agents
 
-use crate::agents::agentd_definitions::get_agent_0_definition;
+use crate::agents::agent_definitions::get_agent_0_definition;
 use regex::Regex;
 
 pub struct AgentFactory {
