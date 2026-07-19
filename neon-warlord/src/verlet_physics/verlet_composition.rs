@@ -6,7 +6,7 @@ use cgmath::MetricSpace;
 use crate::{ verlet_physics::{VerletObject, fixed::Fixed, fixed_link::FixedLink, link::Link, sticky_link::StickyLink}};
 type Vec3 = cgmath::Vector3<f32>;
 
-struct VerletComposition {
+pub struct VerletComposition {
     pub verlet_objects: Vec<VerletObject>,
     pub links: Vec<Link>,
     pub fixed_links: Vec<FixedLink>,
@@ -16,7 +16,7 @@ struct VerletComposition {
 
 impl VerletComposition {
 
-    fn create(nodes: &[Node]) {
+    pub fn create(nodes: &[Node]) -> VerletComposition {
         let radius = 0.5;
         let pos = Vec3::new(0.0, 0.0, 0.0);
 
@@ -27,7 +27,13 @@ impl VerletComposition {
         let mut sticky_links = Vec::new();
 
         if nodes.len() == 0 {
-            return;
+            return Self {
+                verlet_objects,
+                links,
+                fixed_links,
+                fixed,
+                sticky_links,
+            };
         }
 
         // Create all nodes
@@ -72,10 +78,14 @@ impl VerletComposition {
                     fixed.push(Fixed::new(id_0, pos_0));
                 },
             }
+        }
 
-
-            // let verlet_object = VerletObject::new(
-            //     pos, radius)
+        Self {
+            verlet_objects,
+            links,
+            fixed_links,
+            fixed,
+            sticky_links,
         }
     }
 }

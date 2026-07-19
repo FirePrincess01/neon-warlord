@@ -19,6 +19,7 @@ mod verlet_physics;
 mod worker;
 mod worker_instance;
 mod agents;
+mod physics_simulation_v2;
 
 use forward_renderer::{
     AnimatedObjectStorage, ForwardRenderer, PerformanceMonitor, TerrainStorage,

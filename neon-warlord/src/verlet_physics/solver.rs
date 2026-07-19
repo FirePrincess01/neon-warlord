@@ -3,7 +3,7 @@
 use cgmath::InnerSpace;
 use noise::NoiseFn;
 
-use crate::verlet_physics::{self, Vec3, VerletObject};
+use crate::verlet_physics::{self, Vec3, VerletObject, verlet_composition::VerletComposition};
 
 pub struct Solver {
     perlin: noise::Perlin,
@@ -46,6 +46,37 @@ impl Solver {
         }
 
         self.ticks += 1;
+    }
+
+    pub fn update_composites(
+        &self,
+        verlet_compositions: &mut [VerletComposition],
+        dt: f32,
+    ) {
+        for composition in verlet_compositions {
+            let verlet_objects = &mut composition.verlet_objects;
+            
+            // gravity
+            Self::apply_gravity(verlet_objects);
+            
+            // constraints
+            for elem in &composition.fixed {
+                elem.apply(verlet_objects);
+            }
+            for elem in &composition.links {
+                elem.apply(verlet_objects);
+            }
+            for elem in &composition.fixed_links {
+                elem.apply(verlet_objects);
+            }
+            for elem in &composition.sticky_links {
+                elem.apply(verlet_objects);
+            }
+
+            // physics equation
+            Self::update_positions(verlet_objects, dt);
+
+        }
     }
 
     fn update_positions(verlet_objects: &mut [VerletObject], dt: f32) {
