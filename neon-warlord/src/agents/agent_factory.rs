@@ -32,6 +32,8 @@ impl AgentFactory {
             }
         }
 
+        nodes.sort_by_key(|node| node.id);
+
         nodes
     }
 
