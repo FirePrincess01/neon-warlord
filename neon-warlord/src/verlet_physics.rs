@@ -2,8 +2,10 @@
 
 pub mod fixed;
 pub mod fixed_link;
+pub mod sticky_link;
 pub mod link;
 pub mod solver;
+pub mod verlet_composition;
 
 use cgmath::Zero;
 

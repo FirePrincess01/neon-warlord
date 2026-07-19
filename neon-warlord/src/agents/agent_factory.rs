@@ -1,7 +1,10 @@
 //! Instantiates agents
 
-use crate::agents::agent_definitions::get_agent_0_definition;
+use crate::{agents::agent_definitions::get_agent_0_definition, verlet_physics::verlet_composition::{LinkKind, Node}};
+use cgmath::Zero;
 use regex::Regex;
+type Vec3 = cgmath::Vector3<f32>;
+
 
 pub struct AgentFactory {
     re: Regex,
@@ -20,6 +23,8 @@ impl AgentFactory {
     ) -> Vec<Node> {
         let mut nodes = Vec::new();
 
+
+        // Parse nodes
         for nr_slice in 0..NR_SLICES {
             for r in 0..R {
                 for c in 0..C {
@@ -34,10 +39,38 @@ impl AgentFactory {
 
         nodes.sort_by_key(|node| node.id);
 
-        nodes
+        // Create result
+        let mut res = Vec::with_capacity(nodes.len());
+        if nodes.len() == 0 {
+            return res;
+        }
+
+        let origin = &nodes[0];
+        let origin_pos = Vec3::new(
+            origin.location.1 as f32, 
+            origin.location.2 as f32,
+            origin.location.0 as f32
+        );
+
+        for node in nodes {
+         let local_pos = Vec3::new(
+                node.location.1 as f32 - origin_pos.x,
+                node.location.2 as f32 - origin_pos.y,
+                node.location.0 as f32 - origin_pos.z,
+            );
+
+            res.push(Node{
+                id: node.id,
+                link_kind: node.link_kind,
+                link_target: node.link_target,
+                pos: local_pos,
+            });
+        }
+
+        res
     }
 
-    fn parse(&self, elem: &str) -> Node {
+    fn parse(&self, elem: &str) -> AgentNode {
         let caps = self
             .re
             .captures(elem)
@@ -47,18 +80,18 @@ impl AgentFactory {
         let kind = &caps["kind"];
         let target = &caps["target"];
 
-        let id: u32 = id.parse().unwrap();
-        let link_target: u32 = target.parse().unwrap();
+        let id: usize = id.parse().unwrap();
+        let link_target: usize = target.parse().unwrap();
 
         let link_kind = match kind {
-            "F" => LinkKind::fixed,
-            "L" => LinkKind::linked,
-            "S" => LinkKind::sticky,
-            "O" => LinkKind::origin,
+            "F" => LinkKind::Fixed,
+            "L" => LinkKind::Linked,
+            "S" => LinkKind::Sticky,
+            "O" => LinkKind::Origin,
             &_ => panic!("Error parsing agent definition")
         };
 
-        Node {
+        AgentNode {
             id,
             link_kind,
             link_target,
@@ -67,22 +100,13 @@ impl AgentFactory {
     }
 }
 
-enum LinkKind {
-    /// Node is fixed in location to the other node
-    fixed,
-    /// Node is fixed in distance to the other node
-    linked,
-    /// Node is fixed in distance to the other node and is sticky to the ground
-    sticky,
-    /// Treated as origin of the structure (has no parent links)
-    origin,
-}
 
-pub struct Node {
-    id: u32,
-    link_kind: LinkKind,
-    link_target: u32,
-    location: (usize, usize, usize)
+
+pub struct AgentNode {
+    pub id: usize,
+    pub link_kind: LinkKind,
+    pub link_target: usize,
+    pub location: (usize, usize, usize),
 }
 
 
