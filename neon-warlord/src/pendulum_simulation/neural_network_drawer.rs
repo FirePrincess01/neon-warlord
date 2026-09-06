@@ -16,7 +16,7 @@ pub struct NeuralNetworkDrawer<
     color_zero: Vec3,
     color_positive: Vec3,
 
-    nr_nodes: usize,
+    _nr_nodes: usize,
 
     position: Vec3,
 }
@@ -32,7 +32,7 @@ impl<
 NeuralNetworkDrawer<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL> {
 
     pub fn new(
-        model: &NeuralNetworkSimd<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>, 
+        _model: &NeuralNetworkSimd<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>, 
         radius: f32, 
         position: Vec3
     ) -> Self {
@@ -50,7 +50,7 @@ NeuralNetworkDrawer<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL> {
             color_negative: color_negative.into(),
             color_zero: color_zero.into(),
             color_positive: color_positive.into(),
-            nr_nodes,
+            _nr_nodes: nr_nodes,
             position,
         }
     }
@@ -59,7 +59,7 @@ NeuralNetworkDrawer<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL> {
         &mut self,
         model: &NeuralNetworkSimd<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>, 
         producer_nodes: &mut Vec<particle_shader::Instance>,
-        producer_edges: &mut Vec<particle_shader_two_point::Instance>,
+        _producer_edges: &mut Vec<particle_shader_two_point::Instance>,
     ) {
         self.update_nodes(model, producer_nodes);
     }

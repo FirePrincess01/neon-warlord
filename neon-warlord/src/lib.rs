@@ -15,6 +15,7 @@ mod heightmap_generator;
 mod orb_controller;
 mod orb_storage;
 mod physics_simulation_v2;
+#[allow(dead_code)]
 mod physics_simulation_v3;
 mod physics_simulation_v3_drawer;
 mod pendulum_simulation;
@@ -25,6 +26,8 @@ mod simple_physics_simulation;
 mod sun_storage;
 mod triple_buffer;
 mod verlet_physics;
+
+#[allow(dead_code)]
 mod verlet_physics_simd;
 mod worker;
 mod worker_instance;
@@ -51,7 +54,7 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_controller::AntPosition, ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController, debug_overlay::DebugOverlay, pendulum_simulation::{PendulumSimulation, PendulumSimulationThread}, physics_simulation_v3::{PhysicSimThread, PhysicsSimulationV3}, physics_simulation_v3_drawer::PhysicsSimulationV3Drawer, simple_physics_simulation::SimplePhysicsSimulation, sun_storage::SunStorage, worker_instance::WorkerInstance, worker_thread::WorkerThread,
+    ant_controller::AntPosition, ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController, debug_overlay::DebugOverlay, pendulum_simulation::{PendulumSimulation, PendulumSimulationThread}, physics_simulation_v3_drawer::PhysicsSimulationV3Drawer, simple_physics_simulation::SimplePhysicsSimulation, sun_storage::SunStorage, worker_instance::WorkerInstance, worker_thread::WorkerThread,
 };
 
 const WATCH_POINTS_SIZE: usize = 10;

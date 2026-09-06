@@ -57,7 +57,7 @@ impl PendulumSimulation {
     }
 
     pub fn update_physics(&mut self, _height_map: &impl HeightMapInterface) {
-        let dt = 1.0 / 60.0;
+        let _dt = 1.0 / 60.0;
         self.ticks += 1;
 
         // self.watch_ups.stop();

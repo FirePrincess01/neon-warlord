@@ -4,6 +4,7 @@
 pub mod dqn;
 #[allow(dead_code)]
 pub mod dqn_dfdx;
+#[allow(dead_code)]
 pub mod neat;
 #[allow(dead_code)]
 pub mod neural_network;
