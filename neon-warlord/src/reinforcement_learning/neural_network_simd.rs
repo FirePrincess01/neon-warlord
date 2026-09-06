@@ -34,7 +34,7 @@ pub struct NeuralNetworkSimd<
     pub x: [f32; LANES],
 
     // parameters
-    w: [[[f32; LANES]; LANES]; NR_LAYERS],
+    pub w: [[[f32; LANES]; LANES]; NR_LAYERS],
     b: [[f32; LANES]; NR_LAYERS],
 
     // output

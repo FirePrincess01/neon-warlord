@@ -17,6 +17,7 @@ mod orb_storage;
 mod physics_simulation_v2;
 mod physics_simulation_v3;
 mod physics_simulation_v3_drawer;
+mod pendulum_simulation;
 mod procedural_tree;
 mod reinforcement_learning;
 mod settings;
