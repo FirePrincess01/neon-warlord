@@ -5,7 +5,11 @@ mod neural_network_drawer;
 use forward_renderer::height_map::HeightMapInterface;
 use wgpu_renderer::performance_monitor::{Fps, watch::Watch};
 
-use crate::{pendulum_simulation::neural_network_drawer::NeuralNetworkDrawer, physics_simulation_v3_drawer::DrawerObjects, reinforcement_learning::neural_network_simd::NeuralNetworkSimd, triple_buffer, worker_thread};
+use crate::{
+    pendulum_simulation::neural_network_drawer::NeuralNetworkDrawer,
+    physics_simulation_v3_drawer::DrawerObjects,
+    reinforcement_learning::neural_network_simd::NeuralNetworkSimd, triple_buffer, worker_thread,
+};
 
 pub const WATCH_POINTS_SIZE: usize = 10;
 type Vec3 = cgmath::Vector3<f32>;
@@ -35,11 +39,7 @@ impl PendulumSimulation {
         let scale = 0.1;
 
         let model = NeuralNetworkSimd::new();
-        let model_drawer = NeuralNetworkDrawer::new(
-            &model, 
-            scale, 
-            pos
-        );
+        let model_drawer = NeuralNetworkDrawer::new(&model, scale, pos);
 
         // Debug
         let ups = Fps::new();
@@ -73,16 +73,14 @@ impl PendulumSimulation {
     }
 
     pub fn update_drawer(&mut self, objects: &mut DrawerObjects) {
-
         self.watch_ups.start("Draw Model");
         self.model_drawer.update(
-            &self.model, 
-            &mut objects.genome_nodes, 
-            &mut objects.genome_edges
+            &self.model,
+            &mut objects.genome_nodes,
+            &mut objects.genome_edges,
         );
 
         self.watch_ups.stop();
-
 
         objects.ups = self.ups.get();
         self.watch_ups.update();

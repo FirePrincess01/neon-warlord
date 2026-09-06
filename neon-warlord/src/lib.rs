@@ -14,11 +14,11 @@ mod game_board;
 mod heightmap_generator;
 mod orb_controller;
 mod orb_storage;
+mod pendulum_simulation;
 mod physics_simulation_v2;
 #[allow(dead_code)]
 mod physics_simulation_v3;
 mod physics_simulation_v3_drawer;
-mod pendulum_simulation;
 mod procedural_tree;
 mod reinforcement_learning;
 mod settings;
@@ -54,7 +54,17 @@ use wgpu_renderer::{
 use winit::event::{ElementState, WindowEvent};
 
 use crate::{
-    ant_controller::AntPosition, ant_generator::AntGenerator, ant_storage::AntStorage, camera_controller::CameraController, debug_overlay::DebugOverlay, pendulum_simulation::{PendulumSimulation, PendulumSimulationThread}, physics_simulation_v3_drawer::PhysicsSimulationV3Drawer, simple_physics_simulation::SimplePhysicsSimulation, sun_storage::SunStorage, worker_instance::WorkerInstance, worker_thread::WorkerThread,
+    ant_controller::AntPosition,
+    ant_generator::AntGenerator,
+    ant_storage::AntStorage,
+    camera_controller::CameraController,
+    debug_overlay::DebugOverlay,
+    pendulum_simulation::{PendulumSimulation, PendulumSimulationThread},
+    physics_simulation_v3_drawer::PhysicsSimulationV3Drawer,
+    simple_physics_simulation::SimplePhysicsSimulation,
+    sun_storage::SunStorage,
+    worker_instance::WorkerInstance,
+    worker_thread::WorkerThread,
 };
 
 const WATCH_POINTS_SIZE: usize = 10;
@@ -316,12 +326,11 @@ impl NeonWarlord {
         //         sim: PhysicsSimulationV3::new(producer),
         //     });
 
-        let pendulum_simulation_thread = 
-            WorkerThread::spawn(PendulumSimulationThread {
-                sim: PendulumSimulation::new(),
-                producer,
-                height_map: _height_map.clone(),
-            });
+        let pendulum_simulation_thread = WorkerThread::spawn(PendulumSimulationThread {
+            sim: PendulumSimulation::new(),
+            producer,
+            height_map: _height_map.clone(),
+        });
 
         // Worker
         let worker = WorkerInstance::new();
