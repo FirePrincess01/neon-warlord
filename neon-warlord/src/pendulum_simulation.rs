@@ -1,13 +1,19 @@
 //! Simulates an inverted pendulum
 
-mod neural_network_drawer;
 mod graph_lines;
+mod neural_network_drawer;
 
 use forward_renderer::height_map::HeightMapInterface;
 use wgpu_renderer::performance_monitor::{Fps, watch::Watch};
 
 use crate::{
-    pendulum_simulation::{graph_lines::{GraphLines, GraphLinesDrawer}, neural_network_drawer::NeuralNetworkDrawer}, physics_simulation_v3_drawer::DrawerObjects, reinforcement_learning::neural_network_simd::NeuralNetworkSimd, triple_buffer, worker_thread,
+    pendulum_simulation::{
+        graph_lines::{GraphLines, GraphLinesDrawer},
+        neural_network_drawer::NeuralNetworkDrawer,
+    },
+    physics_simulation_v3_drawer::DrawerObjects,
+    reinforcement_learning::neural_network_simd::NeuralNetworkSimd,
+    triple_buffer, worker_thread,
 };
 
 pub const WATCH_POINTS_SIZE: usize = 10;
@@ -47,15 +53,12 @@ impl PendulumSimulation {
         let watch_ups = Watch::new();
 
         let graph_x: Vec<f32> = (0..100).map(|i| i as f32 * 0.1).collect();
-        let graph_y: Vec<f32> = (0..100).map(|i| (i as f32 * 0.1).sin()* 10.0).collect();
+        let graph_y: Vec<f32> = (0..100).map(|i| (i as f32 * 0.1).sin() * 10.0).collect();
         let graph = GraphLines {
             x: graph_x,
             y: graph_y,
         };
-        let graph_drawer = GraphLinesDrawer::new(
-            scale, 
-            pos + Vec3::new(-2.0, 1.0, 1.0),
-        );
+        let graph_drawer = GraphLinesDrawer::new(scale, pos + Vec3::new(-2.0, 1.0, 1.0));
 
         Self {
             ticks: 0,
@@ -92,11 +95,7 @@ impl PendulumSimulation {
         let edges = &mut objects.genome_edges;
 
         self.watch_ups.start("Draw Model");
-        self.model_drawer.update(
-            &self.model,
-            nodes,
-            edges,
-        );
+        self.model_drawer.update(&self.model, nodes, edges);
 
         self.graph_drawer.update(&self.graph, edges);
 

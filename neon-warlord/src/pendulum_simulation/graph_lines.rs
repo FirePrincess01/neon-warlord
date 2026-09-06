@@ -35,8 +35,8 @@ impl GraphLinesDrawer {
             grid_extent: 10.0,
         }
     }
-    
-pub fn update(
+
+    pub fn update(
         &mut self,
         graph: &GraphLines,
         edges: &mut Vec<particle_shader_two_point::Instance>,
@@ -45,10 +45,7 @@ pub fn update(
         self.draw_graph(graph, edges);
     }
 
-    fn draw_grid(
-        &self,
-        edges: &mut Vec<particle_shader_two_point::Instance>,
-    ) {
+    fn draw_grid(&self, edges: &mut Vec<particle_shader_two_point::Instance>) {
         let size = self.size * 0.02;
 
         let extent = self.grid_extent;
@@ -58,11 +55,9 @@ pub fn update(
 
         while value <= extent {
             // Vertical grid line (X axis)
-            let p0 = self.position
-                + Vec3::new(value, 0.0, -extent) * self.size;
+            let p0 = self.position + Vec3::new(value, 0.0, -extent) * self.size;
 
-            let p1 = self.position
-                + Vec3::new(value, 0.0, extent) * self.size;
+            let p1 = self.position + Vec3::new(value, 0.0, extent) * self.size;
 
             edges.push(particle_shader_two_point::Instance {
                 position_0: p0.into(),
@@ -73,11 +68,9 @@ pub fn update(
             });
 
             // Horizontal grid line (Y axis)
-            let p0 = self.position
-                + Vec3::new(-extent, 0.0, value) * self.size;
+            let p0 = self.position + Vec3::new(-extent, 0.0, value) * self.size;
 
-            let p1 = self.position
-                + Vec3::new(extent, 0.0, value) * self.size;
+            let p1 = self.position + Vec3::new(extent, 0.0, value) * self.size;
 
             edges.push(particle_shader_two_point::Instance {
                 position_0: p0.into(),
@@ -91,11 +84,7 @@ pub fn update(
         }
     }
 
-    fn draw_graph(
-        &self,
-        graph: &GraphLines,
-        edges: &mut Vec<particle_shader_two_point::Instance>,
-    ) {
+    fn draw_graph(&self, graph: &GraphLines, edges: &mut Vec<particle_shader_two_point::Instance>) {
         let size = self.size * 0.02;
 
         let count = graph.x.len().min(graph.y.len());
@@ -105,11 +94,9 @@ pub fn update(
         }
 
         for i in 0..count - 1 {
-            let p0 = self.position
-                + Vec3::new(graph.x[i], 0.0, graph.y[i]) * self.size;
+            let p0 = self.position + Vec3::new(graph.x[i], 0.0, graph.y[i]) * self.size;
 
-            let p1 = self.position
-                + Vec3::new(graph.x[i + 1], 0.0, graph.y[i + 1]) * self.size;
+            let p1 = self.position + Vec3::new(graph.x[i + 1], 0.0, graph.y[i + 1]) * self.size;
 
             edges.push(particle_shader_two_point::Instance {
                 position_0: p0.into(),
