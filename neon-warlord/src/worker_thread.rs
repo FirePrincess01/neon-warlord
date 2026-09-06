@@ -1,6 +1,8 @@
 //! Creates a thread or uses a single threaded update function on wasm
 
-use std::thread::JoinHandle;
+use std::{thread::JoinHandle, time::Duration};
+
+use instant::Instant;
 
 /// Creates a thread or uses a single threaded update function on wasm
 pub struct WorkerThread<T>
@@ -37,7 +39,18 @@ where
             let res = thread::spawn(move || {
                 let mut func_obj = func_obj;
                 loop {
+                    let frame_start = Instant::now();
+
+                    // update
                     func_obj.update();
+
+                    // sleep until 16.6 ms have been reached
+                    let frame_time = frame_start.elapsed();
+                    let target_frame_time = Duration::from_micros(16_667);
+
+                    if frame_time < target_frame_time {
+                        thread::sleep(target_frame_time - frame_time);
+                    }
                 }
             });
             WorkerThread {

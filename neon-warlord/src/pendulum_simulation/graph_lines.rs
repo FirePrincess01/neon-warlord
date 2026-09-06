@@ -1,18 +1,32 @@
 //! Draws a lines graph
 
+use std::collections::VecDeque;
+
 use forward_renderer::{particle_shader_two_point, to_rgb};
 
 use crate::pendulum_simulation::Vec3;
 
 pub struct GraphLines {
-    pub x: Vec<f32>,
-    pub y: Vec<f32>,
+    pub x: VecDeque<f32>,
+    pub y: VecDeque<f32>,
+}
+
+impl GraphLines {
+    pub fn y_push_pop(&mut self, val: f32) {
+        self.y.pop_front();
+        self.y.push_back(val);
+    }
 }
 
 pub struct GraphLinesDrawer {
     size: f32,
     color: Vec3,
     position: Vec3,
+
+    x_lim_start: f32,
+    x_lim_end: f32,
+    y_lim_start: f32,
+    y_lim_end: f32,
 
     // Grid settings
     grid_color: Vec3,
@@ -25,15 +39,36 @@ impl GraphLinesDrawer {
         let color = to_rgb("#c300d9");
         let grid_color = to_rgb("#333333");
 
+        let x_lim_start = 0.0;
+        let x_lim_end = 100.0;
+        let y_lim_start = -1.0;
+        let y_lim_end = 1.0;
+
         Self {
             size,
             color: color.into(),
             position,
 
+            x_lim_start,
+            x_lim_end,
+            y_lim_start,
+            y_lim_end,
+
             grid_color: grid_color.into(),
             grid_spacing: 2.0,
             grid_extent: 10.0,
         }
+    }
+
+    pub fn color(mut self, to_rgb: [f32; 3]) -> GraphLinesDrawer {
+        self.color = to_rgb.into();
+        self
+    }
+
+    pub fn y_lim(mut self, y_lim: f32) -> GraphLinesDrawer {
+        self.y_lim_start = -y_lim;
+        self.y_lim_end = y_lim;
+        self
     }
 
     pub fn update(
@@ -85,7 +120,7 @@ impl GraphLinesDrawer {
     }
 
     fn draw_graph(&self, graph: &GraphLines, edges: &mut Vec<particle_shader_two_point::Instance>) {
-        let size = self.size * 0.02;
+        let size = self.size * 0.05;
 
         let count = graph.x.len().min(graph.y.len());
 
@@ -93,10 +128,28 @@ impl GraphLinesDrawer {
             return;
         }
 
-        for i in 0..count - 1 {
-            let p0 = self.position + Vec3::new(graph.x[i], 0.0, graph.y[i]) * self.size;
+        let x_range = self.x_lim_end - self.x_lim_start;
+        let y_range = self.y_lim_end - self.y_lim_start;
 
-            let p1 = self.position + Vec3::new(graph.x[i + 1], 0.0, graph.y[i + 1]) * self.size;
+        for i in 0..count - 1 {
+            let x0 = (graph.x[i] - self.x_lim_start) / x_range;
+            let y0 = (graph.y[i] - self.y_lim_start) / y_range;
+
+            let x1 = (graph.x[i + 1] - self.x_lim_start) / x_range;
+            let y1 = (graph.y[i + 1] - self.y_lim_start) / y_range;
+
+            let x0 = x0 * self.grid_extent;
+            let x1 = x1 * self.grid_extent;
+
+            // Map [0, 1] -> [-grid_extent, grid_extent]
+            let x0 = x0 * 2.0 * self.grid_extent - self.grid_extent;
+            let y0 = y0 * 2.0 * self.grid_extent - self.grid_extent;
+
+            let x1 = x1 * 2.0 * self.grid_extent - self.grid_extent;
+            let y1 = y1 * 2.0 * self.grid_extent - self.grid_extent;
+
+            let p0 = self.position + Vec3::new(x0, 0.0, y0) * self.size;
+            let p1 = self.position + Vec3::new(x1, 0.0, y1) * self.size;
 
             edges.push(particle_shader_two_point::Instance {
                 position_0: p0.into(),
