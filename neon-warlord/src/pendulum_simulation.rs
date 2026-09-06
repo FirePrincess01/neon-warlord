@@ -97,7 +97,6 @@ impl PendulumSimulation {
         let dt = 1.0 / 60.0;
         self.ticks += 1;
 
-
         self.watch_ups.start("Solver");
         self.pendulum.update(PendulumAction::None, dt);
         self.pendulum.update_verlet_physics(dt);
