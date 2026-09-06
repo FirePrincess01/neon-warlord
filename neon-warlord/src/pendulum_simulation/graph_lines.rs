@@ -1,18 +1,34 @@
 //! Draws a lines graph
 
+use std::collections::VecDeque;
+
 use forward_renderer::{particle_shader_two_point, to_rgb};
 
 use crate::pendulum_simulation::Vec3;
 
 pub struct GraphLines {
-    pub x: Vec<f32>,
-    pub y: Vec<f32>,
+    pub x: VecDeque<f32>,
+    pub y: VecDeque<f32>,
 }
+
+impl GraphLines {
+    pub fn y_push_pop(&mut self, val: f32) {
+        self.y.pop_front();
+        self.y.push_back(val);
+    }
+}
+
+
 
 pub struct GraphLinesDrawer {
     size: f32,
     color: Vec3,
     position: Vec3,
+
+    x_lim_start: f32,
+    x_lim_end: f32,
+    y_lim_start: f32,
+    y_lim_end: f32,
 
     // Grid settings
     grid_color: Vec3,
@@ -25,15 +41,30 @@ impl GraphLinesDrawer {
         let color = to_rgb("#c300d9");
         let grid_color = to_rgb("#333333");
 
+        let x_lim_start = 0.0;
+        let x_lim_end = 100.0;
+        let y_lim_start = -1.0;
+        let y_lim_end = 1.0;
+
         Self {
             size,
             color: color.into(),
             position,
 
+            x_lim_start,
+            x_lim_end,
+            y_lim_start,
+            y_lim_end,
+
             grid_color: grid_color.into(),
             grid_spacing: 2.0,
             grid_extent: 10.0,
         }
+    }
+
+    pub fn color(mut self, to_rgb: [f32; 3]) -> GraphLinesDrawer {
+        self.color = to_rgb.into();
+        self
     }
 
     pub fn update(
@@ -85,7 +116,7 @@ impl GraphLinesDrawer {
     }
 
     fn draw_graph(&self, graph: &GraphLines, edges: &mut Vec<particle_shader_two_point::Instance>) {
-        let size = self.size * 0.02;
+        let size = self.size * 0.03;
 
         let count = graph.x.len().min(graph.y.len());
 
@@ -107,4 +138,6 @@ impl GraphLinesDrawer {
             });
         }
     }
+    
+
 }
