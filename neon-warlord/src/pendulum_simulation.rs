@@ -104,11 +104,11 @@ where
     T: HeightMapInterface,
 {
     fn update(&mut self) {
-        let mut data = self.producer.buffer();
+        let data = self.producer.buffer();
         data.clear();
 
         self.sim.update_physics(&self.height_map);
-        self.sim.update_drawer(&mut data);
+        self.sim.update_drawer(data);
 
         self.producer.publish();
     }
