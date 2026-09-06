@@ -93,7 +93,6 @@ NeuralNetworkDrawer<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL> {
 
                     let size = self.size * 0.5;
 
-
                     let instance = particle_shader::Instance{
                         position: position.into(),
                         color: color.into(),
