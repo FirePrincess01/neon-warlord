@@ -5,10 +5,9 @@ mod neural_network_drawer;
 mod pendulum;
 mod verlet_physics_drawer;
 
-use std::{collections::VecDeque, time::Duration};
+use std::collections::VecDeque;
 
 use forward_renderer::{height_map::HeightMapInterface, to_rgb};
-use instant::Instant;
 use wgpu_renderer::performance_monitor::{Fps, watch::Watch};
 
 use crate::{
@@ -78,7 +77,7 @@ impl PendulumSimulation {
         // Graph
         let graph_x: VecDeque<f32> = (0..100).map(|i| i as f32 * 0.1).collect();
         // let graph_y: VecDeque<f32> = (0..100).map(|i| (i as f32 * 0.1).sin()).collect();
-        let graph_y: VecDeque<f32> = (0..100).map(|i|  0.0 ).collect();
+        let graph_y: VecDeque<f32> = (0..100).map(|_i|  0.0 ).collect();
         let graph_loss = GraphLines {x: graph_x.clone(), y: graph_y.clone()};
 
         let graph_angle = GraphLines {x: graph_x.clone(), y: graph_y.clone()};

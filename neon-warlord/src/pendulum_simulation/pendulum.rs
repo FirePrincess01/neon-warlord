@@ -174,8 +174,8 @@ impl Pendulum {
         self.motor_linear.update_simd(&mut self.verlet_physics.particles);
 
         match action {
-            PendulumAction::Left => self.motor_linear.accelerate(-0.1),
-            PendulumAction::Right => self.motor_linear.accelerate(0.1),
+            PendulumAction::_Left => self.motor_linear.accelerate(-0.1),
+            PendulumAction::_Right => self.motor_linear.accelerate(0.1),
             PendulumAction::None => { },
         }
     }
@@ -186,8 +186,8 @@ impl Pendulum {
 }
 
 pub enum PendulumAction {
-    Left,
-    Right,
+    _Left,
+    _Right,
     None,
 }
 
