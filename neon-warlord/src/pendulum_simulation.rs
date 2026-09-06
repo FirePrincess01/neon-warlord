@@ -90,7 +90,7 @@ impl PendulumSimulation {
     }
 }
 
-pub struct PhysicSimThread<T>
+pub struct PendulumSimulationThread<T>
 where
     T: HeightMapInterface,
 {
@@ -99,7 +99,7 @@ where
     pub height_map: T,
 }
 
-impl<T> worker_thread::Update for PhysicSimThread<T>
+impl<T> worker_thread::Update for PendulumSimulationThread<T>
 where
     T: HeightMapInterface,
 {

@@ -70,12 +70,14 @@ NeuralNetworkDrawer<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL> {
         producer_nodes: &mut Vec<particle_shader::Instance>,
     ) {
 
-        for (k, layer) in model.w.iter().enumerate() {
+        let w_iter = model.w.iter().chain([&model.w_y]);
+
+        for (k, layer) in w_iter.enumerate() {
             for (j, node) in layer.iter().enumerate() {
                 for (i, &w) in node.iter().enumerate() {
 
                     let position = Vec3::new(
-                        i as f32, k as f32, j as f32
+                        k as f32, j as f32, i as f32
                     );
 
                     let position = position * self.size + self.position;
@@ -89,7 +91,7 @@ NeuralNetworkDrawer<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL> {
 
                     let time = 1.0;
 
-                    let size = self.size;
+                    let size = self.size * 0.5;
 
 
                     let instance = particle_shader::Instance{
