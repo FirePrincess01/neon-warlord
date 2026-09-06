@@ -60,10 +60,10 @@ impl PendulumSimulation {
         let pos_graph_loss = pos + Vec3::new(-2.0, 1.0, 1.0);
         let pos_pendulum = pos + Vec3::new(2.0, -0.5, 1.0);
 
-        let pos_graph_angle =     pos + Vec3::new(2.2, 1.0, 2.2);
-        let pos_graph_angle_vel = pos + Vec3::new(2.2, 1.0, 0.0);
-        let pos_graph_cart =      pos + Vec3::new(4.4, 1.0, 2.2);
-        let pos_graph_cart_vel =  pos + Vec3::new(4.4, 1.0, 0.0);
+        let pos_graph_angle =     pos + Vec3::new(2.2, 1.0, 0.0);
+        let pos_graph_angle_vel = pos + Vec3::new(2.2, 1.0, 2.2);
+        let pos_graph_cart =      pos + Vec3::new(4.4, 1.0, 0.0);
+        let pos_graph_cart_vel =  pos + Vec3::new(4.4, 1.0, 2.2);
 
 
         let scale = 0.1;
@@ -77,7 +77,8 @@ impl PendulumSimulation {
 
         // Graph
         let graph_x: VecDeque<f32> = (0..100).map(|i| i as f32 * 0.1).collect();
-        let graph_y: VecDeque<f32> = (0..100).map(|i| (i as f32 * 0.1).sin() * 10.0).collect();
+        // let graph_y: VecDeque<f32> = (0..100).map(|i| (i as f32 * 0.1).sin()).collect();
+        let graph_y: VecDeque<f32> = (0..100).map(|i|  0.0 ).collect();
         let graph_loss = GraphLines {x: graph_x.clone(), y: graph_y.clone()};
 
         let graph_angle = GraphLines {x: graph_x.clone(), y: graph_y.clone()};
@@ -85,11 +86,18 @@ impl PendulumSimulation {
         let graph_cart = GraphLines {x: graph_x.clone(), y: graph_y.clone()};
         let graph_cart_vel = GraphLines {x: graph_x.clone(), y: graph_y.clone()};
 
-        let graph_drawer_loss = GraphLinesDrawer::new(scale, pos_graph_loss).color(to_rgb("#12d900"));
-        let graph_drawer_angle = GraphLinesDrawer::new(scale, pos_graph_angle).color(to_rgb("#9c00d9"));
-        let graph_drawer_angle_vel = GraphLinesDrawer::new(scale, pos_graph_angle_vel).color(to_rgb("#7700d9"));
-        let graph_drawer_cart = GraphLinesDrawer::new(scale, pos_graph_cart).color(to_rgb("#0070d9"));
-        let graph_drawer_cart_vel = GraphLinesDrawer::new(scale, pos_graph_cart_vel).color(to_rgb("#003dd9"));
+        let graph_drawer_loss = GraphLinesDrawer::new(scale, pos_graph_loss)
+            .color(to_rgb("#12d900"));
+        let graph_drawer_angle = GraphLinesDrawer::new(scale, pos_graph_angle)
+            .color(to_rgb("#d9ae00"))
+            .y_lim(std::f32::consts::PI);
+        let graph_drawer_angle_vel = GraphLinesDrawer::new(scale, pos_graph_angle_vel)
+            .color(to_rgb("#7700d9"))
+            .y_lim(std::f32::consts::PI);
+        let graph_drawer_cart = GraphLinesDrawer::new(scale, pos_graph_cart)
+            .color(to_rgb("#0070d9"));
+        let graph_drawer_cart_vel = GraphLinesDrawer::new(scale, pos_graph_cart_vel)
+            .color(to_rgb("#0041d9"));
 
         // Pendulum
         let pendulum = Pendulum::new();

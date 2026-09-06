@@ -14,6 +14,7 @@ pub struct Pendulum {
 
     // variables
     previous_angle: f32,
+    unwrapped_angle: f32,
     previous_cart_position: f32,
 }
 
@@ -80,6 +81,7 @@ impl Pendulum {
             particle_pendulum,
             motor_linear,
             previous_angle: 0.0,
+            unwrapped_angle: 0.0,
             previous_cart_position: 0.0,
         }
     }
@@ -102,24 +104,37 @@ impl Pendulum {
         let pendulum: cgmath::Vector3<f32> = self.verlet_physics.particles.position(pendulum_index);
 
         let dx = pendulum.x - cart.x;
-        let dy = pendulum.y - cart.y;
+        let dy = pendulum.z - cart.z;
 
+        // Raw angle in [-PI, PI].
         let angle = dy.atan2(dx);
 
-        let mut delta_angle = angle - self.previous_angle;
+        // Difference from the previous angle.
+        let mut delta = angle - self.previous_angle;
 
-        // Wrap delta angle to [-PI, PI].
-        if delta_angle > std::f32::consts::PI {
-            delta_angle -= 2.0 * std::f32::consts::PI;
-        } else if delta_angle < -std::f32::consts::PI {
-            delta_angle += 2.0 * std::f32::consts::PI;
+        // Wrap the difference to [-PI, PI].
+        // This removes the artificial 2*PI jump at the atan2 boundary.
+        const PI: f32 = std::f32::consts::PI;
+        const TWO_PI: f32 = 2.0 * PI;
+
+        if delta > PI {
+            delta -= TWO_PI;
+        } else if delta < -PI {
+            delta += TWO_PI;
         }
 
-        let angular_velocity = delta_angle / dt;
-
+        // Accumulate the small change rather than using the raw angle.
+        self.unwrapped_angle += delta;
         self.previous_angle = angle;
 
-        (angle, angular_velocity)
+        // Angular velocity in radians/sec.
+        let angular_velocity = if dt > 0.0 {
+            delta / dt
+        } else {
+            0.0
+        };
+
+        (self.unwrapped_angle, angular_velocity)
     }
 
     // Calculates the position of the cart ranging from -1.0 to 1.0 and the velocity

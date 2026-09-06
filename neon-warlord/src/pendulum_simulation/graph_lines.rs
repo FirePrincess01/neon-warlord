@@ -67,6 +67,12 @@ impl GraphLinesDrawer {
         self
     }
 
+    pub fn y_lim(mut self, y_lim: f32) -> GraphLinesDrawer {
+        self.y_lim_start = -y_lim;
+        self.y_lim_end = y_lim;
+        self
+    }
+
     pub fn update(
         &mut self,
         graph: &GraphLines,
@@ -115,8 +121,12 @@ impl GraphLinesDrawer {
         }
     }
 
-    fn draw_graph(&self, graph: &GraphLines, edges: &mut Vec<particle_shader_two_point::Instance>) {
-        let size = self.size * 0.03;
+    fn draw_graph(
+        &self,
+        graph: &GraphLines,
+        edges: &mut Vec<particle_shader_two_point::Instance>,
+    ) {
+        let size = self.size * 0.05;
 
         let count = graph.x.len().min(graph.y.len());
 
@@ -124,10 +134,28 @@ impl GraphLinesDrawer {
             return;
         }
 
-        for i in 0..count - 1 {
-            let p0 = self.position + Vec3::new(graph.x[i], 0.0, graph.y[i]) * self.size;
+        let x_range = self.x_lim_end - self.x_lim_start;
+        let y_range = self.y_lim_end - self.y_lim_start;
 
-            let p1 = self.position + Vec3::new(graph.x[i + 1], 0.0, graph.y[i + 1]) * self.size;
+        for i in 0..count - 1 {
+            let x0 = (graph.x[i] - self.x_lim_start) / x_range;
+            let y0 = (graph.y[i] - self.y_lim_start) / y_range;
+
+            let x1 = (graph.x[i + 1] - self.x_lim_start) / x_range;
+            let y1 = (graph.y[i + 1] - self.y_lim_start) / y_range;
+
+            let x0 = x0 * self.grid_extent;
+            let x1 = x1 * self.grid_extent;
+
+            // Map [0, 1] -> [-grid_extent, grid_extent]
+            let x0 = x0 * 2.0 * self.grid_extent - self.grid_extent;
+            let y0 = y0 * 2.0 * self.grid_extent - self.grid_extent;
+
+            let x1 = x1 * 2.0 * self.grid_extent - self.grid_extent;
+            let y1 = y1 * 2.0 * self.grid_extent - self.grid_extent;
+
+            let p0 = self.position + Vec3::new(x0, 0.0, y0) * self.size;
+            let p1 = self.position + Vec3::new(x1, 0.0, y1) * self.size;
 
             edges.push(particle_shader_two_point::Instance {
                 position_0: p0.into(),
