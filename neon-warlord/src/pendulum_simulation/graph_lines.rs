@@ -69,7 +69,7 @@ pub fn update(
                 position_1: p1.into(),
                 color: self.grid_color.into(),
                 time: 1.0,
-                size: size,
+                size,
             });
 
             // Horizontal grid line (Y axis)
@@ -84,7 +84,7 @@ pub fn update(
                 position_1: p1.into(),
                 color: self.grid_color.into(),
                 time: 1.0,
-                size: size,
+                size,
             });
 
             value += spacing;
@@ -116,7 +116,7 @@ pub fn update(
                 position_1: p1.into(),
                 color: self.color.into(),
                 time: 1.0,
-                size: size,
+                size,
             });
         }
     }
