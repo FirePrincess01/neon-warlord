@@ -2,18 +2,19 @@
 
 mod graph_lines;
 mod neural_network_drawer;
+mod pendulum;
+mod verlet_physics_drawer;
+
+use std::time::Duration;
 
 use forward_renderer::height_map::HeightMapInterface;
+use instant::Instant;
 use wgpu_renderer::performance_monitor::{Fps, watch::Watch};
 
 use crate::{
     pendulum_simulation::{
-        graph_lines::{GraphLines, GraphLinesDrawer},
-        neural_network_drawer::NeuralNetworkDrawer,
-    },
-    physics_simulation_v3_drawer::DrawerObjects,
-    reinforcement_learning::neural_network_simd::NeuralNetworkSimd,
-    triple_buffer, worker_thread,
+        graph_lines::{GraphLines, GraphLinesDrawer}, neural_network_drawer::NeuralNetworkDrawer, pendulum::{Pendulum, PendulumAction}, verlet_physics_drawer::VerletPhysicsDrawer,
+    }, physics_simulation_v3_drawer::DrawerObjects, reinforcement_learning::neural_network_simd::NeuralNetworkSimd, triple_buffer, worker_thread,
 };
 
 pub const WATCH_POINTS_SIZE: usize = 10;
@@ -32,6 +33,8 @@ pub struct PendulumSimulation {
     model_drawer: NeuralNetworkDrawer<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>,
     graph: GraphLines,
     graph_drawer: GraphLinesDrawer,
+    pendulum: Pendulum,
+    verlet_physics_drawer: VerletPhysicsDrawer,
 
     // Debug
     ups: Fps,
@@ -43,22 +46,36 @@ impl PendulumSimulation {
     pub fn new() -> Self {
         // agent 0
         let pos = Vec3::new(0.0, 0.0, 2.0);
+        let pos_model = pos;
+        let pos_graph = pos + Vec3::new(-2.0, 1.0, 1.0);
+        let pos_pendulum = pos + Vec3::new(2.0, -0.5, 1.0);
+
         let scale = 0.1;
 
         let model = Box::new(NeuralNetworkSimd::new());
-        let model_drawer = NeuralNetworkDrawer::new(&model, scale, pos);
+        let model_drawer = NeuralNetworkDrawer::new(&model, scale, pos_model);
 
         // Debug
         let ups = Fps::new();
         let watch_ups = Watch::new();
 
+        // Graph
         let graph_x: Vec<f32> = (0..100).map(|i| i as f32 * 0.1).collect();
         let graph_y: Vec<f32> = (0..100).map(|i| (i as f32 * 0.1).sin() * 10.0).collect();
         let graph = GraphLines {
             x: graph_x,
             y: graph_y,
         };
-        let graph_drawer = GraphLinesDrawer::new(scale, pos + Vec3::new(-2.0, 1.0, 1.0));
+        let graph_drawer = GraphLinesDrawer::new(scale, pos_graph);
+
+        // Pendulum
+        let pendulum = Pendulum::new();
+        let verlet_physics_drawer = VerletPhysicsDrawer::new(
+            &pendulum.verlet_physics, 
+            scale,
+            pos_pendulum,
+        );
+
 
         Self {
             ticks: 0,
@@ -67,6 +84,8 @@ impl PendulumSimulation {
             model_drawer,
             graph,
             graph_drawer,
+            pendulum,
+            verlet_physics_drawer,
 
             ups,
             last_render_time: instant::Instant::now(),
@@ -75,13 +94,14 @@ impl PendulumSimulation {
     }
 
     pub fn update_physics(&mut self, _height_map: &impl HeightMapInterface) {
-        let _dt = 1.0 / 60.0;
+        let dt = 1.0 / 60.0;
         self.ticks += 1;
 
-        // self.watch_ups.stop();
 
-        // self.watch_ups.start("Solver");
-        // self.watch_ups.stop();
+        self.watch_ups.start("Solver");
+        self.pendulum.update(PendulumAction::None);
+        self.pendulum.update_verlet_physics(dt);
+        self.watch_ups.stop();
 
         // ups
         let now = instant::Instant::now();
@@ -98,6 +118,8 @@ impl PendulumSimulation {
         self.model_drawer.update(&self.model, nodes, edges);
 
         self.graph_drawer.update(&self.graph, edges);
+
+        self.verlet_physics_drawer.update(&self.pendulum.verlet_physics, nodes, edges);
 
         self.watch_ups.stop();
 
