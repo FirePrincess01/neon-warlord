@@ -22,7 +22,7 @@ pub struct PendulumSimulation {
     // Physics
     ticks: u64,
 
-    model: NeuralNetworkSimd<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>,
+    model: Box<NeuralNetworkSimd<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>>,
     model_drawer: NeuralNetworkDrawer<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>,
     graph: GraphLines,
     graph_drawer: GraphLinesDrawer,
@@ -39,7 +39,7 @@ impl PendulumSimulation {
         let pos = Vec3::new(0.0, 0.0, 2.0);
         let scale = 0.1;
 
-        let model = NeuralNetworkSimd::new();
+        let model = Box::new(NeuralNetworkSimd::new());
         let model_drawer = NeuralNetworkDrawer::new(&model, scale, pos);
 
         // Debug
