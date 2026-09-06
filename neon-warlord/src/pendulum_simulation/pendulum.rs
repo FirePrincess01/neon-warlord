@@ -7,10 +7,14 @@ pub struct Pendulum {
 
     particles_static: [usize; 2],
     particles_static_pos: [Vec3; 2],
-    _particle_cart: usize,
+    particle_cart: usize,
     particle_pendulum: usize,
 
     motor_linear: MotorLinear,
+
+    // variables
+    previous_angle: f32,
+    previous_cart_position: f32,
 }
 
 impl Pendulum {
@@ -27,7 +31,7 @@ impl Pendulum {
             mass
         );
 
-        let _particle_cart = verlet_physics.push_particle(
+        let particle_cart = verlet_physics.push_particle(
             Vec3::new(0.0, 0.0, 0.0), 
             radius, 
             mass
@@ -47,17 +51,17 @@ impl Pendulum {
         );
 
         verlet_physics.push_constraint_distance(
-            _particle_cart, 
+            particle_cart, 
             particle_pendulum, 
             1.0, 
             0.8
         );
 
-        verlet_physics.push_constraint_none(particles_static_0, _particle_cart);
-        verlet_physics.push_constraint_none(particles_static_1, _particle_cart);
+        verlet_physics.push_constraint_none(particles_static_0, particle_cart);
+        verlet_physics.push_constraint_none(particles_static_1, particle_cart);
 
         let motor_linear = MotorLinear::new(
-            _particle_cart, 
+            particle_cart, 
             particles_static_0, 
             particles_static_1,
         );
@@ -72,17 +76,70 @@ impl Pendulum {
                 particles_static_pos_0,
                 particles_static_pos_1,
             ], 
-            _particle_cart, 
+            particle_cart, 
             particle_pendulum,
             motor_linear,
+            previous_angle: 0.0,
+            previous_cart_position: 0.0,
         }
     }
 
-    pub fn update(&mut self, action: PendulumAction) -> PendulumState {
+    pub fn update(&mut self, action: PendulumAction, dt: f32) -> PendulumState {
         self.apply_static_constraint();
         self.apply_cart_constraint(action);
 
-        PendulumState { alpha: 0.0, angular_velocity: 0.0, cart_pos: 0.0, cart_velocity: 0.0 }
+        let (alpha, angular_velocity) = self.calculate_angle(dt);
+        let (cart_pos, cart_velocity) = self.calculate_cart_position(dt);
+
+        PendulumState { alpha, angular_velocity, cart_pos, cart_velocity }
+    }
+
+    // calculates the angle between the cart and the pendulum and returns the angle and the angular velocity
+    fn calculate_angle(&mut self, dt:f32) -> (f32, f32) {
+        let cart_index: usize = self.particle_cart;
+        let pendulum_index: usize = self.particle_pendulum;
+        let cart: cgmath::Vector3<f32> = self.verlet_physics.particles.position(cart_index);
+        let pendulum: cgmath::Vector3<f32> = self.verlet_physics.particles.position(pendulum_index);
+
+        let dx = pendulum.x - cart.x;
+        let dy = pendulum.y - cart.y;
+
+        let angle = dy.atan2(dx);
+
+        let mut delta_angle = angle - self.previous_angle;
+
+        // Wrap delta angle to [-PI, PI].
+        if delta_angle > std::f32::consts::PI {
+            delta_angle -= 2.0 * std::f32::consts::PI;
+        } else if delta_angle < -std::f32::consts::PI {
+            delta_angle += 2.0 * std::f32::consts::PI;
+        }
+
+        let angular_velocity = delta_angle / dt;
+
+        self.previous_angle = angle;
+
+        (angle, angular_velocity)
+    }
+
+    // Calculates the position of the cart ranging from -1.0 to 1.0 and the velocity
+    fn calculate_cart_position(&mut self, dt:f32) -> (f32, f32) {
+        let cart_index: usize = self.particle_cart;
+        let lef_index: usize = self.particles_static[0];
+        let right_index: usize = self.particles_static[1];
+        let cart: cgmath::Vector3<f32> = self.verlet_physics.particles.position(cart_index);
+        let left: cgmath::Vector3<f32> = self.verlet_physics.particles.position(lef_index);
+        let right: cgmath::Vector3<f32> = self.verlet_physics.particles.position(right_index);
+
+        // Normalize cart position from [left.x, right.x] to [-1.0, 1.0].
+        let position = 2.0 * (cart.x - left.x) / (right.x - left.x) - 1.0;
+
+        // Calculate velocity.
+        let velocity = (position - self.previous_cart_position) / dt;
+
+        self.previous_cart_position = position;
+
+        (position, velocity)
     }
 
     fn apply_static_constraint(&mut self) 

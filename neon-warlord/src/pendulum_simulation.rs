@@ -99,7 +99,7 @@ impl PendulumSimulation {
 
 
         self.watch_ups.start("Solver");
-        self.pendulum.update(PendulumAction::None);
+        self.pendulum.update(PendulumAction::None, dt);
         self.pendulum.update_verlet_physics(dt);
         self.watch_ups.stop();
 
