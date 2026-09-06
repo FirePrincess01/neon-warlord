@@ -1,6 +1,9 @@
 //! A pendulum on a cart
 
-use crate::{advanced_composition::motor_linear::MotorLinear, pendulum_simulation::Vec3, verlet_physics_simd::VerletPhysicsSimd};
+use crate::{
+    advanced_composition::motor_linear::MotorLinear, pendulum_simulation::Vec3,
+    verlet_physics_simd::VerletPhysicsSimd,
+};
 
 pub struct Pendulum {
     pub verlet_physics: VerletPhysicsSimd,
@@ -24,60 +27,30 @@ impl Pendulum {
 
         let radius = 0.1;
         let mass = 0.1;
-        
-        let particles_static_pos_0 = Vec3::new(-5.0, 0.0, 0.0);
-        let particles_static_0 = verlet_physics.push_particle(
-            particles_static_pos_0, 
-            radius, 
-            mass
-        );
 
-        let particle_cart = verlet_physics.push_particle(
-            Vec3::new(0.0, 0.0, 0.0), 
-            radius, 
-            mass
-        );
+        let particles_static_pos_0 = Vec3::new(-5.0, 0.0, 0.0);
+        let particles_static_0 = verlet_physics.push_particle(particles_static_pos_0, radius, mass);
+
+        let particle_cart = verlet_physics.push_particle(Vec3::new(0.0, 0.0, 0.0), radius, mass);
 
         let particles_static_pos_1 = Vec3::new(5.0, 0.0, 0.0);
-        let particles_static_1 = verlet_physics.push_particle(
-            particles_static_pos_1, 
-            radius, 
-            mass
-        );
+        let particles_static_1 = verlet_physics.push_particle(particles_static_pos_1, radius, mass);
 
-        let particle_pendulum = verlet_physics.push_particle(
-            Vec3::new(0.1, 0.0, 1.0), 
-            radius, 
-            mass
-        );
+        let particle_pendulum =
+            verlet_physics.push_particle(Vec3::new(0.1, 0.0, 1.0), radius, mass);
 
-        verlet_physics.push_constraint_distance(
-            particle_cart, 
-            particle_pendulum, 
-            1.0, 
-            0.8
-        );
+        verlet_physics.push_constraint_distance(particle_cart, particle_pendulum, 1.0, 0.8);
 
         verlet_physics.push_constraint_none(particles_static_0, particle_cart);
         verlet_physics.push_constraint_none(particles_static_1, particle_cart);
 
-        let motor_linear = MotorLinear::new(
-            particle_cart, 
-            particles_static_0, 
-            particles_static_1,
-        );
+        let motor_linear = MotorLinear::new(particle_cart, particles_static_0, particles_static_1);
 
-        Self { 
-            verlet_physics, 
-            particles_static: [
-                particles_static_0,
-                particles_static_1,
-            ], 
-            particles_static_pos: [
-                particles_static_pos_0,
-                particles_static_pos_1,
-            ], 
-            particle_cart, 
+        Self {
+            verlet_physics,
+            particles_static: [particles_static_0, particles_static_1],
+            particles_static_pos: [particles_static_pos_0, particles_static_pos_1],
+            particle_cart,
             particle_pendulum,
             motor_linear,
             previous_angle: 0.0,
@@ -93,11 +66,16 @@ impl Pendulum {
         let (alpha, angular_velocity) = self.calculate_angle(dt);
         let (cart_pos, cart_velocity) = self.calculate_cart_position(dt);
 
-        PendulumState { alpha, angular_velocity, cart_pos, cart_velocity }
+        PendulumState {
+            alpha,
+            angular_velocity,
+            cart_pos,
+            cart_velocity,
+        }
     }
 
     // calculates the angle between the cart and the pendulum and returns the angle and the angular velocity
-    fn calculate_angle(&mut self, dt:f32) -> (f32, f32) {
+    fn calculate_angle(&mut self, dt: f32) -> (f32, f32) {
         let cart_index: usize = self.particle_cart;
         let pendulum_index: usize = self.particle_pendulum;
         let cart: cgmath::Vector3<f32> = self.verlet_physics.particles.position(cart_index);
@@ -128,17 +106,13 @@ impl Pendulum {
         self.previous_angle = angle;
 
         // Angular velocity in radians/sec.
-        let angular_velocity = if dt > 0.0 {
-            delta / dt
-        } else {
-            0.0
-        };
+        let angular_velocity = if dt > 0.0 { delta / dt } else { 0.0 };
 
         (self.unwrapped_angle, angular_velocity)
     }
 
     // Calculates the position of the cart ranging from -1.0 to 1.0 and the velocity
-    fn calculate_cart_position(&mut self, dt:f32) -> (f32, f32) {
+    fn calculate_cart_position(&mut self, dt: f32) -> (f32, f32) {
         let cart_index: usize = self.particle_cart;
         let lef_index: usize = self.particles_static[0];
         let right_index: usize = self.particles_static[1];
@@ -157,29 +131,27 @@ impl Pendulum {
         (position, velocity)
     }
 
-    fn apply_static_constraint(&mut self) 
-    {
-        self.verlet_physics.particles.set_position(
-            self.particles_static[0], 
-            self.particles_static_pos[0],
-        );
+    fn apply_static_constraint(&mut self) {
+        self.verlet_physics
+            .particles
+            .set_position(self.particles_static[0], self.particles_static_pos[0]);
 
-        self.verlet_physics.particles.set_position(
-            self.particles_static[1], 
-            self.particles_static_pos[1],
-        );
+        self.verlet_physics
+            .particles
+            .set_position(self.particles_static[1], self.particles_static_pos[1]);
     }
 
     fn apply_cart_constraint(&mut self, action: PendulumAction) {
-        self.motor_linear.update_simd(&mut self.verlet_physics.particles);
+        self.motor_linear
+            .update_simd(&mut self.verlet_physics.particles);
 
         match action {
             PendulumAction::_Left => self.motor_linear.accelerate(-0.1),
             PendulumAction::_Right => self.motor_linear.accelerate(0.1),
-            PendulumAction::None => { },
+            PendulumAction::None => {}
         }
     }
-    
+
     pub fn update_verlet_physics(&mut self, dt: f32) {
         self.verlet_physics.update(dt);
     }

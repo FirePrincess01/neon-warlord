@@ -18,8 +18,6 @@ impl GraphLines {
     }
 }
 
-
-
 pub struct GraphLinesDrawer {
     size: f32,
     color: Vec3,
@@ -121,11 +119,7 @@ impl GraphLinesDrawer {
         }
     }
 
-    fn draw_graph(
-        &self,
-        graph: &GraphLines,
-        edges: &mut Vec<particle_shader_two_point::Instance>,
-    ) {
+    fn draw_graph(&self, graph: &GraphLines, edges: &mut Vec<particle_shader_two_point::Instance>) {
         let size = self.size * 0.05;
 
         let count = graph.x.len().min(graph.y.len());
@@ -166,6 +160,4 @@ impl GraphLinesDrawer {
             });
         }
     }
-    
-
 }

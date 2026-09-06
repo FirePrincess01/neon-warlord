@@ -12,8 +12,14 @@ use wgpu_renderer::performance_monitor::{Fps, watch::Watch};
 
 use crate::{
     pendulum_simulation::{
-        graph_lines::{GraphLines, GraphLinesDrawer}, neural_network_drawer::NeuralNetworkDrawer, pendulum::{Pendulum, PendulumAction}, verlet_physics_drawer::VerletPhysicsDrawer,
-    }, physics_simulation_v3_drawer::DrawerObjects, reinforcement_learning::neural_network_simd::NeuralNetworkSimd, triple_buffer, worker_thread,
+        graph_lines::{GraphLines, GraphLinesDrawer},
+        neural_network_drawer::NeuralNetworkDrawer,
+        pendulum::{Pendulum, PendulumAction},
+        verlet_physics_drawer::VerletPhysicsDrawer,
+    },
+    physics_simulation_v3_drawer::DrawerObjects,
+    reinforcement_learning::neural_network_simd::NeuralNetworkSimd,
+    triple_buffer, worker_thread,
 };
 
 pub const WATCH_POINTS_SIZE: usize = 10;
@@ -59,11 +65,10 @@ impl PendulumSimulation {
         let pos_graph_loss = pos + Vec3::new(-2.0, 1.0, 1.0);
         let pos_pendulum = pos + Vec3::new(2.0, -0.5, 1.0);
 
-        let pos_graph_angle =     pos + Vec3::new(2.2, 1.0, 0.0);
+        let pos_graph_angle = pos + Vec3::new(2.2, 1.0, 0.0);
         let pos_graph_angle_vel = pos + Vec3::new(2.2, 1.0, 2.2);
-        let pos_graph_cart =      pos + Vec3::new(4.4, 1.0, 0.0);
-        let pos_graph_cart_vel =  pos + Vec3::new(4.4, 1.0, 2.2);
-
+        let pos_graph_cart = pos + Vec3::new(4.4, 1.0, 0.0);
+        let pos_graph_cart_vel = pos + Vec3::new(4.4, 1.0, 2.2);
 
         let scale = 0.1;
 
@@ -77,35 +82,46 @@ impl PendulumSimulation {
         // Graph
         let graph_x: VecDeque<f32> = (0..100).map(|i| i as f32 * 0.1).collect();
         // let graph_y: VecDeque<f32> = (0..100).map(|i| (i as f32 * 0.1).sin()).collect();
-        let graph_y: VecDeque<f32> = (0..100).map(|_i|  0.0 ).collect();
-        let graph_loss = GraphLines {x: graph_x.clone(), y: graph_y.clone()};
+        let graph_y: VecDeque<f32> = (0..100).map(|_i| 0.0).collect();
+        let graph_loss = GraphLines {
+            x: graph_x.clone(),
+            y: graph_y.clone(),
+        };
 
-        let graph_angle = GraphLines {x: graph_x.clone(), y: graph_y.clone()};
-        let graph_angle_vel = GraphLines {x: graph_x.clone(), y: graph_y.clone()};
-        let graph_cart = GraphLines {x: graph_x.clone(), y: graph_y.clone()};
-        let graph_cart_vel = GraphLines {x: graph_x.clone(), y: graph_y.clone()};
+        let graph_angle = GraphLines {
+            x: graph_x.clone(),
+            y: graph_y.clone(),
+        };
+        let graph_angle_vel = GraphLines {
+            x: graph_x.clone(),
+            y: graph_y.clone(),
+        };
+        let graph_cart = GraphLines {
+            x: graph_x.clone(),
+            y: graph_y.clone(),
+        };
+        let graph_cart_vel = GraphLines {
+            x: graph_x.clone(),
+            y: graph_y.clone(),
+        };
 
-        let graph_drawer_loss = GraphLinesDrawer::new(scale, pos_graph_loss)
-            .color(to_rgb("#12d900"));
+        let graph_drawer_loss =
+            GraphLinesDrawer::new(scale, pos_graph_loss).color(to_rgb("#12d900"));
         let graph_drawer_angle = GraphLinesDrawer::new(scale, pos_graph_angle)
             .color(to_rgb("#d9ae00"))
             .y_lim(std::f32::consts::PI);
         let graph_drawer_angle_vel = GraphLinesDrawer::new(scale, pos_graph_angle_vel)
             .color(to_rgb("#7700d9"))
             .y_lim(std::f32::consts::PI);
-        let graph_drawer_cart = GraphLinesDrawer::new(scale, pos_graph_cart)
-            .color(to_rgb("#0070d9"));
-        let graph_drawer_cart_vel = GraphLinesDrawer::new(scale, pos_graph_cart_vel)
-            .color(to_rgb("#0041d9"));
+        let graph_drawer_cart =
+            GraphLinesDrawer::new(scale, pos_graph_cart).color(to_rgb("#0070d9"));
+        let graph_drawer_cart_vel =
+            GraphLinesDrawer::new(scale, pos_graph_cart_vel).color(to_rgb("#0041d9"));
 
         // Pendulum
         let pendulum = Pendulum::new();
-        let verlet_physics_drawer = VerletPhysicsDrawer::new(
-            &pendulum.verlet_physics, 
-            scale,
-            pos_pendulum,
-        );
-
+        let verlet_physics_drawer =
+            VerletPhysicsDrawer::new(&pendulum.verlet_physics, scale, pos_pendulum);
 
         Self {
             ticks: 0,
@@ -139,7 +155,8 @@ impl PendulumSimulation {
         let pendulum_state = self.pendulum.update(PendulumAction::None, dt);
 
         self.graph_angle.y_push_pop(pendulum_state.alpha);
-        self.graph_angle_vel.y_push_pop(pendulum_state.angular_velocity);
+        self.graph_angle_vel
+            .y_push_pop(pendulum_state.angular_velocity);
         self.graph_cart.y_push_pop(pendulum_state.cart_pos);
         self.graph_cart_vel.y_push_pop(pendulum_state.cart_velocity);
 
@@ -162,11 +179,14 @@ impl PendulumSimulation {
 
         self.graph_drawer_loss.update(&self.graph_loss, edges);
         self.graph_drawer_angle.update(&self.graph_angle, edges);
-        self.graph_drawer_angle_vel.update(&self.graph_angle_vel, edges);
+        self.graph_drawer_angle_vel
+            .update(&self.graph_angle_vel, edges);
         self.graph_drawer_cart.update(&self.graph_cart, edges);
-        self.graph_drawer_cart_vel.update(&self.graph_cart_vel, edges);
+        self.graph_drawer_cart_vel
+            .update(&self.graph_cart_vel, edges);
 
-        self.verlet_physics_drawer.update(&self.pendulum.verlet_physics, nodes, edges);
+        self.verlet_physics_drawer
+            .update(&self.pendulum.verlet_physics, nodes, edges);
 
         self.watch_ups.stop();
 
