@@ -34,6 +34,7 @@ pub struct PendulumSimulation {
     dqn: Dqn<INPUTS, OUTPUTS>,
 
     graph_loss: GraphLines<1>,
+    graph_chosen_action: GraphLines<1>,
     graph_actions: GraphLines<3>,
     graph_angle: GraphLines<1>,
     graph_angle_vel: GraphLines<1>,
@@ -41,6 +42,7 @@ pub struct PendulumSimulation {
     graph_cart_vel: GraphLines<1>,
 
     graph_drawer_loss: GraphLinesDrawer<1>,
+    graph_drawer_chosen_action: GraphLinesDrawer<1>,
     graph_drawer_actions: GraphLinesDrawer<3>,
     graph_drawer_angle: GraphLinesDrawer<1>,
     graph_drawer_angle_vel: GraphLinesDrawer<1>,
@@ -63,7 +65,8 @@ impl PendulumSimulation {
         let pos_model = pos;
 
         let pos_graph_loss = pos + Vec3::new(-4.2, 1.0, 1.0);
-        let pos_graph_actions = pos + Vec3::new(-2.0, 1.0, 1.0);
+        let pos_graph_chosen_action = pos + Vec3::new(-2.0, 1.0, 0.0);
+        let pos_graph_actions = pos + Vec3::new(-2.0, 1.0, 2.2);
         let pos_pendulum = pos + Vec3::new(2.0, -0.5, 1.0);
 
         let pos_graph_angle = pos + Vec3::new(2.2, 1.0, 0.0);
@@ -86,6 +89,11 @@ impl PendulumSimulation {
         // let graph_y: VecDeque<f32> = (0..100).map(|i| (i as f32 * 0.1).sin()).collect();
         let graph_y: VecDeque<f32> = (0..100).map(|_i| 0.0).collect();
         let graph_loss = GraphLines {
+            x: graph_x.clone(),
+            y: [graph_y.clone()],
+        };
+
+        let graph_chosen_action = GraphLines {
             x: graph_x.clone(),
             y: [graph_y.clone()],
         };
@@ -114,8 +122,10 @@ impl PendulumSimulation {
 
         let graph_drawer_loss =
             GraphLinesDrawer::new(scale, pos_graph_loss).colors([to_rgb("#12d900").into()]);
+        let graph_drawer_chosen_action =
+            GraphLinesDrawer::new(scale, pos_graph_chosen_action).colors([to_rgb("#b1d900").into()]);
         let graph_drawer_actions =
-            GraphLinesDrawer::new(scale, pos_graph_actions).colors([to_rgb("#f75ee7").into(), to_rgb("#1d0d1b").into(), to_rgb("#744ff7").into()]);
+            GraphLinesDrawer::new(scale, pos_graph_actions).colors([to_rgb("#ff00e6").into(), to_rgb("#100010").into(), to_rgb("#3700ff").into()]);
         let graph_drawer_angle = GraphLinesDrawer::new(scale, pos_graph_angle)
             .colors([to_rgb("#d9ae00").into()])
             .y_lim(std::f32::consts::PI);
@@ -159,6 +169,8 @@ impl PendulumSimulation {
             dqn,
             graph_actions,
             graph_drawer_actions,
+            graph_chosen_action,
+            graph_drawer_chosen_action,
         }
     }
 
@@ -204,9 +216,12 @@ impl PendulumSimulation {
         ];
 
         let action = self.dqn.choose_action(&inputs);
-         self.graph_actions.y_push_pop(0, action.1[0]);
-         self.graph_actions.y_push_pop(1, action.1[1]);
-         self.graph_actions.y_push_pop(2, action.1[2]);
+
+        // update graph
+        self.graph_actions.y_push_pop(0, action.1[0]);
+        self.graph_actions.y_push_pop(1, action.1[1]);
+        self.graph_actions.y_push_pop(2, action.1[2]);
+        self.graph_chosen_action.y_push_pop(0, (action.0 as f32 - 1.0) * 0.2);
 
         let pendulum_action: PendulumAction = (action.0 as u8).into();
 
@@ -276,6 +291,7 @@ impl PendulumSimulation {
         self.model_drawer.update(&self.dqn.model, nodes, edges);
 
         self.graph_drawer_loss.update(&self.graph_loss, edges);
+        self.graph_drawer_chosen_action.update(&self.graph_chosen_action, edges);
         self.graph_drawer_actions.update(&self.graph_actions, edges);
         self.graph_drawer_angle.update(&self.graph_angle, edges);
         self.graph_drawer_angle_vel
