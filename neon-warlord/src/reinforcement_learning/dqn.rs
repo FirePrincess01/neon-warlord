@@ -12,7 +12,7 @@ use crate::reinforcement_learning::neural_network_simd::{
 const LAYERS: usize = 5;
 
 pub struct Dqn<const INPUTS: usize, const OUTPUTS: usize> {
-    model: NeuralNetworkSimd<INPUTS, OUTPUTS, LAYERS, true>,
+    pub model: NeuralNetworkSimd<INPUTS, OUTPUTS, LAYERS, true>,
     steps: Vec<Transition<INPUTS>>,
 
     replay_buffer: HashMap<ReplayKey<INPUTS>, Transition<INPUTS>>,
@@ -76,9 +76,23 @@ impl<const INPUTS: usize, const OUTPUTS: usize> Dqn<INPUTS, OUTPUTS> {
         next_inputs: [u8; INPUTS],
         finished: bool,
     ) {
+        let inputs_signed: [i8; INPUTS] = inputs.map(|x| x as i8);
+
+        let replay_key: ReplayKey<INPUTS> = ReplayKey {
+            inputs: inputs_signed,
+            action,
+        };
+
         let inputs_f32 = inputs.map(|x| x as f32);
-        let next_inputs_f32 = next_inputs.map(|x| x as f32);
-        self.set_reward(inputs_f32, action, reward, next_inputs_f32, finished);
+        let inputs_next_f32 = next_inputs.map(|x| x as f32);
+        self.set_reward(
+            inputs_f32, 
+            action, 
+            reward, 
+            inputs_next_f32, 
+            finished, 
+            replay_key
+        );
     }
 
     pub fn set_reward(
@@ -86,22 +100,23 @@ impl<const INPUTS: usize, const OUTPUTS: usize> Dqn<INPUTS, OUTPUTS> {
         inputs: [f32; INPUTS],
         action: usize,
         reward: f32,
-        next_inputs: [f32; INPUTS],
+        inputs_next: [f32; INPUTS],
         finished: bool,
+        replay_key: ReplayKey<INPUTS>,
     ) {
         let step = Transition {
             inputs,
             action,
             reward,
-            inputs_next: next_inputs,
+            inputs_next,
             finished,
         };
 
-        let inputs_u8 = inputs.map(|x| x as u8);
-        let replay_key = ReplayKey {
-            inputs: inputs_u8,
-            action,
-        };
+        // let inputs_u8 = inputs.map(|x| x as u8);
+        // let replay_key: ReplayKey<INPUTS> = ReplayKey {
+        //     inputs: inputs_u8,
+        //     action,
+        // };
 
         self.steps.push(step.clone());
         self.replay_buffer.insert(replay_key, step);
@@ -201,6 +216,6 @@ pub struct Transition<const INPUTS: usize> {
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct ReplayKey<const INPUTS: usize> {
-    pub inputs: [u8; INPUTS],
+    pub inputs: [i8; INPUTS],
     pub action: usize,
 }

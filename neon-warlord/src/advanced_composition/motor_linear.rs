@@ -64,8 +64,10 @@ impl MotorLinear {
         //     val = fastrand::f32();
         // }
 
-        val = val.clamp(0.0, 1.0);
+        // val = val.clamp(0.0, 1.0);
 
-        self.acceleration = (val - 0.5) * 10.0;
+        // self.acceleration = (val - 0.5) * 10.0;
+
+        self.acceleration = val;
     }
 }

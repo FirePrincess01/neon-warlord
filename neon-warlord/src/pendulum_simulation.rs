@@ -12,30 +12,27 @@ use wgpu_renderer::performance_monitor::{Fps, watch::Watch};
 
 use crate::{
     pendulum_simulation::{
-        graph_lines::{GraphLines, GraphLinesDrawer},
-        neural_network_drawer::NeuralNetworkDrawer,
-        pendulum::{Pendulum, PendulumAction},
-        verlet_physics_drawer::VerletPhysicsDrawer,
-    },
-    physics_simulation_v3_drawer::DrawerObjects,
-    reinforcement_learning::neural_network_simd::NeuralNetworkSimd,
-    triple_buffer, worker_thread,
+        graph_lines::{GraphLines, GraphLinesDrawer}, neural_network_drawer::NeuralNetworkDrawer, pendulum::{Pendulum, PendulumAction, PendulumState}, verlet_physics_drawer::VerletPhysicsDrawer,
+    }, physics_simulation_v3_drawer::DrawerObjects, reinforcement_learning::{dqn::{self, Dqn, ReplayKey}, neural_network_simd::NeuralNetworkSimd}, triple_buffer, worker_thread,
 };
 
 pub const WATCH_POINTS_SIZE: usize = 10;
 type Vec3 = cgmath::Vector3<f32>;
 
-const INPUTS: usize = 5;
-const OUTPUTS: usize = 2;
-const NR_LAYERS: usize = 10;
+const INPUTS: usize = 4;
+const OUTPUTS: usize = 3;
+const NR_LAYERS: usize = 5;
 const RESIDUAL: bool = true;
 
 pub struct PendulumSimulation {
     // Physics
     ticks: u64,
 
-    model: Box<NeuralNetworkSimd<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>>,
+    // model: Box<NeuralNetworkSimd<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>>,
     model_drawer: NeuralNetworkDrawer<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>,
+
+    dqn: Dqn<INPUTS, OUTPUTS>,
+
     graph_loss: GraphLines,
     graph_angle: GraphLines,
     graph_angle_vel: GraphLines,
@@ -72,8 +69,9 @@ impl PendulumSimulation {
 
         let scale = 0.1;
 
-        let model = Box::new(NeuralNetworkSimd::new());
-        let model_drawer = NeuralNetworkDrawer::new(&model, scale, pos_model);
+        // let model = Box::new(NeuralNetworkSimd::new());
+        let dqn = Dqn::new();
+        let model_drawer = NeuralNetworkDrawer::new(&dqn.model, scale, pos_model);
 
         // Debug
         let ups = Fps::new();
@@ -123,10 +121,13 @@ impl PendulumSimulation {
         let verlet_physics_drawer =
             VerletPhysicsDrawer::new(&pendulum.verlet_physics, scale, pos_pendulum);
 
+        // Dqn
+        
+
         Self {
             ticks: 0,
 
-            model,
+            // model,
             model_drawer,
             graph_loss,
             graph_angle,
@@ -144,6 +145,7 @@ impl PendulumSimulation {
             graph_drawer_angle_vel,
             graph_drawer_cart,
             graph_drawer_cart_vel,
+            dqn,
         }
     }
 
@@ -152,13 +154,16 @@ impl PendulumSimulation {
         self.ticks += 1;
 
         self.watch_ups.start("Solver");
-        let pendulum_state = self.pendulum.update(PendulumAction::None, dt);
+        let pendulum_state = self.pendulum.state();
+        let pendulum_action = self.get_pendulum_action(&pendulum_state);
+        let pendulum_state_new = self.pendulum.update(pendulum_action, dt);
+        self.set_pendulum_reward(&pendulum_state, pendulum_action, &pendulum_state_new);
 
-        self.graph_angle.y_push_pop(pendulum_state.alpha);
+        self.graph_angle.y_push_pop(pendulum_state_new.alpha);
         self.graph_angle_vel
-            .y_push_pop(pendulum_state.angular_velocity);
-        self.graph_cart.y_push_pop(pendulum_state.cart_pos);
-        self.graph_cart_vel.y_push_pop(pendulum_state.cart_velocity);
+            .y_push_pop(pendulum_state_new.angular_velocity);
+        self.graph_cart.y_push_pop(pendulum_state_new.cart_pos);
+        self.graph_cart_vel.y_push_pop(pendulum_state_new.cart_velocity);
 
         self.pendulum.update_verlet_physics(dt);
         self.watch_ups.stop();
@@ -170,12 +175,86 @@ impl PendulumSimulation {
         self.ups.update(dt);
     }
 
+    fn get_pendulum_action(&mut self, pendulum_state: &PendulumState) -> PendulumAction {
+        let alpha = pendulum_state.alpha;
+        let angular_velocity = pendulum_state.angular_velocity;
+        let cart_pos = pendulum_state.cart_pos;
+        let cart_velocity = pendulum_state.cart_velocity;
+
+        let inputs = [
+            alpha, 
+            angular_velocity, 
+            cart_pos, 
+            cart_velocity, 
+        ];
+
+        let action = self.dqn.choose_action(&inputs);
+
+        let pendulum_action: PendulumAction = (action.0 as u8).into();
+
+        pendulum_action
+    }
+
+    fn set_pendulum_reward(&mut self, 
+        pendulum_state: &PendulumState, 
+        pendulum_action: PendulumAction, 
+        pendulum_state_next: &PendulumState,
+    ) {
+        let alpha = pendulum_state.alpha;
+        let angular_velocity = pendulum_state.angular_velocity;
+        let cart_pos = pendulum_state.cart_pos;
+        let cart_velocity = pendulum_state.cart_velocity;
+        let action: u8 = pendulum_action.into();
+        let action = action as usize;
+        // println!("action: {}", action);
+
+        let inputs: [f32; 4] = [
+            pendulum_state.alpha, 
+            pendulum_state.angular_velocity, 
+            pendulum_state.cart_pos, 
+            pendulum_state.cart_velocity, 
+        ];
+
+        let inputs_next: [f32; 4] = [
+            pendulum_state_next.alpha, 
+            pendulum_state_next.angular_velocity, 
+            pendulum_state_next.cart_pos, 
+            pendulum_state_next.cart_velocity, 
+        ];
+
+        let replay_key_inputs: [i8; 4] = [
+            (alpha / std::f32::consts::PI * 100.0) as i8,
+            (angular_velocity * 100.0) as i8,
+            (cart_pos * 100.0) as i8,
+            (cart_velocity * 100.0) as i8,
+        ];
+
+         let replay_key = ReplayKey {
+            inputs: replay_key_inputs,
+            action,
+        };
+
+        let reward = alpha.abs();
+        
+        if self.ticks > 100 {
+            let episode_finished = self.ticks.is_multiple_of(1000);
+            
+            let finished = episode_finished;
+
+            self.dqn.set_reward(inputs, action, reward, inputs_next, finished, replay_key);
+
+            if episode_finished {
+                self.dqn.learn_replay();
+            }
+        }
+    }
+
     pub fn update_drawer(&mut self, objects: &mut DrawerObjects) {
         let nodes = &mut objects.genome_nodes;
         let edges = &mut objects.genome_edges;
 
         self.watch_ups.start("Draw Model");
-        self.model_drawer.update(&self.model, nodes, edges);
+        self.model_drawer.update(&self.dqn.model, nodes, edges);
 
         self.graph_drawer_loss.update(&self.graph_loss, edges);
         self.graph_drawer_angle.update(&self.graph_angle, edges);
@@ -194,6 +273,8 @@ impl PendulumSimulation {
         self.watch_ups.update();
         objects.watch_ups = self.watch_ups.get_viewer_data();
     }
+    
+
 }
 
 pub struct PendulumSimulationThread<T>
