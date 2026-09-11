@@ -278,7 +278,7 @@ impl PendulumSimulation {
 
             if episode_finished {
                 let loss = self.dqn.learn_replay();
-                self.graph_loss.y_push_pop(0, loss);
+                self.graph_loss.y_push_pop(0, loss * 2.0);
             }
         }
     }
