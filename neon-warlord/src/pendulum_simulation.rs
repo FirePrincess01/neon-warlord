@@ -34,12 +34,14 @@ pub struct PendulumSimulation {
     dqn: Dqn<INPUTS, OUTPUTS>,
 
     graph_loss: GraphLines<1>,
+    graph_actions: GraphLines<3>,
     graph_angle: GraphLines<1>,
     graph_angle_vel: GraphLines<1>,
     graph_cart: GraphLines<1>,
     graph_cart_vel: GraphLines<1>,
 
     graph_drawer_loss: GraphLinesDrawer<1>,
+    graph_drawer_actions: GraphLinesDrawer<3>,
     graph_drawer_angle: GraphLinesDrawer<1>,
     graph_drawer_angle_vel: GraphLinesDrawer<1>,
     graph_drawer_cart: GraphLinesDrawer<1>,
@@ -59,7 +61,9 @@ impl PendulumSimulation {
         // agent 0
         let pos = Vec3::new(0.0, 0.0, 2.0);
         let pos_model = pos;
-        let pos_graph_loss = pos + Vec3::new(-2.0, 1.0, 1.0);
+
+        let pos_graph_loss = pos + Vec3::new(-4.2, 1.0, 1.0);
+        let pos_graph_actions = pos + Vec3::new(-2.0, 1.0, 1.0);
         let pos_pendulum = pos + Vec3::new(2.0, -0.5, 1.0);
 
         let pos_graph_angle = pos + Vec3::new(2.2, 1.0, 0.0);
@@ -86,6 +90,11 @@ impl PendulumSimulation {
             y: [graph_y.clone()],
         };
 
+        let graph_actions = GraphLines {
+            x: graph_x.clone(),
+            y: [graph_y.clone(), graph_y.clone(), graph_y.clone()],
+        };
+
         let graph_angle = GraphLines {
             x: graph_x.clone(),
             y: [graph_y.clone()],
@@ -105,6 +114,8 @@ impl PendulumSimulation {
 
         let graph_drawer_loss =
             GraphLinesDrawer::new(scale, pos_graph_loss).colors([to_rgb("#12d900").into()]);
+        let graph_drawer_actions =
+            GraphLinesDrawer::new(scale, pos_graph_actions).colors([to_rgb("#f75ee7").into(), to_rgb("#1d0d1b").into(), to_rgb("#744ff7").into()]);
         let graph_drawer_angle = GraphLinesDrawer::new(scale, pos_graph_angle)
             .colors([to_rgb("#d9ae00").into()])
             .y_lim(std::f32::consts::PI);
@@ -146,6 +157,8 @@ impl PendulumSimulation {
             graph_drawer_cart,
             graph_drawer_cart_vel,
             dqn,
+            graph_actions,
+            graph_drawer_actions,
         }
     }
 
@@ -158,6 +171,8 @@ impl PendulumSimulation {
         let pendulum_action = self.get_pendulum_action(&pendulum_state);
         let pendulum_state_new = self.pendulum.update(pendulum_action, dt);
         self.set_pendulum_reward(&pendulum_state, pendulum_action, &pendulum_state_new);
+
+       
 
         self.graph_angle.y_push_pop(0, pendulum_state_new.alpha);
         self.graph_angle_vel
@@ -189,6 +204,9 @@ impl PendulumSimulation {
         ];
 
         let action = self.dqn.choose_action(&inputs);
+         self.graph_actions.y_push_pop(0, action.1[0]);
+         self.graph_actions.y_push_pop(1, action.1[1]);
+         self.graph_actions.y_push_pop(2, action.1[2]);
 
         let pendulum_action: PendulumAction = (action.0 as u8).into();
 
@@ -244,7 +262,8 @@ impl PendulumSimulation {
             self.dqn.set_reward(inputs, action, reward, inputs_next, finished, replay_key);
 
             if episode_finished {
-                self.dqn.learn_replay();
+                let loss = self.dqn.learn_replay();
+                self.graph_loss.y_push_pop(0, loss);
             }
         }
     }
@@ -257,6 +276,7 @@ impl PendulumSimulation {
         self.model_drawer.update(&self.dqn.model, nodes, edges);
 
         self.graph_drawer_loss.update(&self.graph_loss, edges);
+        self.graph_drawer_actions.update(&self.graph_actions, edges);
         self.graph_drawer_angle.update(&self.graph_angle, edges);
         self.graph_drawer_angle_vel
             .update(&self.graph_angle_vel, edges);
