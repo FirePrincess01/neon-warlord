@@ -33,17 +33,17 @@ pub struct PendulumSimulation {
 
     dqn: Dqn<INPUTS, OUTPUTS>,
 
-    graph_loss: GraphLines,
-    graph_angle: GraphLines,
-    graph_angle_vel: GraphLines,
-    graph_cart: GraphLines,
-    graph_cart_vel: GraphLines,
+    graph_loss: GraphLines<1>,
+    graph_angle: GraphLines<1>,
+    graph_angle_vel: GraphLines<1>,
+    graph_cart: GraphLines<1>,
+    graph_cart_vel: GraphLines<1>,
 
-    graph_drawer_loss: GraphLinesDrawer,
-    graph_drawer_angle: GraphLinesDrawer,
-    graph_drawer_angle_vel: GraphLinesDrawer,
-    graph_drawer_cart: GraphLinesDrawer,
-    graph_drawer_cart_vel: GraphLinesDrawer,
+    graph_drawer_loss: GraphLinesDrawer<1>,
+    graph_drawer_angle: GraphLinesDrawer<1>,
+    graph_drawer_angle_vel: GraphLinesDrawer<1>,
+    graph_drawer_cart: GraphLinesDrawer<1>,
+    graph_drawer_cart_vel: GraphLinesDrawer<1>,
 
     pendulum: Pendulum,
     verlet_physics_drawer: VerletPhysicsDrawer,
@@ -83,38 +83,38 @@ impl PendulumSimulation {
         let graph_y: VecDeque<f32> = (0..100).map(|_i| 0.0).collect();
         let graph_loss = GraphLines {
             x: graph_x.clone(),
-            y: graph_y.clone(),
+            y: [graph_y.clone()],
         };
 
         let graph_angle = GraphLines {
             x: graph_x.clone(),
-            y: graph_y.clone(),
+            y: [graph_y.clone()],
         };
         let graph_angle_vel = GraphLines {
             x: graph_x.clone(),
-            y: graph_y.clone(),
+            y: [graph_y.clone()],
         };
         let graph_cart = GraphLines {
             x: graph_x.clone(),
-            y: graph_y.clone(),
+            y: [graph_y.clone()],
         };
         let graph_cart_vel = GraphLines {
             x: graph_x.clone(),
-            y: graph_y.clone(),
+            y: [graph_y.clone()],
         };
 
         let graph_drawer_loss =
-            GraphLinesDrawer::new(scale, pos_graph_loss).color(to_rgb("#12d900"));
+            GraphLinesDrawer::new(scale, pos_graph_loss).colors([to_rgb("#12d900").into()]);
         let graph_drawer_angle = GraphLinesDrawer::new(scale, pos_graph_angle)
-            .color(to_rgb("#d9ae00"))
+            .colors([to_rgb("#d9ae00").into()])
             .y_lim(std::f32::consts::PI);
         let graph_drawer_angle_vel = GraphLinesDrawer::new(scale, pos_graph_angle_vel)
-            .color(to_rgb("#7700d9"))
+            .colors([to_rgb("#7700d9").into()])
             .y_lim(std::f32::consts::PI);
         let graph_drawer_cart =
-            GraphLinesDrawer::new(scale, pos_graph_cart).color(to_rgb("#0070d9"));
+            GraphLinesDrawer::new(scale, pos_graph_cart).colors([to_rgb("#0070d9").into()]);
         let graph_drawer_cart_vel =
-            GraphLinesDrawer::new(scale, pos_graph_cart_vel).color(to_rgb("#0041d9"));
+            GraphLinesDrawer::new(scale, pos_graph_cart_vel).colors([to_rgb("#0041d9").into()]);
 
         // Pendulum
         let pendulum = Pendulum::new();
@@ -159,11 +159,11 @@ impl PendulumSimulation {
         let pendulum_state_new = self.pendulum.update(pendulum_action, dt);
         self.set_pendulum_reward(&pendulum_state, pendulum_action, &pendulum_state_new);
 
-        self.graph_angle.y_push_pop(pendulum_state_new.alpha);
+        self.graph_angle.y_push_pop(0, pendulum_state_new.alpha);
         self.graph_angle_vel
-            .y_push_pop(pendulum_state_new.angular_velocity);
-        self.graph_cart.y_push_pop(pendulum_state_new.cart_pos);
-        self.graph_cart_vel.y_push_pop(pendulum_state_new.cart_velocity);
+            .y_push_pop(0, pendulum_state_new.angular_velocity);
+        self.graph_cart.y_push_pop(0, pendulum_state_new.cart_pos);
+        self.graph_cart_vel.y_push_pop(0, pendulum_state_new.cart_velocity);
 
         self.pendulum.update_verlet_physics(dt);
         self.watch_ups.stop();
