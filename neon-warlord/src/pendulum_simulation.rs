@@ -20,7 +20,7 @@ pub const WATCH_POINTS_SIZE: usize = 10;
 type Vec3 = cgmath::Vector3<f32>;
 
 const INPUTS: usize = 4;
-const OUTPUTS: usize = 3;
+const OUTPUTS: usize = 7;
 const NR_LAYERS: usize = 5;
 const RESIDUAL: bool = true;
 
@@ -35,7 +35,7 @@ pub struct PendulumSimulation {
 
     graph_loss: GraphLines<1>,
     graph_chosen_action: GraphLines<1>,
-    graph_actions: GraphLines<3>,
+    graph_actions: GraphLines<OUTPUTS>,
     graph_angle: GraphLines<1>,
     graph_angle_vel: GraphLines<1>,
     graph_cart: GraphLines<1>,
@@ -43,13 +43,14 @@ pub struct PendulumSimulation {
 
     graph_drawer_loss: GraphLinesDrawer<1>,
     graph_drawer_chosen_action: GraphLinesDrawer<1>,
-    graph_drawer_actions: GraphLinesDrawer<3>,
+    graph_drawer_actions: GraphLinesDrawer<OUTPUTS>,
     graph_drawer_angle: GraphLinesDrawer<1>,
     graph_drawer_angle_vel: GraphLinesDrawer<1>,
     graph_drawer_cart: GraphLinesDrawer<1>,
     graph_drawer_cart_vel: GraphLinesDrawer<1>,
 
     pendulum: Pendulum,
+    initial_pendulum: Pendulum,
     verlet_physics_drawer: VerletPhysicsDrawer,
 
     // Debug
@@ -100,7 +101,7 @@ impl PendulumSimulation {
 
         let graph_actions = GraphLines {
             x: graph_x.clone(),
-            y: [graph_y.clone(), graph_y.clone(), graph_y.clone()],
+            y: [graph_y.clone(), graph_y.clone(), graph_y.clone(), graph_y.clone(), graph_y.clone(), graph_y.clone(), graph_y.clone()],
         };
 
         let graph_angle = GraphLines {
@@ -125,7 +126,15 @@ impl PendulumSimulation {
         let graph_drawer_chosen_action =
             GraphLinesDrawer::new(scale, pos_graph_chosen_action).colors([to_rgb("#b1d900").into()]);
         let graph_drawer_actions =
-            GraphLinesDrawer::new(scale, pos_graph_actions).colors([to_rgb("#ff00e6").into(), to_rgb("#100010").into(), to_rgb("#3700ff").into()]);
+            GraphLinesDrawer::new(scale, pos_graph_actions).colors([
+                to_rgb("#ff005d").into(), 
+                to_rgb("#ff00e6").into(), 
+                to_rgb("#950187").into(), 
+                to_rgb("#100010").into(), 
+                to_rgb("#1f0090").into(),
+                to_rgb("#3700ff").into(),
+                to_rgb("#0400ff").into(),
+            ]);
         let graph_drawer_angle = GraphLinesDrawer::new(scale, pos_graph_angle)
             .colors([to_rgb("#d9ae00").into()])
             .y_lim(std::f32::consts::PI);
@@ -155,7 +164,8 @@ impl PendulumSimulation {
             graph_angle_vel,
             graph_cart,
             graph_cart_vel,
-            pendulum,
+            pendulum: pendulum.clone(),
+            initial_pendulum: pendulum.clone(),
             verlet_physics_drawer,
 
             ups,
@@ -221,7 +231,11 @@ impl PendulumSimulation {
         self.graph_actions.y_push_pop(0, action.1[0]);
         self.graph_actions.y_push_pop(1, action.1[1]);
         self.graph_actions.y_push_pop(2, action.1[2]);
-        self.graph_chosen_action.y_push_pop(0, (action.0 as f32 - 1.0) * 0.2);
+        self.graph_actions.y_push_pop(3, action.1[3]);
+        self.graph_actions.y_push_pop(4, action.1[4]);
+        self.graph_actions.y_push_pop(5, action.1[5]);
+        self.graph_actions.y_push_pop(6, action.1[6]);
+        self.graph_chosen_action.y_push_pop(0, (action.0 as f32 - 3.0) * 0.2);
 
         let pendulum_action: PendulumAction = (action.0 as u8).into();
 
@@ -267,19 +281,49 @@ impl PendulumSimulation {
             action,
         };
 
-        let reward = alpha.abs();
+        let mut finished = false;
+        // let mut reward = alpha.abs();
+
+        let angle_error = 1.0 - alpha.abs() / std::f32::consts::PI;
+        let angular_velocity_error = angular_velocity.abs();
+        let position_error = cart_pos.abs();
+        let velocity_error = cart_velocity.abs();
+
+
+        // let mut reward = if alpha.abs() / std::f32::consts::PI > 0.7 && position_error < 0.5  {
+        //     1.0
+        // } else {
+        //     finished = true;
+        //     0.0
+        // };
+
+        let mut reward =
+            1.0
+            - 1.0 * angle_error
+            - 0.1 * angular_velocity_error
+            - 0.5 * position_error
+            - 0.1 * velocity_error;
+
+
+        // println!("reward: {}", reward);
+
+        if cart_pos.abs() > 0.9 {
+            reward = -10.0;
+            finished = true;
+            self.pendulum = self.initial_pendulum.clone();
+        }
         
-        if self.ticks > 100 {
-            let episode_finished = self.ticks.is_multiple_of(1000);
-            
-            let finished = episode_finished;
+        let episode_finished = self.ticks.is_multiple_of(5000);
+        
+        // finished = finished;
 
-            self.dqn.set_reward(inputs, action, reward, inputs_next, finished, replay_key);
+        self.dqn.set_reward(inputs, action, reward, inputs_next, finished, replay_key);
 
-            if episode_finished {
-                let loss = self.dqn.learn_replay();
-                self.graph_loss.y_push_pop(0, loss * 2.0);
-            }
+        if episode_finished || finished {
+            self.pendulum = self.initial_pendulum.clone();
+            let loss = self.dqn.learn_replay();
+            // let loss = self.dqn.learn();
+            self.graph_loss.y_push_pop(0, loss * 2.0);
         }
     }
 

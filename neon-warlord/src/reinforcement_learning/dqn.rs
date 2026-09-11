@@ -123,7 +123,7 @@ impl<const INPUTS: usize, const OUTPUTS: usize> Dqn<INPUTS, OUTPUTS> {
     }
 
     pub fn learn(&mut self) -> f32 {
-        const GAMMA: f32 = 0.9;
+        const GAMMA: f32 = 0.5;
 
         if self.steps.is_empty() {
             return 0.0;
@@ -189,17 +189,28 @@ impl<const INPUTS: usize, const OUTPUTS: usize> Dqn<INPUTS, OUTPUTS> {
             .subtract_gradients(&(&gradients_loss_sum * LEARNING_RATE));
 
         self.steps.clear();
-        // self.epsilon = f32::max(self.epsilon * 0.99, 0.1);
+        self.epsilon = f32::max(self.epsilon * 0.999, 0.01);
 
         loss
     }
 
     pub fn learn_replay(&mut self) -> f32 {
-        self.epsilon = f32::max(self.epsilon * 0.9999, 0.01);
+        // self.epsilon = f32::max(self.epsilon * 0.99, 0.01);
 
-        for value in self.replay_buffer.values() {
+        let values: Vec<&Transition<INPUTS>> = (0..1000)
+            .map(|_| {
+                let index = fastrand::usize(..self.replay_buffer.len());
+                self.replay_buffer.values().nth(index).unwrap()
+            })
+            .collect();
+
+        for value in values {
             self.steps.push(value.clone());
         }
+
+        // for value in self.replay_buffer.values() {
+        //     self.steps.push(value.clone());
+        // }
 
         self.learn()
     }
