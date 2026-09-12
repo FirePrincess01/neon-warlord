@@ -1,7 +1,7 @@
 //! Implements matrix multiplication with simd operations
 
 use std::{iter::zip, ops::Mul};
-use std::ops::{Add, AddAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Sub};
 
 use wide::f32x16;
 
