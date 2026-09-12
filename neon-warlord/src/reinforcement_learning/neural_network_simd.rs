@@ -2,6 +2,7 @@
 
 pub mod epoch;
 pub mod gradients;
+pub mod simd_math;
 
 #[cfg(test)]
 mod test_neural_network_simd;
@@ -20,9 +21,16 @@ use std::iter::zip;
 use itertools::izip;
 use wide::f32x16;
 
-use crate::reinforcement_learning::neural_network_simd::gradients::GradientsSimd;
+use crate::reinforcement_learning::neural_network_simd::{gradients::GradientsSimd};
+
 
 const LANES: usize = 16;
+const NR_NEURONS: usize = 128;
+const NR_LANES: usize = NR_NEURONS / LANES;
+
+type SMat = simd_math::SMat<NR_NEURONS, NR_LANES>;
+type SVec = simd_math::SVec<NR_NEURONS, NR_LANES>;
+type SRowVec = simd_math::SRowVec<NR_NEURONS, NR_LANES>;
 
 pub struct NeuralNetworkSimd<
     const INPUTS: usize,
@@ -31,54 +39,54 @@ pub struct NeuralNetworkSimd<
     const RESIDUAL: bool,
 > {
     // input
-    pub x: [f32; LANES],
+    pub x: [f32; NR_NEURONS],
 
     // parameters
-    pub w: [[[f32; LANES]; LANES]; NR_LAYERS],
-    b: [[f32; LANES]; NR_LAYERS],
+    pub w: [[[f32; NR_NEURONS]; NR_NEURONS]; NR_LAYERS],
+    b: [[f32; NR_NEURONS]; NR_LAYERS],
 
     // output
-    pub w_y: [[f32; LANES]; LANES],
-    b_y: [f32; LANES],
-    pub y: [f32; LANES],
+    pub w_y: [[f32; NR_NEURONS]; NR_NEURONS],
+    b_y: [f32; NR_NEURONS],
+    pub y: [f32; NR_NEURONS],
 
     // intermediate products
 
     // a = f(z)
-    a: [[f32; LANES]; NR_LAYERS],
+    a: [[f32; NR_NEURONS]; NR_LAYERS],
 
     // z = W*a + b
-    z: [[f32; LANES]; NR_LAYERS],
+    z: [[f32; NR_NEURONS]; NR_LAYERS],
 
     // back propagation
-    dy_dw: [[[f32; LANES]; LANES]; NR_LAYERS],
-    dy_db: [[f32; LANES]; NR_LAYERS],
+    dy_dw: [[[f32; NR_NEURONS]; NR_NEURONS]; NR_LAYERS],
+    dy_db: [[f32; NR_NEURONS]; NR_LAYERS],
 
-    dy_dw_y: [[f32; LANES]; LANES],
-    dy_db_y: [f32; LANES],
+    dy_dw_y: [[f32; NR_NEURONS]; NR_NEURONS],
+    dy_db_y: [f32; NR_NEURONS],
 }
 
 impl<const INPUTS: usize, const OUTPUTS: usize, const NR_LAYERS: usize, const RESIDUAL: bool>
     NeuralNetworkSimd<INPUTS, OUTPUTS, NR_LAYERS, RESIDUAL>
 {
     pub fn new() -> Self {
-        let x = [0.0; LANES];
+        let x = [0.0; NR_NEURONS];
 
-        let w = [[[0.0; LANES]; LANES]; NR_LAYERS];
-        let b = [[0.0; LANES]; NR_LAYERS];
-        let w_y = [[0.0; LANES]; LANES];
-        let b_y = [0.0; LANES];
+        let w = [[[0.0; NR_NEURONS]; NR_NEURONS]; NR_LAYERS];
+        let b = [[0.0; NR_NEURONS]; NR_LAYERS];
+        let w_y = [[0.0; NR_NEURONS]; NR_NEURONS];
+        let b_y = [0.0; NR_NEURONS];
 
-        let y = [0.0; LANES];
+        let y = [0.0; NR_NEURONS];
 
-        let a = [[0.0; LANES]; NR_LAYERS];
-        let z = [[0.0; LANES]; NR_LAYERS];
+        let a = [[0.0; NR_NEURONS]; NR_LAYERS];
+        let z = [[0.0; NR_NEURONS]; NR_LAYERS];
 
-        let dy_dw = [[[0.0; LANES]; LANES]; NR_LAYERS];
-        let dy_db = [[0.0; LANES]; NR_LAYERS];
+        let dy_dw = [[[0.0; NR_NEURONS]; NR_NEURONS]; NR_LAYERS];
+        let dy_db = [[0.0; NR_NEURONS]; NR_LAYERS];
 
-        let dy_dw_y = [[0.0; LANES]; LANES];
-        let dy_db_y = [0.0; LANES];
+        let dy_dw_y = [[0.0; NR_NEURONS]; NR_NEURONS];
+        let dy_db_y = [0.0; NR_NEURONS];
 
         Self {
             x,
@@ -159,7 +167,7 @@ impl<const INPUTS: usize, const OUTPUTS: usize, const NR_LAYERS: usize, const RE
         assert!(INPUTS <= LANES);
         assert!(OUTPUTS <= LANES);
 
-        let mut padded = [0.0; LANES];
+        let mut padded = [0.0; NR_NEURONS];
         padded[..INPUTS].copy_from_slice(x);
 
         let output = self.forward_16(padded);
@@ -167,39 +175,43 @@ impl<const INPUTS: usize, const OUTPUTS: usize, const NR_LAYERS: usize, const RE
         output[..OUTPUTS].try_into().unwrap()
     }
 
-    pub fn forward_16(&mut self, x: [f32; LANES]) -> [f32; LANES] {
+
+
+    pub fn forward_16(&mut self, x: [f32; NR_NEURONS]) -> [f32; NR_NEURONS] {
         self.x = x;
 
-        let mut input_ = f32x16::from(self.x);
+        let mut input_: SVec = SVec::new(self.x);
 
         for (w, b, a, z) in izip!(self.w, self.b, &mut self.a, &mut self.z) {
             // z = W * input + b + input
-            let mut z_ = Self::mul_16x16_16x1(&w, input_);
-            z_ += f32x16::from(b);
+            let mut z_: SVec = SMat::new(w) * &input_;
+            z_ += &SVec::new(b);
+
             if RESIDUAL {
-                z_ += input_;
+                z_ += &input_;
             }
 
             // a = f(z)
-            let a_ = Self::activation_re_lu_f32x16(z_);
+            let a_: SVec = Self::activation_re_lu_vec(&z_);
 
             *z = z_.into();
-            *a = a_.into();
+            *a = a_.clone().into();
 
             input_ = a_;
         }
 
         // y
         // z = W * a + b
-        let mut y_ = Self::mul_16x16_16x1(&self.w_y, input_);
-        y_ += f32x16::from(self.b_y);
+        let mut y_: SVec = SMat::new(self.w_y) * &input_;
+
+        y_ += &SVec::new(self.b_y);
         self.y = y_.into();
 
         self.y
     }
 
     pub fn backward(&mut self, index: usize) -> GradientsSimd<NR_LAYERS> {
-        assert!(index < LANES);
+        assert!(index < NR_NEURONS);
 
         let mut z_iter = self.z.iter().rev();
         let mut a_iter = self.a.iter().rev().chain([&self.x]);
@@ -208,11 +220,11 @@ impl<const INPUTS: usize, const OUTPUTS: usize, const NR_LAYERS: usize, const RE
         let mut dy_dw_iter = self.dy_dw.iter_mut().rev();
 
         // last element
-        let mut dy_db_y = [0.0; LANES];
+        let mut dy_db_y= [0.0; NR_NEURONS];
         dy_db_y[index] = 1.0; // choose weight
         self.dy_db_y = dy_db_y;
 
-        let mut dy_dw_y = [[0.0; LANES]; LANES];
+        let mut dy_dw_y = [[0.0; NR_NEURONS]; NR_NEURONS];
         dy_dw_y[index] = *a_iter.next().unwrap(); // choose weight
         self.dy_dw_y = dy_dw_y;
 
@@ -222,39 +234,42 @@ impl<const INPUTS: usize, const OUTPUTS: usize, const NR_LAYERS: usize, const RE
         let w = &self.w_y[index]; // choose weight
         let dy_db = dy_db_iter.next().unwrap();
         let dy_dw = dy_dw_iter.next().unwrap();
-        let mut delta_previous_;
+        let mut delta_previous_: SVec;
         {
-            let dz_ = Self::derivative_re_lu_f32x16(f32x16::from(*z));
-            let delta_ = f32x16::from(*w) * dz_;
+            let dz_: SVec = Self::derivative_re_lu_vec(&SVec::new(*z));
+            let delta_: SVec = SVec::new(*w) * &dz_;
 
-            delta_previous_ = delta_;
+            delta_previous_ = delta_.clone();
 
-            let dy_dw_ = Self::mul_delta_a(delta_, f32x16::from(*a));
+            let dy_dw_: SMat = delta_.clone() * SRowVec::new(*a);
 
-            *dy_db = delta_.into();
-            *dy_dw = dy_dw_;
+            *dy_db = delta_.clone().into();
+            *dy_dw = dy_dw_.into();
         }
 
         // other elements
         for (&z, &a, w, dy_db, dy_dw) in izip!(z_iter, a_iter, w_iter, dy_db_iter, dy_dw_iter,) {
             // Gradient through W
-            let mut delta_ = Self::mul_1x16_16x16(delta_previous_, w);
+            let delta_previous_row_vec = SRowVec::new(delta_previous_.clone().into());
+            let w_ = SMat::new(*w);
+            let mut delta_ = SVec::new((delta_previous_row_vec * w_).into());
 
             // Gradient through residual connection
             if RESIDUAL {
-                delta_ += delta_previous_;
+                delta_ += &delta_previous_;
             }
 
             // Gradient through ReLU
-            let dz_ = Self::derivative_re_lu_f32x16(f32x16::from(z));
-            let delta_ = delta_ * dz_;
+            // let dz_ = Self::derivative_re_lu_f32x16(f32x16::from(z));
+            let dz_: SVec = Self::derivative_re_lu_vec(&SVec::new(z));
+            let delta_: SVec = delta_ * &dz_;
 
-            delta_previous_ = delta_;
+            delta_previous_ = delta_.clone();
 
-            let dy_dw_ = Self::mul_delta_a(delta_, f32x16::from(a));
+            let dy_dw_: SMat = delta_.clone() * SRowVec::new(a);
 
             *dy_db = delta_.into();
-            *dy_dw = dy_dw_;
+            *dy_dw = dy_dw_.into();
         }
 
         GradientsSimd {
@@ -268,120 +283,64 @@ impl<const INPUTS: usize, const OUTPUTS: usize, const NR_LAYERS: usize, const RE
     pub fn subtract_gradients(&mut self, gradients: &GradientsSimd<NR_LAYERS>) {
         // w
         for (w, dw) in zip(&mut self.w, &gradients.dy_dw) {
-            // println!("dw {:?}", dw);
-            for (w, dw) in zip(w, dw) {
-                let res = f32x16::from(*w) - f32x16::from(*dw);
-                *w = res.into();
-            }
+            let res_ = SMat::new(*w) - &SMat::new(*dw);
+            *w = res_.into();
         }
 
         // b
         for (b, db) in zip(&mut self.b, &gradients.dy_db) {
-            // println!("db {:?}", db);
-            let res = f32x16::from(*b) - f32x16::from(*db);
+            let res = SVec::new(*b) - &SVec::new(*db);
             *b = res.into();
         }
 
         // w_y
         for (w, dw) in zip(&mut self.w_y, &gradients.dy_dw_y) {
-            let res = f32x16::from(*w) - f32x16::from(*dw);
+            let res =  SVec::new(*w) - &SVec::new(*dw);
             *w = res.into();
         }
 
         // b_y
         {
-            let res = f32x16::from(self.b_y) - f32x16::from(gradients.dy_db_y);
+            let res =  SVec::new(self.b_y) - &SVec::new(gradients.dy_db_y);
             self.b_y = res.into();
         }
     }
 
-    // #[inline]
-    // fn mul_16x16_16x1(a: &[[f32;16]], b: f32x16) -> f32x16{
-    //     let mut out_ = f32x16::splat(0.0);
-
-    //     for &a in a {
-    //         let a_ = f32x16::from(a);
-
-    //         out_ += a_ * b;
-    //     }
-
-    //     out_.into()
-    // }
+    const LEAKY_RELU_ALPHA: f32 = 0.01;
 
     #[inline]
-    fn mul_16x16_16x1(a: &[[f32; 16]], b: f32x16) -> f32x16 {
-        let mut out = [0.0f32; 16];
+    fn activation_re_lu_vec(x: &SVec) -> SVec {
+        let mut res =  SVec::new([0.0; NR_NEURONS]);
+        let zero = f32x16::ZERO;
+        let alpha = f32x16::splat(Self::LEAKY_RELU_ALPHA);
 
-        for (out, row) in zip(&mut out, a) {
-            let row = f32x16::from(*row);
-            let product = row * b;
+        for (x, res) in zip(x.a.as_chunks::<LANES>().0,  res.a.as_chunks_mut::<LANES>().0) {
+            let x_ = f32x16::from(*x);
 
-            // horizontal sum of product
-            *out = product.reduce_add();
-        }
+            let res_ = x_.simd_gt(zero).select(x_, x_ * alpha);
 
-        f32x16::from(out)
-    }
-
-    #[inline]
-    fn mul_1x16_16x16(a: f32x16, b: &[[f32; 16]]) -> f32x16 {
-        let mut out_ = f32x16::splat(0.0);
-
-        for (&a, &b) in zip(a.as_array(), b) {
-            let a_ = f32x16::splat(a);
-            let b_ = f32x16::from(b);
-
-            out_ += a_ * b_;
-        }
-
-        out_
-    }
-
-    #[inline]
-    pub fn mul_delta_a(delta_: f32x16, a_: f32x16) -> [[f32; 16]; 16] {
-        let mut res: [[f32; 16]; 16] = [[0.0; 16]; 16];
-
-        for (&delta, res) in zip(delta_.as_array(), &mut res) {
-            let delta_ = f32x16::splat(delta);
-            let row = delta_ * a_;
-
-            *res = row.into();
+            *res = res_.into();
         }
 
         res
     }
 
-    // #[inline]
-    // fn activation_re_lu_f32x16(x: f32x16) -> f32x16 {
-    //     x.max(f32x16::splat(0.0))
-    // }
-
-    // #[inline]
-    // fn derivative_re_lu_f32x16(x: f32x16) -> f32x16 {
-    //     x.simd_gt(f32x16::splat(0.0))
-    //         .select(f32x16::splat(1.0), f32x16::splat(0.0))
-    // }
-
-    // fn activation_re_lu(value: f32) -> f32 {
-    //     value.max(0.0)
-    // }
-
-    // fn derivative_re_lu(value: f32) -> f32 {
-    //     if value > 0.0 { 1.0 } else { 0.0 }
-    // }
-
-    const LEAKY_RELU_ALPHA: f32 = 0.01;
-
     #[inline]
-    fn activation_re_lu_f32x16(x: f32x16) -> f32x16 {
-        x.simd_gt(f32x16::splat(0.0))
-            .select(x, x * f32x16::splat(Self::LEAKY_RELU_ALPHA))
-    }
+    fn derivative_re_lu_vec(x: &SVec) -> SVec {
+        let mut res =  SVec::new([0.0; NR_NEURONS]);
+        let zero = f32x16::ZERO;
+        let alpha = f32x16::splat(Self::LEAKY_RELU_ALPHA);
+        let one = f32x16::splat(1.0);
 
-    #[inline]
-    fn derivative_re_lu_f32x16(x: f32x16) -> f32x16 {
-        x.simd_gt(f32x16::splat(0.0))
-            .select(f32x16::splat(1.0), f32x16::splat(Self::LEAKY_RELU_ALPHA))
+        for (x, res) in zip(x.a.as_chunks::<LANES>().0,  res.a.as_chunks_mut::<LANES>().0) {
+            let x_ = f32x16::from(*x);
+
+            let res_ = x_.simd_gt(zero).select(one, alpha);
+
+            *res = res_.into();
+        }
+
+        res
     }
 
     #[inline]
@@ -454,3 +413,4 @@ impl<const INPUTS: usize, const OUTPUTS: usize, const NR_LAYERS: usize, const RE
         write!(f, "}}")
     }
 }
+

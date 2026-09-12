@@ -17,8 +17,8 @@ use wgpu_renderer::performance_monitor::{Fps, watch::Watch};
 
 use crate::{
     pendulum_simulation::{
-        graph_lines::{GraphLines, GraphLinesDrawer}, neural_network_drawer::NeuralNetworkDrawer, pendulum::{Pendulum, PendulumAction, PendulumState}, verlet_physics_drawer::VerletPhysicsDrawer,
-    }, physics_simulation_v3_drawer::DrawerObjects, reinforcement_learning::{dqn::{self, Dqn, ReplayKey}, dqn_dfdx2::DqnDfdx2, neural_network_simd::NeuralNetworkSimd}, triple_buffer, worker_thread,
+        graph_lines::{GraphLines, GraphLinesDrawer}, pendulum::{Pendulum, PendulumAction, PendulumState}, verlet_physics_drawer::VerletPhysicsDrawer,
+    }, physics_simulation_v3_drawer::DrawerObjects, reinforcement_learning::{dqn::{self}, dqn_dfdx2::DqnDfdx2}, triple_buffer, worker_thread,
 };
 
 pub const WATCH_POINTS_SIZE: usize = 10;

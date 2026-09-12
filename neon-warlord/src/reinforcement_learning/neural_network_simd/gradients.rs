@@ -4,22 +4,27 @@ use itertools::izip;
 use wide::f32x16;
 
 use super::LANES;
+use super::NR_LANES;
+use super::NR_NEURONS;
+
+use super::SVec;
+use super::SMat;
 
 pub struct GradientsSimd<const SIZE: usize> {
-    pub dy_dw: [[[f32; LANES]; LANES]; SIZE],
-    pub dy_db: [[f32; LANES]; SIZE],
+    pub dy_dw: [[[f32; NR_NEURONS]; NR_NEURONS]; SIZE],
+    pub dy_db: [[f32; NR_NEURONS]; SIZE],
 
-    pub dy_dw_y: [[f32; LANES]; LANES],
-    pub dy_db_y: [f32; LANES],
+    pub dy_dw_y: [[f32; NR_NEURONS]; NR_NEURONS],
+    pub dy_db_y: [f32; NR_NEURONS],
 }
 
 impl<const SIZE: usize> GradientsSimd<SIZE> {
     pub fn new() -> Self {
-        let dy_dw = [[[0.0; LANES]; LANES]; SIZE];
-        let dy_db = [[0.0; LANES]; SIZE];
+        let dy_dw = [[[0.0; NR_NEURONS]; NR_NEURONS]; SIZE];
+        let dy_db = [[0.0; NR_NEURONS]; SIZE];
 
-        let dy_dw_y = [[0.0; LANES]; LANES];
-        let dy_db_y = [0.0; LANES];
+        let dy_dw_y = [[0.0; NR_NEURONS]; NR_NEURONS];
+        let dy_db_y = [0.0; NR_NEURONS];
 
         Self {
             dy_dw,
@@ -32,27 +37,27 @@ impl<const SIZE: usize> GradientsSimd<SIZE> {
     #[inline]
     pub fn multiply_constant(&self, val: f32) -> Self {
         let mut res = Self::new();
-        let val_ = f32x16::splat(val);
+        let val_ = SVec::new([val; NR_NEURONS]);
 
         // dy_dw
         for (x, y) in std::iter::zip(&self.dy_dw, &mut res.dy_dw) {
             for (x, y) in std::iter::zip(x, y) {
-                *y = (f32x16::from(*x) * val_).into();
+                *y = (SVec::new(*x) * &val_).into();
             }
         }
 
         // dy_db
         for (x, y) in std::iter::zip(&self.dy_db, &mut res.dy_db) {
-            *y = (f32x16::from(*x) * val_).into();
+            *y = (SVec::new(*x) * &val_).into();
         }
 
         // dy_dw_y
         for (x, y) in std::iter::zip(&self.dy_dw_y, &mut res.dy_dw_y) {
-            *y = (f32x16::from(*x) * val_).into();
+            *y = (SVec::new(*x) * &val_).into();
         }
 
         // dy_db_y
-        res.dy_db_y = (f32x16::from(self.dy_db_y) * val_).into();
+        res.dy_db_y = (SVec::new(self.dy_db_y) * &val_).into();
 
         res
     }
@@ -64,22 +69,22 @@ impl<const SIZE: usize> GradientsSimd<SIZE> {
         // dy_dw
         for (a, b, y) in izip!(&self.dy_dw, &other.dy_dw, &mut res.dy_dw) {
             for (a, b, y) in izip!(a, b, y) {
-                *y = (f32x16::from(*a) + f32x16::from(*b)).into();
+                *y = (SVec::new(*a) + &SVec::new(*b)).into();
             }
         }
 
         // dy_db
         for (a, b, y) in izip!(&self.dy_db, &other.dy_db, &mut res.dy_db) {
-            *y = (f32x16::from(*a) + f32x16::from(*b)).into();
+            *y = (SVec::new(*a) + &SVec::new(*b)).into();
         }
 
         // dy_dw_y
         for (a, b, y) in izip!(&self.dy_dw_y, &other.dy_dw_y, &mut res.dy_dw_y) {
-            *y = (f32x16::from(*a) + f32x16::from(*b)).into();
+            *y = (SVec::new(*a) + &SVec::new(*b)).into();
         }
 
         // dy_db_y
-        res.dy_db_y = (f32x16::from(self.dy_db_y) + f32x16::from(other.dy_db_y)).into();
+        res.dy_db_y = (SVec::new(self.dy_db_y) + &SVec::new(other.dy_db_y)).into();
 
         res
     }
@@ -91,22 +96,22 @@ impl<const SIZE: usize> GradientsSimd<SIZE> {
         // dy_dw
         for (a, b, y) in izip!(&self.dy_dw, &other.dy_dw, &mut res.dy_dw) {
             for (a, b, y) in izip!(a, b, y) {
-                *y = (f32x16::from(*a) - f32x16::from(*b)).into();
+                *y = (SVec::new(*a) - &SVec::new(*b)).into();
             }
         }
 
         // dy_db
         for (a, b, y) in izip!(&self.dy_db, &other.dy_db, &mut res.dy_db) {
-            *y = (f32x16::from(*a) - f32x16::from(*b)).into();
+            *y = (SVec::new(*a) - &SVec::new(*b)).into();
         }
 
         // dy_dw_y
         for (a, b, y) in izip!(&self.dy_dw_y, &other.dy_dw_y, &mut res.dy_dw_y) {
-            *y = (f32x16::from(*a) - f32x16::from(*b)).into();
+            *y = (SVec::new(*a) - &SVec::new(*b)).into();
         }
 
         // dy_db_y
-        res.dy_db_y = (f32x16::from(self.dy_db_y) - f32x16::from(other.dy_db_y)).into();
+        res.dy_db_y = (SVec::new(self.dy_db_y) - &SVec::new(other.dy_db_y)).into();
 
         res
     }
