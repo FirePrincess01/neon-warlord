@@ -6,13 +6,13 @@ mod test_maze;
 use std::collections::HashMap;
 
 use crate::reinforcement_learning::neural_network_simd::{
-    NeuralNetworkSimd, gradients::GradientsSimd,
+    NeuralNetwork16, gradients::GradientsSimd, Gradient16
 };
 
 const LAYERS: usize = 5;
 
 pub struct Dqn<const INPUTS: usize, const OUTPUTS: usize> {
-    pub model: NeuralNetworkSimd<INPUTS, OUTPUTS, LAYERS, true>,
+    pub model: NeuralNetwork16<INPUTS, OUTPUTS, LAYERS, true>,
     steps: Vec<Transition<INPUTS>>,
 
     replay_buffer: HashMap<ReplayKey<INPUTS>, Transition<INPUTS>>,
@@ -24,7 +24,7 @@ pub struct Dqn<const INPUTS: usize, const OUTPUTS: usize> {
 
 impl<const INPUTS: usize, const OUTPUTS: usize> Dqn<INPUTS, OUTPUTS> {
     pub fn new() -> Self {
-        let model = NeuralNetworkSimd::new_rand();
+        let model = NeuralNetwork16::new_rand();
         let steps = Vec::new();
         let replay_buffer: HashMap<ReplayKey<INPUTS>, Transition<INPUTS>> = HashMap::new();
         let epsilon = 1.0;
@@ -132,7 +132,7 @@ impl<const INPUTS: usize, const OUTPUTS: usize> Dqn<INPUTS, OUTPUTS> {
         let n = self.steps.len() as f32;
 
         let mut sum = 0.0;
-        let mut gradients_loss_sum: GradientsSimd<LAYERS> = GradientsSimd::new();
+        let mut gradients_loss_sum: Gradient16<LAYERS> = Gradient16::new();
         for step in self.steps.iter().rev() {
             let inputs = step.inputs;
             let action = step.action;

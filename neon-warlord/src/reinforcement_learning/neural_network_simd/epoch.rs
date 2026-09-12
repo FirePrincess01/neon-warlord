@@ -4,19 +4,19 @@ use std::iter::zip;
 
 use itertools::izip;
 
-use crate::reinforcement_learning::neural_network_simd::gradients::GradientsSimd;
+use crate::reinforcement_learning::neural_network_simd::{Gradient16, NeuralNetwork16, gradients::GradientsSimd};
 
 use super::NeuralNetworkSimd;
 
 pub struct EpochSimd<const SIZE: usize> {
-    pub model: NeuralNetworkSimd<16, 16, SIZE, false>,
+    pub model: NeuralNetwork16<16, 16, SIZE, false>,
 
     pub loss: f32,
 }
 
 impl<const SIZE: usize> EpochSimd<SIZE> {
     pub fn new() -> Self {
-        let model = NeuralNetworkSimd::new_rand();
+        let model = NeuralNetwork16::new_rand();
         let loss = 0.0;
 
         Self { model, loss }
@@ -74,7 +74,7 @@ impl<const SIZE: usize> EpochSimd<SIZE> {
         self.loss = loss;
 
         // accumulate gradients
-        let mut gradients_loss_sum: GradientsSimd<SIZE> = GradientsSimd::new();
+        let mut gradients_loss_sum: Gradient16<SIZE> = GradientsSimd::new();
 
         // Derivative loss function
         // derivative mean square error
