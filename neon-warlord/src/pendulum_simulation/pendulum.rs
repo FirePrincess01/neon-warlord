@@ -31,16 +31,16 @@ impl Pendulum {
         let radius = 0.1;
         let mass = 0.1;
 
-        let particles_static_pos_0 = Vec3::new(-5.0, 0.0, 0.0);
+        let particles_static_pos_0 = Vec3::new(-20.0, 0.0, 0.0);
         let particles_static_0 = verlet_physics.push_particle(particles_static_pos_0, radius, mass);
 
         let particle_cart = verlet_physics.push_particle(Vec3::new(0.0, 0.0, 0.0), radius, mass);
 
-        let particles_static_pos_1 = Vec3::new(5.0, 0.0, 0.0);
+        let particles_static_pos_1 = Vec3::new(20.0, 0.0, 0.0);
         let particles_static_1 = verlet_physics.push_particle(particles_static_pos_1, radius, mass);
 
         let particle_pendulum =
-            verlet_physics.push_particle(Vec3::new(0.0, 0.0, 1.0), radius, mass);
+            verlet_physics.push_particle(Vec3::new(0.0, 0.0, -1.0), radius, mass);
 
         verlet_physics.push_constraint_distance(particle_cart, particle_pendulum, 1.0, 0.8);
 
@@ -69,7 +69,7 @@ impl Pendulum {
             pendulum_state
         };
 
-        obj.update(PendulumAction::None, 0.0);
+        obj.update(PendulumAction::Left0, 0.0);
 
         obj
     }
@@ -106,7 +106,7 @@ impl Pendulum {
         let dy = pendulum.z - cart.z;
 
         // Raw angle in [-PI, PI].
-        let angle = dx.atan2(-dy);
+        let angle = dx.atan2(dy);
 
         // Difference from the previous angle.
         let mut delta = angle - self.previous_angle;
@@ -167,13 +167,13 @@ impl Pendulum {
             .update_simd(&mut self.verlet_physics.particles);
 
         match action {
-            PendulumAction::Left2 => self.motor_linear.accelerate(-1.6),
-            PendulumAction::Left1 => self.motor_linear.accelerate(-0.8),
-            PendulumAction::Left0 => self.motor_linear.accelerate(-0.4),
-            PendulumAction::None => {}
-            PendulumAction::Right0 => self.motor_linear.accelerate(0.4),
-            PendulumAction::Right1 => self.motor_linear.accelerate(0.8),
-            PendulumAction::Right2 => self.motor_linear.accelerate(1.6),
+            // PendulumAction::Left2 => self.motor_linear.accelerate(-1.6),
+            // PendulumAction::Left1 => self.motor_linear.accelerate(-0.8),
+            PendulumAction::Left0 => self.motor_linear.accelerate(-2.4),
+            // PendulumAction::None => {}
+            PendulumAction::Right0 => self.motor_linear.accelerate(2.4),
+            // PendulumAction::Right1 => self.motor_linear.accelerate(0.8),
+            // PendulumAction::Right2 => self.motor_linear.accelerate(1.6),
         }
     }
 
@@ -186,13 +186,13 @@ impl Pendulum {
 #[repr(u8)]
 #[derive(Clone, Copy)]
 pub enum PendulumAction {
-    Left2  = 0,
-    Left1  = 1,
-    Left0  = 2,
-    None  = 3,
-    Right0 = 4,
-    Right1 = 5,
-    Right2 = 6,
+    // Left2  = 0,
+    // Left1  = 1,
+    Left0  = 0,
+    // None  = 3,
+    Right0 = 1,
+    // Right1 = 5,
+    // Right2 = 6,
 }
 
 impl From<PendulumAction> for u8 {
@@ -204,13 +204,13 @@ impl From<PendulumAction> for u8 {
 impl From<u8> for PendulumAction {
     fn from(value: u8) -> Self {
         match value {
-            0 => Self::Left2,
-            1 => Self::Left1,
-            2 => Self::Left0,
-            3 => Self::None,
-            4 => Self::Right0,
-            5 => Self::Right1,
-            6 => Self::Right2,
+            // 0 => Self::Left2,
+            // 1 => Self::Left1,
+            0 => Self::Left0,
+            // 3 => Self::None,
+            1 => Self::Right0,
+            // 5 => Self::Right1,
+            // 6 => Self::Right2,
             _ => panic!("Unexpected Value"),
         }
     }

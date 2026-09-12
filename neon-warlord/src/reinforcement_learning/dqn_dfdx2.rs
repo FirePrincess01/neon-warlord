@@ -29,7 +29,7 @@ struct Transition {
     done: bool,
 }
 
-struct DqnDfdx2 {
+pub struct DqnDfdx2 {
     dev: Cpu,
     q_net: QNetworkModule,
     target_net: QNetworkModule,
@@ -47,7 +47,7 @@ struct DqnDfdx2 {
 }
 
 impl DqnDfdx2 {
-    fn new(
+    pub fn new(
 
     ) -> Self {
         let dev = Cpu::default();
@@ -64,7 +64,7 @@ impl DqnDfdx2 {
         let epsilon_decay: f32 = 0.998; 
         let epsilon_min: f32 = 0.02;
         let gamma: f32 = 0.99f32;
-        let replay_buffer_capacity: usize = 2000;
+        let replay_buffer_capacity: usize = 20000;
         let replay_buffer: VecDeque<Transition> = VecDeque::with_capacity(replay_buffer_capacity);
 
         let total_reward: f32 = 0.0;
@@ -108,7 +108,7 @@ impl DqnDfdx2 {
         reward: f32,
         next_state: [f32; INPUTS],
         done: bool,
-    ) {
+    ) -> f32 {
         self.total_reward += reward;
 
         self.replay_buffer.push_back(Transition { state, action, reward, next_state, done });
@@ -168,12 +168,28 @@ impl DqnDfdx2 {
             let targets_t = self.dev.tensor(targets_array);
 
             let loss = mse_loss(pred_q_values, targets_t);
+            let loss_res = loss.as_vec()[0];
             let grads = loss.backward();
             self.adam.update(&mut self.q_net, &grads).expect("Fehler beim Optimizer-Update");
+
+
+            return self.total_reward;
         }
+
+        return 0.0;
     }
 
     pub fn update_target_net(&mut self) {
         self.target_net = self.q_net.clone();
+    }
+    
+    pub fn epsilon_decay(&mut self) {
+        if self.epsilon > self.epsilon_min {
+            self.epsilon *= self.epsilon_decay;
+        }
+
+        println!("Episode: {:4}, Accum. Reward: {:7.1}, Epsilon: {:.3}", 0.0, self.total_reward, self.epsilon);
+
+        self.total_reward = 0.0;
     }
 }
