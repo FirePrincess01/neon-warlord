@@ -4,6 +4,11 @@ mod graph_lines;
 mod neural_network_drawer;
 mod pendulum;
 mod verlet_physics_drawer;
+mod test_pendulum_simulation_dfdx;
+mod test_pendulum_simulation_dfdx_2;
+mod test_pendulum_simulation_dfdx_3;
+mod test_pendulum_simulation_dfdx_4;
+mod test_pendulum_simulation_dfdx_5;
 
 use std::collections::VecDeque;
 
