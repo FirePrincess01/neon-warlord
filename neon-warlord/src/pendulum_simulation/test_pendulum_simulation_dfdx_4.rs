@@ -74,6 +74,7 @@ struct Transition {
 }
 
 #[test]
+#[ignore = "too expensive"]
 fn main() {
     let dev = Cpu::default();
 

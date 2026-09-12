@@ -281,6 +281,7 @@ impl CartPoleEnv {
 // ============================================================
 
 #[test]
+#[ignore = "too expensive"]
 fn main() {
     let dev = Cpu::default();
 

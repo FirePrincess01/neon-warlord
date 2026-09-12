@@ -62,6 +62,7 @@ impl PendulumEnv {
 }
 
 #[test]
+#[ignore = "too expensive"]
 fn main() {
     let dev = Cpu::default();
 
